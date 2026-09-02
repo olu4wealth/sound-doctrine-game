@@ -1,0 +1,25 @@
+{
+  "name": "Sound Doctrine — Saints, Martyrs & Heroes",
+  "short_name": "Sound Doctrine",
+  "description": "A Scripture trivia game on 1 & 2 Timothy and Titus (KJV).",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fdf3e3",
+  "theme_color": "#f3b431",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

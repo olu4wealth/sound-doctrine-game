@@ -1,0 +1,16 @@
+{
+  "name": "sound-doctrine",
+  "version": "1.0.0",
+  "description": "Sound Doctrine — a Scripture trivia game on 1 & 2 Timothy and Titus (KJV).",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node verify/game-core.test.mjs && node verify/check.mjs",
+    "test:e2e": "playwright test",
+    "serve": "npx serve . -l 4173",
+    "postinstall": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
+  }
+}

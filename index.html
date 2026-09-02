@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f3b431" />
+  <meta name="description" content="Sound Doctrine — a Scripture trivia game on 1 & 2 Timothy and Titus (KJV): climb the Ladder, keep the Candle, know the doctrine." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Sound Doctrine — Saints, Martyrs &amp; Heroes</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="assets/icon-crest.png" />
+  <link rel="apple-touch-icon" href="assets/icon-crest.png" />
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- INTRO (cinematic showcase, shown first on load) -->
+    <section id="screen-intro" class="screen">
+      <div class="intro-stage">
+        <img class="crest" src="assets/icon-crest.png" alt="Sound Doctrine crest" />
+        <h1 class="title">Sound Doctrine</h1>
+        <p class="subtitle">Saints, Martyrs &amp; Heroes<br />1 &amp; 2 Timothy &middot; Titus</p>
+        <p class="intro-story">A young elder is entrusted with a lamp and a charge. Each question feeds the flame; each climb carries him toward sound doctrine. How far will you carry the light?</p>
+        <ul class="intro-bullets">
+          <li>Climb the Ladder — easy recall to very hard synthesis</li>
+          <li>Keep the Candle lit — correct answers burn brighter</li>
+          <li>Never shamed — every miss is corrected by Scripture</li>
+        </ul>
+      </div>
+      <button class="primary" id="btn-intro-begin">Enter the Charge</button>
+      <button class="ghost" id="btn-intro-how">How to play</button>
+    </section>
+
+    <!-- START -->
+    <section id="screen-start" class="screen hidden">
+      <img class="crest" src="assets/icon-crest.png" alt="Sound Doctrine crest" />
+      <h1 class="title">Sound Doctrine</h1>
+      <p class="subtitle">Saints, Martyrs &amp; Heroes<br />1 &amp; 2 Timothy &middot; Titus</p>
+      <p class="tagline">Three books. One charge. Know the doctrine.</p>
+      <div class="name-entry">
+        <input id="input-name" type="text" maxlength="24" placeholder="Your name (shown on the board)" autocomplete="off" />
+      </div>
+      <button class="primary" id="btn-begin">Begin the Charge</button>
+      <button class="ghost" id="btn-how">How to play</button>
+      <button class="ghost" id="btn-leaderboard">Leaderboard</button>
+    </section>
+
+    <!-- HOW -->
+    <section id="screen-how" class="screen hidden">
+      <h2>How to play</h2>
+      <ul class="how-list">
+        <li>Every answer comes straight from 1 &amp; 2 Timothy or Titus (KJV).</li>
+        <li><strong>The Ladder</strong> climbs from easy recall to extremely-hard synthesis.</li>
+        <li>Stake your confidence before answering (1× / 2× / 3×). A near-miss earns <em>Grace</em> — half kept.</li>
+        <li>Keep the <strong>Candle</strong> lit: a 7-day streak, with oil vials as shields. Misses never shame you.</li>
+        <li>Wrong answers always show the verse and its reference.</li>
+        <li>Finish and get your <strong>Charge Report</strong>: grade, strengths, weaknesses, and how to do better.</li>
+      </ul>
+      <button class="primary" id="btn-how-back">Back</button>
+    </section>
+
+    <!-- HOME (Candle) -->
+    <section id="screen-home" class="screen hidden">
+      <header class="home-head">
+        <div class="home-name" id="home-name">—</div>
+        <div class="home-rank" id="home-rank">Recruit</div>
+      </header>
+      <div class="candle-stage" id="candle-stage" data-state="lit">
+        <div class="candle-glow" aria-hidden="true"></div>
+        <span class="candle-spark spark-a" aria-hidden="true">✦</span>
+        <span class="candle-spark spark-b" aria-hidden="true">✧</span>
+        <img class="candle-img" id="candle-img" src="assets/candle-lit.png" alt="Lit candle" />
+      </div>
+      <div class="candle-caption" id="candle-caption">Your lamp is lit</div>
+      <div class="streak-row">
+        <span class="streak-num" id="streak-num">0</span>
+        <span class="streak-label">day streak (of 7)</span>
+        <span class="oil" id="oil-count">🫗 0</span>
+      </div>
+      <div class="home-cta">
+        <button class="primary" id="btn-climb">Begin a Climb</button>
+        <button class="ghost" id="btn-daily">Daily Office</button>
+      </div>
+      <div class="home-second">
+        <button class="ghost small" id="btn-profile">Profile</button>
+        <button class="ghost small" id="btn-lb2">Leaderboard</button>
+      </div>
+    </section>
+
+    <!-- LADDER GAME -->
+    <section id="screen-game" class="screen hidden">
+      <header class="hud">
+        <button class="hud-exit" id="btn-exit" aria-label="Quit">✕</button>
+        <div class="hud-hearts" id="hud-hearts">❤️❤️❤️❤️❤️</div>
+        <div class="hud-progress" id="hud-progress">0/10</div>
+        <div class="timer-ring hud-timer">
+          <svg class="ring" viewBox="0 0 80 80">
+            <circle class="ring-track" cx="40" cy="40" r="34"></circle>
+            <circle class="ring-fill" id="ring-fill" cx="40" cy="40" r="34"></circle>
+          </svg>
+          <span class="ring-label" id="ring-label">30</span>
+        </div>
+      </header>
+      <div class="progress"><div class="progress-bar" id="progress-bar"></div></div>
+
+      <!-- Live flame indicator: flickers, brightens on correct, dims as time runs low -->
+      <div class="flame-meter" id="flame-meter" aria-hidden="true">
+        <div class="flame" id="flame"></div>
+      </div>
+
+      <div class="question-card">
+        <div class="q-meta">
+          <span class="q-book" id="q-book"></span>
+          <span class="q-subject" id="q-subject"></span>
+          <span class="q-type" id="q-type"></span>
+        </div>
+        <p class="q-prompt" id="q-prompt"></p>
+        <div class="bid-row" id="bid-row">
+          <button class="bid" data-bid="confident">Confident<span class="bid-mult">1×</span></button>
+          <button class="bid" data-bid="certain">Certain<span class="bid-mult">2×</span></button>
+          <button class="bid" data-bid="preach">I'll preach it<span class="bid-mult">3×</span></button>
+        </div>
+        <div class="options hidden" id="q-options"></div>
+      </div>
+
+      <div class="feedback hidden" id="feedback">
+        <p class="feedback-head" id="feedback-head"></p>
+        <blockquote class="verse" id="feedback-verse"></blockquote>
+        <cite class="verse-ref" id="feedback-ref"></cite>
+        <button class="primary" id="btn-next">Continue</button>
+      </div>
+    </section>
+
+    <!-- CHARGE REPORT -->
+    <section id="screen-report" class="screen hidden">
+      <h2>The Charge Complete</h2>
+      <div class="report-grade" id="report-grade"></div>
+      <div class="report-summary" id="report-summary"></div>
+      <div class="report-columns" id="report-columns"></div>
+      <div class="report-rx" id="report-rx"></div>
+      <button class="primary" id="btn-again">Climb Again</button>
+      <button class="ghost" id="btn-home">Back to the Candle</button>
+    </section>
+
+    <!-- DAILY OFFICE -->
+    <section id="screen-daily" class="screen hidden">
+      <h2>Daily Office</h2>
+      <p class="daily-intro" id="daily-intro"></p>
+      <div class="daily-grid hidden" id="daily-answered"></div>
+      <button class="primary hidden" id="btn-daily-start">Begin Today's Office</button>
+      <button class="ghost hidden" id="btn-daily-share"></button>
+      <button class="ghost" id="btn-daily-back">Back to the Candle</button>
+    </section>
+
+    <!-- LEADERBOARD -->
+    <section id="screen-lb" class="screen hidden">
+      <h2>Leaderboard</h2>
+      <div class="lb-tabs">
+        <button class="lb-tab" data-tab="all">All time</button>
+      </div>
+      <div class="lb-list" id="lb-list"></div>
+      <button class="ghost" id="btn-lb-back">Back</button>
+    </section>
+
+    <!-- PROFILE -->
+    <section id="screen-profile" class="screen hidden">
+      <h2>Profile</h2>
+      <div class="profile-stats" id="profile-stats"></div>
+      <div class="profile-actions">
+        <button class="ghost" id="btn-profile-signout">Sign out</button>
+        <button class="ghost danger" id="btn-profile-delete">Delete account</button>
+      </div>
+      <button class="ghost" id="btn-profile-back">Back</button>
+    </section>
+
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

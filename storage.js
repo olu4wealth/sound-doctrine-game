@@ -1,0 +1,149 @@
+// storage.js — persistence layer for Sound Doctrine.
+// Local-first: player profile + leaderboard live in localStorage so the game works
+// offline and with zero backend. Supabase-ready: the same API surface is used; when a
+// Supabase client + config is present, leaderboard writes are mirrored there.
+// (Global real-time leaderboard needs the Supabase project — see docs/UI-UX.md §4.)
+
+const KEYS = {
+  player: 'sd.player.v1',
+  leaderboard: 'sd.leaderboard.v1',
+};
+
+function read(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+function write(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* ignore */ }
+}
+
+// ---------- Player profile ----------
+export function loadPlayer() {
+  return read(KEYS.player, {
+    name: '',
+    createdAt: null,
+    streak: 0,
+    lastChargeDay: null,
+    oilVials: 0,
+    totalDays: 0,
+    totalAnswered: 0,
+    totalCorrect: 0,
+    fails: 0,
+    bestTimeMs: null,
+    bestStreak: 0,
+    entryTier: 1,
+    weakSubjects: [],
+    seenIds: [],
+    lifetimeChapters: {}, // "book ch" -> {asked, correct}
+    lifetimeBooks: {},
+    lifetimeSubjects: {},
+  });
+}
+export function savePlayer(p) { write(KEYS.player, p); }
+
+// ---------- Leaderboard (local; Supabase-mirrored later) ----------
+export function loadLeaderboard() {
+  return read(KEYS.leaderboard, []);
+}
+function saveLeaderboard(rows) { write(KEYS.leaderboard, rows); }
+
+// Record a completed charge into profile + leaderboard.
+export function recordCharge(player, session) {
+  const p = { ...player };
+  const correct = session.questions.filter((q) => q._correct).length;
+  p.totalAnswered = (p.totalAnswered || 0) + session.questions.length;
+  p.totalCorrect = (p.totalCorrect || 0) + correct;
+  p.fails = (p.fails || 0) + (session.questions.length - correct);
+  if (session.bestTimeMs != null) {
+    p.bestTimeMs = p.bestTimeMs == null ? session.bestTimeMs : Math.min(p.bestTimeMs, session.bestTimeMs);
+  }
+  p.oilVials = (p.oilVials || 0) + (session.oilVialsEarned || 0);
+  // Adaptive: advance entryTier when strong; learn weak subjects.
+  const acc = p.totalAnswered ? p.totalCorrect / p.totalAnswered : 0;
+  if (acc >= 0.8 && p.entryTier < 7) p.entryTier += 1;
+  const weak = session.questions.filter((q) => !q._correct).map((q) => q.subject);
+  if (weak.length) {
+    const ws = new Set(p.weakSubjects || []);
+    weak.forEach((w) => ws.add(w));
+    p.weakSubjects = [...ws].slice(0, 12); // unwieldy if unbounded
+  } else if (p.weakSubjects?.length) {
+    p.weakSubjects = p.weakSubjects.filter((s) => !session.questions.some((q) => q.subject === s && !q._correct));
+  }
+  // Lifetime chapter/book/subject stats
+  const bump = (obj, key, correctFlag) => {
+    obj[key] = obj[key] || { asked: 0, correct: 0 };
+    obj[key].asked++;
+    if (correctFlag) obj[key].correct++;
+  };
+  for (const q of session.questions) {
+    bump(p.lifetimeChapters, `${q.book} ${q.chapter}`, q._correct);
+    bump(p.lifetimeBooks, q.book, q._correct);
+    bump(p.lifetimeSubjects, q.subject, q._correct);
+  }
+  // seen ids (bounded)
+  p.seenIds = [...new Set([...(p.seenIds || []), ...session.questions.map((q) => q.id)])].slice(-50);
+
+  savePlayer(p);
+  return p;
+}
+
+// Add/update the current player's row on the leaderboard, then sort.
+export function updateLeaderboard(player, session) {
+  const rows = loadLeaderboard().filter((r) => r.name !== player.name);
+  const acc = player.totalAnswered ? player.totalCorrect / player.totalAnswered : 0;
+  rows.push({
+    name: player.name,
+    streak: player.streak,
+    fails: player.fails,
+    acc,
+    totalCorrect: player.totalCorrect,
+    totalAnswered: player.totalAnswered,
+    bestTimeMs: player.bestTimeMs,
+    score: acc * 1000 + (player.streak || 0) * 50 - (player.fails || 0) * 5,
+    updatedAt: Date.now(),
+  });
+  const sorted = rows
+    .sort((a, b) => (b.score - a.score) || (a.fails - b.fails))
+    .slice(0, 50);
+  saveLeaderboard(sorted);
+  return sorted;
+}
+
+// Supabase-ready mirror. Import `@supabase/supabase-js` and set config to enable.
+// Until then, leaderboard stays local (works fully offline).
+export async function syncLeaderboardToSupabase(entry) {
+  // const sb = window.__SD_SUPABASE__; // set by supabase.js when configured
+  // if (sb) return sb.from('leaderboard').upsert(entry);
+  return Promise.resolve({ local: true }); // no-op until Supabase configured
+}
+
+export function playerRank(rows, name) {
+  const idx = rows.findIndex((r) => r.name === name);
+  return idx === -1 ? null : idx + 1;
+}
+
+// ---------- Account management ----------
+// Sign out: keep the local history but clear the active name so the start screen asks again.
+export function signOutPlayer(fromProfile) {
+  write(KEYS.player, { ...loadPlayer(), name: '' });
+  return loadPlayer();
+}
+
+// Delete account: wipe the player's profile AND remove their row(s) from the local leaderboard.
+export function deletePlayer(name) {
+  localStorage.removeItem(KEYS.player);
+  const rows = loadLeaderboard().filter((r) => r.name !== name);
+  saveLeaderboard(rows);
+  return null;
+}
+
+// Remove a specific named player's row(s) from the leaderboard.
+export function removeLeaderboardRows(name) {
+  const rows = loadLeaderboard().filter((r) => r.name !== name);
+  saveLeaderboard(rows);
+  return rows;
+}

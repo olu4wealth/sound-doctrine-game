@@ -1,0 +1,505 @@
+[
+  {
+    "id": "t3-1ti-4-12",
+    "book": "1 Timothy",
+    "chapter": 4,
+    "subject": "example",
+    "tier": 3,
+    "type": "reference",
+    "prompt": "\u201CBe thou an example of the believers, in word, in conversation, in charity, in spirit, in faith, in purity\u201D \u2014 where is this written?",
+    "options": [
+      "1 Timothy 4:12",
+      "2 Timothy 1:13",
+      "1 Timothy 6:11",
+      "Titus 2:7"
+    ],
+    "correctIndex": 0,
+    "passage": "1 Timothy 4:12",
+    "verseText": "Let no man despise thy youth; but be thou an example of the believers, in word, in conversation, in charity, in spirit, in faith, in purity."
+  },
+  {
+    "id": "t3-1ti-6-10",
+    "book": "1 Timothy",
+    "chapter": 6,
+    "subject": "money",
+    "tier": 3,
+    "type": "reference",
+    "prompt": "\u201CFor the love of money is the root of all evil\u201D \u2014 where is this written?",
+    "options": [
+      "1 Timothy 6:10",
+      "1 Timothy 6:6",
+      "Titus 3:8",
+      "2 Timothy 3:2"
+    ],
+    "correctIndex": 0,
+    "passage": "1 Timothy 6:10",
+    "verseText": "For the love of money is the root of all evil: which while some coveted after, they have erred from the faith, and pierced themselves through with many sorrows."
+  },
+  {
+    "id": "t3-2ti-2-15",
+    "book": "2 Timothy",
+    "chapter": 2,
+    "subject": "study",
+    "tier": 3,
+    "type": "reference",
+    "prompt": "\u201CStudy to shew thyself approved unto God\u201D \u2014 where is this written?",
+    "options": [
+      "2 Timothy 2:15",
+      "2 Timothy 2:19",
+      "1 Timothy 4:13",
+      "Titus 1:9"
+    ],
+    "correctIndex": 0,
+    "passage": "2 Timothy 2:15",
+    "verseText": "Study to shew thyself approved unto God, a workman that needeth not to be ashamed, rightly dividing the word of truth."
+  },
+  {
+    "id": "t3-tit-1-12",
+    "book": "Titus",
+    "chapter": 1,
+    "subject": "cretian proverb",
+    "tier": 3,
+    "type": "reference",
+    "prompt": "\u201CThe Cretians are alway liars, evil beasts, slow bellies\u201D \u2014 from which chapter of Titus?",
+    "options": [
+      "Titus 1",
+      "Titus 2",
+      "Titus 3",
+      "It is not in Titus"
+    ],
+    "correctIndex": 0,
+    "passage": "Titus 1:12",
+    "verseText": "One of themselves, even a prophet of their own, said, The Cretians are alway liars, evil beasts, slow bellies."
+  },
+  {
+    "id": "t3-1ti-6-12",
+    "book": "1 Timothy",
+    "chapter": 6,
+    "subject": "good fight",
+    "tier": 3,
+    "type": "reference",
+    "prompt": "\u201CFight the good fight of faith, lay hold on eternal life\u201D \u2014 where is this written?",
+    "options": [
+      "1 Timothy 6:12",
+      "2 Timothy 4:7",
+      "1 Timothy 1:18",
+      "Titus 3:8"
+    ],
+    "correctIndex": 0,
+    "passage": "1 Timothy 6:12",
+    "verseText": "Fight the good fight of faith, lay hold on eternal life, whereunto thou art also called, and hast professed a good profession before many witnesses."
+  },
+  {
+    "id": "t3-2ti-4-22",
+    "book": "2 Timothy",
+    "chapter": 4,
+    "subject": "closings",
+    "tier": 3,
+    "type": "reference",
+    "prompt": "\u201CThe Lord Jesus Christ be with thy spirit. Grace be with you. Amen.\u201D closes which book?",
+    "options": [
+      "2 Timothy",
+      "1 Timothy",
+      "Titus",
+      "None of these books"
+    ],
+    "correctIndex": 0,
+    "passage": "2 Timothy 4:22",
+    "verseText": "The Lord Jesus Christ be with thy spirit. Grace be with you. Amen."
+  },
+  {
+    "id": "t3-2ti-3-16",
+    "book": "2 Timothy",
+    "chapter": 3,
+    "subject": "scripture",
+    "tier": 3,
+    "type": "reference",
+    "prompt": "\u201CAll scripture is given by inspiration of God\u201D \u2014 where is this written?",
+    "options": [
+      "2 Timothy 3:16",
+      "2 Timothy 3:15",
+      "1 Timothy 4:13",
+      "Titus 1:9"
+    ],
+    "correctIndex": 0,
+    "passage": "2 Timothy 3:16",
+    "verseText": "All scripture is given by inspiration of God, and is profitable for doctrine, for reproof, for correction, for instruction in righteousness:"
+  },
+  {
+    "id": "t3-1ti-3-16",
+    "book": "1 Timothy",
+    "chapter": 3,
+    "subject": "mystery of godliness",
+    "tier": 3,
+    "type": "reference",
+    "prompt": "\u201CAnd without controversy great is the mystery of godliness\u201D \u2014 where is this written?",
+    "options": [
+      "1 Timothy 3:16",
+      "1 Timothy 4:9",
+      "2 Timothy 1:13",
+      "Titus 2:13"
+    ],
+    "correctIndex": 0,
+    "passage": "1 Timothy 3:16",
+    "verseText": "And without controversy great is the mystery of godliness: God was manifest in the flesh, justified in the Spirit, seen of angels, preached unto the Gentiles, believed on in the world, received up into glory."
+  },
+  {
+    "id": "t4-2ti-2-6",
+    "book": "2 Timothy",
+    "chapter": 2,
+    "subject": "soldier metaphors",
+    "tier": 4,
+    "type": "discern",
+    "prompt": "Which of these KJV verses is the one that says \u201CThe husbandman that laboureth must be first partaker of the fruits\u201D?",
+    "options": [
+      "The husbandman that laboureth must be first partaker of the fruits.",
+      "No man that warreth entangleth himself with the affairs of this life.",
+      "And if a man also strive for masteries, yet is he not crowned, except he strive lawfully.",
+      "For the scripture saith, Thou shalt not muzzle the ox that treadeth out the corn."
+    ],
+    "correctIndex": 0,
+    "nearIndexes": [2],
+    "passage": "2 Timothy 2:6",
+    "verseText": "The husbandman that laboureth must be first partaker of the fruits."
+  },
+  {
+    "id": "t4-tit-1-9",
+    "book": "Titus",
+    "chapter": 1,
+    "subject": "elders",
+    "tier": 4,
+    "type": "discern",
+    "prompt": "\u201CHolding fast the faithful word\u201D is the exact wording of which verse?",
+    "options": [
+      "Titus 1:9",
+      "1 Timothy 3:9",
+      "2 Timothy 1:13",
+      "1 Timothy 4:6"
+    ],
+    "correctIndex": 0,
+    "nearIndexes": [2],
+    "passage": "Titus 1:9",
+    "verseText": "Holding fast the faithful word as he hath been taught, that he may be able by sound doctrine both to exhort and to convince the gainsayers."
+  },
+  {
+    "id": "t4-1ti-4-8",
+    "book": "1 Timothy",
+    "chapter": 4,
+    "subject": "godliness",
+    "tier": 4,
+    "type": "discern",
+    "prompt": "Which is the exact KJV wording of 1 Timothy 4:8?",
+    "options": [
+      "For bodily exercise profiteth little: but godliness is profitable unto all things, having promise of the life that now is, and of that which is to come.",
+      "But godliness with contentment is great gain.",
+      "If a man therefore purge himself from these, he shall be a vessel unto honour.",
+      "These things are good and profitable unto men."
+    ],
+    "correctIndex": 0,
+    "nearIndexes": [1],
+    "passage": "1 Timothy 4:8",
+    "verseText": "For bodily exercise profiteth little: but godliness is profitable unto all things, having promise of the life that now is, and of that which is to come."
+  },
+  {
+    "id": "t4-tit-2-15",
+    "book": "Titus",
+    "chapter": 2,
+    "subject": "authority",
+    "tier": 4,
+    "type": "discern",
+    "prompt": "\u201CLet no man despise thee\u201D (without \u201Cthy youth\u201D coming right after it) appears in which verse?",
+    "options": [
+      "Titus 2:15",
+      "1 Timothy 4:12",
+      "1 Timothy 5:20",
+      "2 Timothy 4:2"
+    ],
+    "correctIndex": 0,
+    "nearIndexes": [1],
+    "passage": "Titus 2:15",
+    "verseText": "These things speak, and exhort, and rebuke with all authority. Let no man despise thee."
+  },
+  {
+    "id": "t4-tit-1-13",
+    "book": "Titus",
+    "chapter": 1,
+    "subject": "sound in faith",
+    "tier": 4,
+    "type": "discern",
+    "prompt": "Which verse contains the exact phrase \u201Csound in the faith\u201D (with \u201Cthe\u201D)?",
+    "options": [
+      "Titus 1:13",
+      "Titus 2:2",
+      "2 Timothy 1:13",
+      "2 Timothy 4:3"
+    ],
+    "correctIndex": 0,
+    "nearIndexes": [1],
+    "passage": "Titus 1:13",
+    "verseText": "This witness is true. Wherefore rebuke them sharply, that they may be sound in the faith;"
+  },
+  {
+    "id": "t4-1ti-3-6",
+    "book": "1 Timothy",
+    "chapter": 3,
+    "subject": "bishop qualifications",
+    "tier": 4,
+    "type": "discern",
+    "prompt": "What is the exact reason a bishop must not be \u201Ca novice\u201D?",
+    "options": [
+      "lest being lifted up with pride he fall into the condemnation of the devil",
+      "lest he come into reproach and the snare of the devil",
+      "lest he be not able to rule his own house",
+      "lest he be proud, knowing nothing"
+    ],
+    "correctIndex": 0,
+    "nearIndexes": [1],
+    "passage": "1 Timothy 3:6",
+    "verseText": "Not a novice, lest being lifted up with pride he fall into the condemnation of the devil."
+  },
+  {
+    "id": "t5-2ti-2-12",
+    "book": "2 Timothy",
+    "chapter": 2,
+    "subject": "faithful sayings",
+    "tier": 5,
+    "type": "sequence",
+    "prompt": "Which of these is the correct KJV word-order of 2 Timothy 2:12?",
+    "options": [
+      "If we suffer, we shall also reign with him: if we deny him, he also will deny us:",
+      "If we deny him, he also will deny us: if we suffer, we shall also reign with him:",
+      "If we suffer, we shall also reign with him: if we believe not, he also will deny us:",
+      "If we deny him, he also will deny us: if we suffer, we shall reign with him also:"
+    ],
+    "correctIndex": 0,
+    "passage": "2 Timothy 2:12",
+    "verseText": "If we suffer, we shall also reign with him: if we deny him, he also will deny us:"
+  },
+  {
+    "id": "t5-1ti-6-12-sequence",
+    "book": "1 Timothy",
+    "chapter": 6,
+    "subject": "good fight",
+    "tier": 5,
+    "type": "sequence",
+    "prompt": "Reconstruct 1 Timothy 6:12 in KJV order \u2014 which is correct?",
+    "options": [
+      "Fight the good fight of faith, lay hold on eternal life, whereunto thou art also called, and hast professed a good profession before many witnesses.",
+      "Lay hold on eternal life, fight the good fight of faith, whereunto thou art also called, and hast professed a good profession before many witnesses.",
+      "Fight the good fight of faith, keep the commandment without spot, and lay hold on eternal life, whereunto thou art called.",
+      "Lay hold on eternal life, and hast professed a good profession, fight the good fight of faith, before many witnesses."
+    ],
+    "correctIndex": 0,
+    "passage": "1 Timothy 6:12",
+    "verseText": "Fight the good fight of faith, lay hold on eternal life, whereunto thou art also called, and hast professed a good profession before many witnesses."
+  },
+  {
+    "id": "t5-tit-3-8-sequence",
+    "book": "Titus",
+    "chapter": 3,
+    "subject": "good works",
+    "tier": 5,
+    "type": "sequence",
+    "prompt": "Reconstruct Titus 3:8's KJV wording \u2014 which is correct?",
+    "options": [
+      "This is a faithful saying, and these things I will that thou affirm constantly, that they which have believed in God might be careful to maintain good works.",
+      "This is a faithful saying, that they which have believed in God might be careful to maintain good works, and these things I will that thou affirm constantly.",
+      "These things I will that thou affirm constantly, that they which are careful might maintain good works, for this is a faithful saying.",
+      "This is a true saying, and these things I will that thou affirm constantly, that they which believe might maintain good works."
+    ],
+    "correctIndex": 0,
+    "passage": "Titus 3:8",
+    "verseText": "This is a faithful saying, and these things I will that thou affirm constantly, that they which have believed in God might be careful to maintain good works. These things are good and profitable unto men."
+  },
+  {
+    "id": "t6-2ti-4-7-fought",
+    "book": "2 Timothy",
+    "chapter": 4,
+    "subject": "good fight",
+    "tier": 6,
+    "type": "crossref",
+    "prompt": "\u201CFight the good fight of faith\u201D (1 Tim 6:12) and \u201CI have fought a good fight\u201D (the other pastoral epistle) \u2014 where is the second one?",
+    "options": [
+      "2 Timothy 4:7",
+      "2 Timothy 2:3",
+      "1 Timothy 1:18",
+      "2 Timothy 4:6"
+    ],
+    "correctIndex": 0,
+    "passage": "2 Timothy 4:7",
+    "verseText": "I have fought a good fight, I have finished my course, I have kept the faith:",
+    "passageB": "1 Timothy 6:12",
+    "verseTextB": "Fight the good fight of faith, lay hold on eternal life, whereunto thou art also called, and hast professed a good profession before many witnesses."
+  },
+  {
+    "id": "t6-1ti-5-21-charge",
+    "book": "1 Timothy",
+    "chapter": 5,
+    "subject": "charge",
+    "tier": 6,
+    "type": "crossref",
+    "prompt": "\u201CI charge thee therefore before God\u201D (2 Tim 4:1) has a sister charge in 1 Timothy: \u201CI charge thee before God, and the Lord Jesus Christ, and the elect angels\u2026\u201D \u2014 which verse?",
+    "options": [
+      "1 Timothy 5:21",
+      "1 Timothy 1:18",
+      "1 Timothy 6:13",
+      "Titus 1:5"
+    ],
+    "correctIndex": 0,
+    "passage": "1 Timothy 5:21",
+    "verseText": "I charge thee before God, and the Lord Jesus Christ, and the elect angels, that thou observe these things without preferring one before another, doing nothing by partiality.",
+    "passageB": "2 Timothy 4:1",
+    "verseTextB": "I charge thee therefore before God, and the Lord Jesus Christ, who shall judge the quick and the dead at his appearing and his kingdom;"
+  },
+  {
+    "id": "t6-faithful-saying-pairs",
+    "book": "2 Timothy",
+    "chapter": 2,
+    "subject": "faithful sayings",
+    "tier": 6,
+    "type": "crossref",
+    "prompt": "\u201CIt is a faithful saying\u201D (2 Tim 2:11) \u2014 which OTHER verse in these books also calls itself \u201Ca faithful saying\u201D?",
+    "options": [
+      "1 Timothy 4:9",
+      "1 Timothy 3:1",
+      "2 Timothy 2:13",
+      "1 Timothy 5:18"
+    ],
+    "correctIndex": 0,
+    "passage": "2 Timothy 2:11",
+    "verseText": "It is a faithful saying: For if we be dead with him, we shall also live with him:",
+    "passageB": "1 Timothy 4:9",
+    "verseTextB": "This is a faithful saying and worthy of all acceptation."
+  },
+  {
+    "id": "t6-fools-questions-pair",
+    "book": "Titus",
+    "chapter": 3,
+    "subject": "avoid",
+    "tier": 6,
+    "type": "crossref",
+    "prompt": "\u201CBut avoid foolish questions, and genealogies\u2026\u201D (Titus 3:9). The parallel instruction in 2 Timothy says: \u201CBut ______ and unlearned questions avoid\u2026\u201D What's the missing word?",
+    "options": [
+      "foolish",
+      "profane",
+      "vain",
+      "endless"
+    ],
+    "correctIndex": 0,
+    "passage": "2 Timothy 2:23",
+    "verseText": "But foolish and unlearned questions avoid, knowing that they do gender strifes.",
+    "passageB": "Titus 3:9",
+    "verseTextB": "But avoid foolish questions, and genealogies, and contentions, and strivings about the law; for they are unprofitable and vain."
+  },
+  {
+    "id": "t6-2ti-1-13-hold",
+    "book": "2 Timothy",
+    "chapter": 1,
+    "subject": "sound doctrine",
+    "tier": 6,
+    "type": "crossref",
+    "prompt": "\u201CHold fast the form of sound words\u201D (2 Tim 1:13) pairs with \u201Cholding fast the faithful word\u201D in Titus \u2014 for what purpose?",
+    "options": [
+      "that he may be able by sound doctrine both to exhort and to convince the gainsayers",
+      "that he may be sound in the faith, sober, grave, temperate",
+      "that he may be proud, knowing nothing, doting about questions",
+      "that he may be a vessel unto honour, prepared unto every good work"
+    ],
+    "correctIndex": 0,
+    "passage": "Titus 1:9",
+    "verseText": "Holding fast the faithful word as he hath been taught, that he may be able by sound doctrine both to exhort and to convince the gainsayers.",
+    "passageB": "2 Timothy 1:13",
+    "verseTextB": "Hold fast the form of sound words, which thou hast heard of me, in faith and love which is in Christ Jesus."
+  },
+  {
+    "id": "t7-sound-doctrine-three",
+    "book": "1 Timothy",
+    "chapter": 1,
+    "subject": "sound doctrine",
+    "tier": 7,
+    "type": "synthesis",
+    "prompt": "Synthesis: 1 Timothy 1:10 says error is \u201Ccontrary to sound doctrine\u201D; Titus 1:9 says a bishop must be able to teach \u201Cby sound doctrine\u201D; 2 Timothy 4:3 warns that people \u201Cwill not endure sound doctrine.\u201D Which exact two-word phrase do all three verses share?",
+    "options": [
+      "sound doctrine",
+      "good doctrine",
+      "sound words",
+      "the truth"
+    ],
+    "correctIndex": 0,
+    "passage": "2 Timothy 4:3",
+    "verseText": "For the time will come when they will not endure sound doctrine; but after their own lusts shall they heap to themselves teachers, having itching ears;",
+    "verses": [
+      { "passage": "1 Timothy 1:10", "verseText": "For whoremongers, for them that defile themselves with mankind, for menstealers, for liars, for perjured persons, and if there be any other thing that is contrary to sound doctrine;" },
+      { "passage": "Titus 1:9", "verseText": "Holding fast the faithful word as he hath been taught, that he may be able by sound doctrine both to exhort and to convince the gainsayers." },
+      { "passage": "2 Timothy 4:3", "verseText": "For the time will come when they will not endure sound doctrine; but after their own lusts shall they heap to themselves teachers, having itching ears;" }
+    ]
+  },
+  {
+    "id": "t7-deposit-keep",
+    "book": "2 Timothy",
+    "chapter": 1,
+    "subject": "charge",
+    "tier": 7,
+    "type": "synthesis",
+    "prompt": "Synthesis: In 1 Timothy 6:20 Paul says \u201Ckeep that which is committed to thy trust\u201D; in 2 Timothy 1:14 he says \u201Cthat good thing which was committed unto thee keep.\u201D What single verb do both verses use for guarding the deposit?",
+    "options": [
+      "keep",
+      "hold",
+      "guard",
+      "flee"
+    ],
+    "correctIndex": 0,
+    "passage": "2 Timothy 1:14",
+    "verseText": "That good thing which was committed unto thee keep by the Holy Ghost which dwelleth in us.",
+    "verses": [
+      { "passage": "1 Timothy 6:20", "verseText": "O Timothy, keep that which is committed to thy trust, avoiding profane and vain babblings, and oppositions of science falsely so called:" },
+      { "passage": "2 Timothy 1:14", "verseText": "That good thing which was committed unto thee keep by the Holy Ghost which dwelleth in us." }
+    ]
+  },
+  {
+    "id": "t7-good-works-three",
+    "book": "Titus",
+    "chapter": 3,
+    "subject": "good works",
+    "tier": 7,
+    "type": "synthesis",
+    "prompt": "Synthesis: 1 Timothy 5:10 speaks of those \u201Cdiligently\u201D following \u201Cevery good work\u201D; 2 Timothy 3:17 says the man of God is \u201Cthroughly furnished unto all good works\u201D; Titus 3:8 urges believers to \u201Cmaintain good works.\u201D What theme do all three tie to?",
+    "options": [
+      "good works",
+      "sound doctrine",
+      "faithful sayings",
+      "the laying on of hands"
+    ],
+    "correctIndex": 0,
+    "passage": "Titus 3:8",
+    "verseText": "This is a faithful saying, and these things I will that thou affirm constantly, that they which have believed in God might be careful to maintain good works. These things are good and profitable unto men.",
+    "verses": [
+      { "passage": "1 Timothy 5:10", "verseText": "Well reported of for good works; if she have brought up children, if she have lodged strangers, if she have washed the saints' feet, if she have relieved the afflicted, if she have diligently followed every good work." },
+      { "passage": "2 Timothy 3:17", "verseText": "That the man of God may be perfect, throughly furnished unto all good works." },
+      { "passage": "Titus 3:8", "verseText": "This is a faithful saying, and these things I will that thou affirm constantly, that they which have believed in God might be careful to maintain good works. These things are good and profitable unto men." }
+    ]
+  },
+  {
+    "id": "t7-heretick-admonition",
+    "book": "Titus",
+    "chapter": 3,
+    "subject": "hereticks",
+    "tier": 7,
+    "type": "synthesis",
+    "prompt": "Synthesis: 1 Timothy 1:19-20 names two men \u201Cdelivered unto Satan, that they may learn not to blaspheme\u201D; 2 Timothy 2:17-18 says two men erred \u201Csaying that the resurrection is past already\u201D; Titus 3:10 tells us to reject a heretic after how many admonitions?",
+    "options": [
+      "the first and second",
+      "the second and third",
+      "the third",
+      "the first only"
+    ],
+    "correctIndex": 0,
+    "passage": "Titus 3:10",
+    "verseText": "A man that is an heretick after the first and second admonition reject;",
+    "verses": [
+      { "passage": "1 Timothy 1:19-20", "verseText": "Holding faith, and a good conscience; which some having put away concerning faith have made shipwreck: Of whom is Hymenaeus and Alexander; whom I have delivered unto Satan, that they may learn not to blaspheme." },
+      { "passage": "2 Timothy 2:17-18", "verseText": "And their word will eat as doth a canker: of whom is Hymenaeus and Philetus; Who concerning the truth have erred, saying that the resurrection is past already; and overthrow the faith of some." },
+      { "passage": "Titus 3:10", "verseText": "A man that is an heretick after the first and second admonition reject;" }
+    ]
+  }
+]
