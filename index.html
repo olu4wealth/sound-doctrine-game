@@ -115,10 +115,17 @@
         <div class="streak-combo hidden" id="streak-combo">🔥 ×2</div>
       </div>
 
-      <!-- Peripheral mascot: reacts briefly on feedback, never blocks the question -->
-      <div class="mascot" id="mascot" aria-hidden="true">
-        <img id="mascot-img" alt="" />
-        <span id="mascot-name"></span>
+      <!-- Both mascots present the question; the one matching the book is highlighted.
+           They react (happy/sad) after you press Continue. -->
+      <div class="mascot-stage" id="mascot-stage" aria-hidden="true">
+        <div class="mascot" id="mascot-timothy">
+          <img src="assets/mascot-timothy-idle.gif" alt="" />
+          <span>Timothy</span>
+        </div>
+        <div class="mascot" id="mascot-titus">
+          <img src="assets/mascot-titus-idle.gif" alt="" />
+          <span>Titus</span>
+        </div>
       </div>
 
       <!-- Oil-vial power-ups: spend an oil vial to skip, get 50/50, or freeze the timer -->

@@ -232,40 +232,55 @@ function updateFlame(frac) {
 // corner at low emphasis and only reacts briefly on the feedback beat, so it
 // never distracts while you're actually answering. Animated: a GIF per mood.
 const MASCOTS = {
-  '1 Timothy': { name: 'Timothy', base: 'assets/mascot-timothy' },
-  '2 Timothy': { name: 'Timothy', base: 'assets/mascot-timothy' }, // Paul wrote both to Timothy
-  'Titus': { name: 'Titus', base: 'assets/mascot-titus' },
+  '1 Timothy': { name: 'Timothy', base: 'assets/mascot-timothy', id: 'mascot-timothy' },
+  '2 Timothy': { name: 'Timothy', base: 'assets/mascot-timothy', id: 'mascot-timothy' }, // Paul wrote both to Timothy
+  'Titus': { name: 'Titus', base: 'assets/mascot-titus', id: 'mascot-titus' },
 };
-let currentMascot = null;
+// The "host" mascot for the current book (the one that "brought" the question).
+let hostMascot = null;
 
+// Both mascots are present while you answer; the one matching the question's
+// book steps forward (highlighted) so it reads as "this mascot brought it."
 function setMascot(book) {
   const m = MASCOTS[book] || MASCOTS['1 Timothy'];
-  currentMascot = m;
-  const mi = el('mascot-img');
-  const mn = el('mascot-name');
-  if (mi) mi.src = `${m.base}-idle.gif`; // default idle state
-  if (mn) mn.textContent = m.name || '';
-  const box = el('mascot');
-  if (box) box.classList.remove('mascot-happy', 'mascot-sad');
+  hostMascot = m;
+  // Reset the NEW host to idle (any ongoing reaction on the previous host
+  // finishes on its own — we don't wipe both on every question).
+  ['mascot-timothy', 'mascot-titus'].forEach((id) => {
+    const box = el(id);
+    if (!box) return;
+    box.classList.remove('mascot-host');
+    if (box.id === m.id) {
+      const img = box.querySelector('img');
+      if (img) img.src = `${m.base}-idle.gif`;
+      box.classList.remove('mascot-happy', 'mascot-sad');
+    }
+  });
+  // Highlight the host mascot.
+  if (el(m.id)) el(m.id).classList.add('mascot-host');
 }
 
-// Swap to the matching mood GIF and restart the container animation.
+// React AFTER the Continue press: host mascot goes happy (correct) / sad (wrong),
+// while the companion stays idle and calm. Both then settle to idle.
 function reactMascot(kind) {
-  const box = el('mascot');
-  const mi = el('mascot-img');
-  if (!box || !currentMascot || !mi) return;
+  if (!hostMascot) return;
+  const reactingId = hostMascot.id; // snapshot the reacting mascot
+  const base = hostMascot.base;
+  const host = el(reactingId);
+  if (!host) return;
   const mood = (kind === 'correct' || kind === 'grace') ? 'happy' : 'sad';
-  mi.src = `${currentMascot.base}-${mood}.gif`;
-  box.classList.remove('mascot-happy', 'mascot-sad');
-  void box.offsetWidth; // reflow to restart CSS pop
-  if (mood === 'happy') box.classList.add('mascot-happy');
-  else box.classList.add('mascot-sad');
-  // After a beat, settle back to idle so it stays calm during the next question.
+  const img = host.querySelector('img');
+  img.src = `${base}-${mood}.gif`;
+  host.classList.remove('mascot-happy', 'mascot-sad');
+  void host.offsetWidth; // reflow to restart CSS pop
+  host.classList.add(mood === 'happy' ? 'mascot-happy' : 'mascot-sad');
+  // Settle the reacting mascot back to idle after a beat (uses the snapshot).
   setTimeout(() => {
-    const mi2 = el('mascot-img');
-    if (mi2) mi2.src = `${currentMascot.base}-idle.gif`;
-    box.classList.remove('mascot-happy', 'mascot-sad');
-  }, 1400);
+    const host2 = el(reactingId);
+    const img2 = host2?.querySelector('img');
+    if (img2) img2.src = `${base}-idle.gif`;
+    host2?.classList.remove('mascot-happy', 'mascot-sad');
+  }, 1800);
 }
 
 // Show/hide the streak-combo "🔥 ×N" badge based on the current consecutive-correct streak.
@@ -426,7 +441,10 @@ function showFeedbackModal(head, verse, ref, kind, isLast, correctText) {
   document.body.appendChild(backdrop);
   document.getElementById('feedback-modal-continue').onclick = () => {
     backdrop.remove();
-    btnNextGo();
+    reactMascot(kind === 'correct' || kind === 'grace' ? 'correct' : 'wrong');
+    // Let the mascot reaction play briefly before the next question renders,
+    // so the feedback beat is felt (and the correct-answer highlight is read).
+    setTimeout(() => btnNextGo(), 900);
   };
 }
 
@@ -574,9 +592,9 @@ function onAnswer(displayIdx) {
   updateStreakCombo();
 
   // Flame flares brighter on a correct answer, then settles back.
-  if (isCorrect) { pulseFlameBright(); sfx.correct(); burstSparkles(8); reactMascot('correct'); }
-  else if (isGrace) { sfx.grace(); reactMascot('grace'); }
-  else { sfx.wrong(); reactMascot('wrong'); }
+  if (isCorrect) { pulseFlameBright(); sfx.correct(); burstSparkles(8); }
+  else if (isGrace) { sfx.grace(); }
+  else { sfx.wrong(); }
 
   // Reward for getting far: milestone bonuses as the climb ramps up.
   const milestone = checkMilestoneReward();
@@ -639,7 +657,6 @@ function onAnswer(displayIdx) {
 // Timeout = wrong (records fail, shows the verse correction, no bonus time).
 function onTimeout() {
   sfx.timeout();
-  reactMascot('wrong');
   const q = currentQ;
   const qWrap = el('q-options');
   q._correct = false;

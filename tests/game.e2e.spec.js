@@ -125,6 +125,8 @@ test.describe('daily office + report + leaderboard', () => {
       await opt.click();
       const cont = page.getByRole('button', { name: /continue|see the report/i });
       if (await cont.count()) await cont.click();
+      // Let the reaction beat + next question render (there's a short delay on Continue).
+      await page.waitForTimeout(1100);
       // If the report appeared early, stop the loop
       if (await page.locator('#screen-report').isVisible().catch(() => false)) break;
     }
@@ -147,6 +149,7 @@ test.describe('daily office + report + leaderboard', () => {
       await opt.click();
       const cont = page.getByRole('button', { name: /continue|see the report/i });
       if (await cont.count()) await cont.click();
+      await page.waitForTimeout(1100); // reaction beat + next question render
       if (await page.locator('#screen-report').isVisible().catch(() => false)) break;
     }
     // Go home then leaderboard
