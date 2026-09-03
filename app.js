@@ -53,12 +53,19 @@ function rankOf(pts) {
 
 // ---------- Load ----------
 async function loadBank() {
-  const [a, b, c] = await Promise.all([
-    fetch('data/questions.json').then((r) => r.json()),
-    fetch('data/questions-t47.json').then((r) => r.json()),
-    fetch('data/questions-new.json').then((r) => r.json()),
-  ]);
-  bank = [...a, ...b, ...c];
+  // D2: single canonical file; fallback to legacy 3-file merge during migration
+  try {
+    const r = await fetch('data/questions-merged.json');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    bank = await r.json();
+  } catch {
+    const [a, b, c] = await Promise.all([
+      fetch('data/questions.json').then((r) => r.json()),
+      fetch('data/questions-t47.json').then((r) => r.json()),
+      fetch('data/questions-new.json').then((r) => r.json()),
+    ]);
+    bank = [...a, ...b, ...c];
+  }
   bank.forEach((q) => { q.tier = tierOf(q); });
 }
 
