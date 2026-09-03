@@ -115,6 +115,21 @@ function renderCandle() {
   el('candle-stage').dataset.state = state;
   el('candle-img').src = CANDLE_IMGS[state];
   el('candle-caption').textContent = CANDLE_CAPTIONS[state];
+  renderLadder();
+}
+
+function renderLadder() {
+  const wrap = el('ladder-rungs');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const current = Math.min(7, Math.max(1, player.entryTier || 1));
+  for (let t = 7; t >= 1; t--) {
+    const row = document.createElement('div');
+    row.className = `ladder-rung${t === current ? ' you' : ''}${t < current ? ' passed' : ''}`;
+    row.dataset.tier = String(t);
+    row.innerHTML = `<span class="rung-dot" aria-hidden="true"></span><span class="rung-capsule">T${t} — ${TIER_NAMES[t]}</span>${t === current ? '<span class="rung-you">🔥YOU</span>' : ''}`;
+    wrap.appendChild(row);
+  }
 }
 
 // ---------- Session setup ----------
@@ -895,6 +910,7 @@ el('btn-lb-back').addEventListener('click', () => {
 });
 el('btn-climb').addEventListener('click', () => startClimb());
 el('btn-daily').addEventListener('click', () => startDaily());
+el('btn-office-start')?.addEventListener('click', () => startDaily());
 el('btn-daily-start').addEventListener('click', () => beginDailyList());
 el('btn-daily-back').addEventListener('click', () => showScreen('screen-home'));
 el('btn-next').addEventListener('click', btnNextGo);
