@@ -14,7 +14,6 @@ assets/candle-alpha.png
 assets/candle-states-alpha.png
 assets/rank-emblems-alpha.png
 assets/clay-decorations-alpha.png
-data/questions.prompt.md
 
 # Env
 .env
@@ -46,3 +45,7 @@ htmlcov/
 __pycache__/
 venv/
 .venv/
+
+# AI candidates (build-time, not shipped)
+data/questions-ai.json
+
