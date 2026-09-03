@@ -27,8 +27,8 @@ async function beginClimb(page) {
 }
 
 async function chooseBidAndAnswer(page, bidName, optionIndex) {
-  return page.getByRole('button', { name: new RegExp(bidName, 'i') }).click()
-    .then(() => page.locator('.option').nth(optionIndex).click());
+  // Bids removed: options are always shown; just click an option.
+  return page.locator('.option').nth(optionIndex).click();
 }
 
 test.describe('core player journey', () => {
@@ -63,10 +63,9 @@ test.describe('core player journey', () => {
 
   test('answering a question shows the verse correction and advances', async ({ page }) => {
     await beginClimb(page);
-    // options are hidden until a bid is chosen
-    await expect(page.locator('#q-options')).toBeHidden();
-    await page.getByRole('button', { name: /confident/i }).click();
+    // Bids removed: options are shown immediately.
     await expect(page.locator('#q-options')).toBeVisible();
+    await expect(page.locator('.option')).toHaveCount(4);
 
     // Click the first option regardless of correctness; feedback modal + verse must appear
     await page.locator('.option').nth(0).click();
@@ -81,7 +80,6 @@ test.describe('core player journey', () => {
 
   test('countdown ring actually ticks down', async ({ page }) => {
     await beginClimb(page);
-    await page.getByRole('button', { name: /confident/i }).click();
     const before = await page.locator('#ring-label').textContent();
     await page.waitForTimeout(1200);
     const after = await page.locator('#ring-label').textContent();

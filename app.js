@@ -2,7 +2,7 @@
 // Duolingo-style: countdown timer (bonus time on correct), kind hearts, color-coded
 // options, juicy micro-interactions. Content stays scripturally verified.
 import {
-  TIER_NAMES, TIER_EMOJI, BIDS, BASE_POINTS, MAX_STREAK, MAX_HEARTS,
+  TIER_NAMES, TIER_EMOJI, BASE_POINTS, MAX_STREAK, MAX_HEARTS,
   timeForTier, bonusTime,
   dailyCharge, dailySeed, resolveAnswer, tierOf,
   pickNextLadder, applyDailyVisit, buildChargeReport, compositeScore,
@@ -12,6 +12,7 @@ import {
   loadPlayer, savePlayer, recordCharge, updateLeaderboard,
   loadLeaderboard, syncLeaderboardToSupabase, signOutPlayer, deletePlayer,
 } from './storage.js';
+import { sfx } from './sound.js';
 
 const el = (id) => document.getElementById(id);
 
@@ -28,6 +29,7 @@ let dailyIdx = 0; // index into session._dailyList during a Daily Office
 let timeLeft = 0;
 let timeTotal = 0;
 let timeRunning = false;
+let frozenUntil = 0; // timestamp (ms) until which the timer is frozen (power-up)
 
 const RANKS = [
   { req: 0, name: 'Recruit' },
@@ -110,10 +112,10 @@ function renderCandle() {
 function resetSession() {
   // A new game always starts afresh: full lives, empty session, cleared per-question state.
   setHearts(MAX_HEARTS);
-  session = { questions: [], pot: 0, elapsedMs: 0, daily: false, oilVialsEarned: 0, bestTimeMs: 0, runTiers: [], maxRunTier: 0 };
+  session = { questions: [], pot: 0, elapsedMs: 0, daily: false, oilVialsEarned: 0, bestTimeMs: 0, runTiers: [], maxRunTier: 0, streak: 0 };
   dailyIdx = 0;
   bank.forEach((q) => {
-    delete q._usedThisRun; delete q._outcome; delete q._correct; delete q._bid; delete q._displayOrder;
+    delete q._usedThisRun; delete q._outcome; delete q._correct; delete q._displayOrder;
   });
   savePlayer(player);
 }
@@ -167,6 +169,7 @@ function startCountdown(tier, idxInTier = 0) {
   timeRunning = true;
   renderTimerBar();
   timerInt = setInterval(() => {
+    if (Date.now() < frozenUntil) { renderTimerBar(); return; } // frozen — don't tick down
     timeLeft -= 0.1;
     if (timeLeft <= 0) {
       timeLeft = 0;
@@ -198,6 +201,10 @@ function renderTimerBar() {
   } else {
     ringEl.classList.remove('timer-shaking');
   }
+  // Danger-phase tick sound (once per second when time is critically low).
+  if (frac <= 0.2 && frac > 0 && Math.abs((timeLeft % 1)) < 0.1) {
+    sfx.tick();
+  }
   updateFlame(frac);
 }
 
@@ -212,6 +219,45 @@ function updateFlame(frac) {
   else flame.classList.remove('dim');
   // NOTE: 'bright' pulse is NOT cleared here — it times out in pulseFlameBright().
 }
+
+// Show/hide the streak-combo "🔥 ×N" badge based on the current consecutive-correct streak.
+function updateStreakCombo() {
+  const badge = el('streak-combo');
+  if (!badge) return;
+  const s = session.streak || 0;
+  if (s >= 2) {
+    badge.textContent = `🔥 ×${comboMultiplier(s).toFixed(1)}`;
+    badge.classList.remove('hidden');
+    badge.classList.toggle('hot', s >= 4);
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+// Sparkle burst: spawns a few CSS particles that fly outward and fade (dopamine on correct).
+function burstSparkles(count = 8, originX = 0.5, originY = 0.5) {
+  const host = document.createElement('div');
+  host.className = 'sparkle-host';
+  document.body.appendChild(host);
+  const colors = ['#f3b431', '#58cc02', '#38b6ff', '#fb7185', '#fff3d6'];
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('span');
+    p.className = 'sparkle-p';
+    p.textContent = ['✦', '✧', '❋', '⋆'][i % 4];
+    const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.6;
+    const dist = 50 + Math.random() * 70;
+    const tx = Math.cos(angle) * dist;
+    const ty = Math.sin(angle) * dist - 20;
+    p.style.setProperty('--tx', tx + 'px');
+    p.style.setProperty('--ty', ty + 'px');
+    p.style.setProperty('--c', colors[i % colors.length]);
+    p.style.left = (originX * 100) + '%';
+    p.style.top = (originY * 100) + '%';
+    host.appendChild(p);
+    setTimeout(() => p.remove(), 700);
+  }
+  setTimeout(() => host.remove(), 700);
+}
 function fmtTime(s) {
   const m = Math.floor(s / 60), sec = s % 60;
   return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
@@ -219,6 +265,7 @@ function fmtTime(s) {
 
 // ---------- Question rendering ----------
 function renderQuestion(q) {
+  frozenUntil = 0; // reset any freeze power-up for the next question
   el('q-book').textContent = q.book;
   el('q-subject').textContent = q.subject;
   el('q-type').textContent = `${TIER_EMOJI[q.tier]} T${q.tier} · ${TIER_NAMES[q.tier]}`;
@@ -238,15 +285,8 @@ function renderQuestion(q) {
     wrap.appendChild(btn);
   });
 
-  // Ladder: options hidden until a confidence bid is chosen.
-  // Daily Office: no bids — options are shown immediately.
-  el('bid-row').classList.toggle('hidden', mode === 'daily');
-  if (mode === 'daily') {
-    q._bid = BIDS[0]; // default confident for the office
-    el('q-options').classList.remove('hidden');
-  } else {
-    el('q-options').classList.add('hidden');
-  }
+  // Confidence bids removed: options are always shown immediately.
+  el('q-options').classList.remove('hidden');
   el('feedback').classList.add('hidden');
   el('feedback').classList.remove('correct', 'wrong', 'grace');
   updateProgress();
@@ -255,6 +295,7 @@ function renderQuestion(q) {
   // Timer scales with the effective (ramped) run tier, so harder progress = less time.
   const runTier = q._runTier || q.tier;
   startCountdown(runTier, (session?.questions?.length || 0));
+  renderPowerups();
 }
 
 function updateProgress() {
@@ -345,16 +386,90 @@ function checkMilestoneReward() {
   return null;
 }
 
-// Flame flares bright briefly on a correct answer, then returns to normal.
+// Streak-fire combo multiplier: consecutive correct answers grow the flame's reward.
+// 1 correct = ×1, 2 = ×1.2, 3 = ×1.4, 4+ = ×1.6 (capped).
+function comboMultiplier(streak) {
+  if (streak <= 1) return 1;
+  if (streak === 2) return 1.2;
+  if (streak === 3) return 1.4;
+  return 1.6;
+}
+
+// Flame flares bright briefly on a correct answer; the flare grows with the streak combo.
 function pulseFlameBright() {
   const flame = el('flame');
   if (!flame) return;
+  const streak = session.streak || 1;
+  const scale = 1.15 + Math.min(0.5, (streak - 1) * 0.12); // higher streak = bigger flare
   flame.classList.add('bright');
+  flame.style.setProperty('--flare-scale', String(scale));
   setTimeout(() => {
-    // The next renderTimerBar tick will drop 'bright' and re-apply 'dim' if needed.
     const meter = el('flame-meter');
     if (meter) meter.style.setProperty('--flame-intensity', '1');
+    flame.style.removeProperty('--flare-scale');
+    flame.classList.remove('bright');
   }, 450);
+}
+
+// ---------- Oil-vial power-ups ----------
+function oilCount() { return player.oilVials || 0; }
+function setOil(n) { player.oilVials = Math.max(0, n); }
+
+// Spend one oil vial; returns true if enough oil was available.
+function spendOil() {
+  if (oilCount() < 1) return false;
+  setOil(oilCount() - 1);
+  savePlayer(player);
+  return true;
+}
+
+// Refresh the power-up buttons' enabled/disabled state.
+function renderPowerups() {
+  const n = oilCount();
+  document.querySelectorAll('.powerup').forEach((b) => {
+    b.disabled = n < 1 || !timeRunning; // need oil and a live question to spend it
+  });
+}
+
+function usePowerup(type) {
+  if (!timeRunning || !currentQ) return; // only during a live question
+  if (!spendOil()) {
+    // No oil — flash the buttons to signal.
+    document.querySelectorAll('.powerup').forEach((b) => b.classList.add('no-oil'));
+    setTimeout(() => document.querySelectorAll('.powerup').forEach((b) => b.classList.remove('no-oil')), 500);
+    return;
+  }
+  if (type === 'skip') {
+    sfx.powerup(); burstSparkles(6, 0.5, 0.5);
+    stopTimer();
+    // Skip: mark skipped (no penalty), advance with a neutral outcome.
+    currentQ._outcome = 'skipped'; currentQ._correct = false;
+    session.questions.push(currentQ);
+    if (mode === 'daily') { dailyIdx++; renderDailyQuestion(); }
+    else if (session.questions.length >= 12) finishClimb();
+    else nextQuestion();
+    renderPowerups();
+    return;
+  }
+  if (type === '5050') {
+    sfx.powerup(); burstSparkles(6, 0.5, 0.5);
+    // Remove two incorrect options (never the correct one).
+    const wrap = el('q-options');
+    const btns = [...wrap.querySelectorAll('.option:not(:disabled)')];
+    const wrong = btns.map((b, i) => ({ b, oi: Number(b.dataset.display) }))
+      .filter((x) => x.oi !== currentQ.correctIndex);
+    for (const w of wrong.slice(-2)) w.b.style.visibility = 'hidden';
+    renderPowerups();
+    return;
+  }
+  if (type === 'freeze') {
+    sfx.powerup();
+    frozenUntil = Date.now() + 5000; // 5s freeze
+    el('flame-meter')?.classList.add('frozen');
+    setTimeout(() => el('flame-meter')?.classList.remove('frozen'), 5000);
+    renderPowerups();
+    return;
+  }
 }
 
 // ---------- Answering ----------
@@ -366,8 +481,7 @@ function onAnswer(displayIdx) {
   const buttons = qWrap.querySelectorAll('.option');
   const chosenOrig = q._displayOrder[displayIdx];
 
-  if (q._bid === undefined) q._bid = BIDS[0];
-  const res = resolveAnswer(q, chosenOrig, q._bid);
+  const res = resolveAnswer(q, chosenOrig);
   const isCorrect = res.outcome === 'correct';
   const isGrace = res.outcome === 'near-miss';
 
@@ -375,10 +489,31 @@ function onAnswer(displayIdx) {
   q._outcome = res.outcome;
   session.questions.push(q);
   session.elapsedMs = (session.elapsedMs || 0) + Math.round((timeTotal - timeLeft) * 1000);
-  if (isCorrect || isGrace) session.pot += res.pot;
+
+  // Streak-fire combo: consecutive correct answers build a growing flame-multiplier.
+  // Wrong/reset answers reset the streak (and the combo).
+  let comboLine = '';
+  if (isCorrect) {
+    session.streak = (session.streak || 0) + 1;
+    const mult = comboMultiplier(session.streak);
+    if (mult > 1) {
+      const bonus = Math.round(res.pot * (mult - 1));
+      session.pot += res.pot + bonus;
+      comboLine = ` · combo ×${mult}`;
+    } else {
+      session.pot += res.pot;
+    }
+  } else {
+    session.streak = 0;
+    if (isCorrect || isGrace) session.pot += res.pot; // grace keeps base but ends combo
+    else session.pot += res.pot;
+  }
+  updateStreakCombo();
 
   // Flame flares brighter on a correct answer, then settles back.
-  if (isCorrect) pulseFlameBright();
+  if (isCorrect) { pulseFlameBright(); sfx.correct(); burstSparkles(8); }
+  else if (isGrace) sfx.grace();
+  else sfx.wrong();
 
   // Reward for getting far: milestone bonuses as the climb ramps up.
   const milestone = checkMilestoneReward();
@@ -386,6 +521,8 @@ function onAnswer(displayIdx) {
   if (milestone && isCorrect) {
     session.pot += milestone.points;
     bonusLine = ` · ${milestone.label} +${milestone.points} ⚜`;
+    sfx.milestone();
+    burstSparkles(16, 0.5, 0.4); // bigger burst on a milestone
   }
 
   // Hearts: only lost on wrong/timeout. Correct and grace neither gain nor lose
@@ -407,13 +544,12 @@ function onAnswer(displayIdx) {
     if (Number(btn.dataset.display) === displayIdx && !isCorrect && !isGrace) btn.classList.add('wrong');
     if (Number(btn.dataset.display) === displayIdx && isGrace) btn.classList.add('grace');
   });
-  el('bid-row').classList.add('hidden');
 
   const gained = bonusTime(res.outcome);
   let head = '';
   let kind = 'correct';
   if (isCorrect) {
-    head = `Rightly divided! +${res.points} ⚜ · +${gained}s${bonusLine}`;
+    head = `Rightly divided! +${res.points} ⚜ · +${gained}s${comboLine}${bonusLine}`;
     kind = 'correct';
   } else if (isGrace) {
     head = `Grace — near to it. ${res.points} ⚜ kept · +${gained}s`;
@@ -438,6 +574,7 @@ function onAnswer(displayIdx) {
 
 // Timeout = wrong (records fail, shows the verse correction, no bonus time).
 function onTimeout() {
+  sfx.timeout();
   const q = currentQ;
   const qWrap = el('q-options');
   q._correct = false;
@@ -454,7 +591,6 @@ function onTimeout() {
     const oi = q._displayOrder[Number(btn.dataset.display)];
     if (oi === q.correctIndex) btn.classList.add('correct');
   });
-  el('bid-row').classList.add('hidden');
   el('feedback-head').textContent = 'The candle ran down. Scripture corrects us —';
   el('feedback').classList.add('wrong');
   el('feedback-verse').textContent = quotesOf(q);
@@ -636,6 +772,22 @@ function renderProfile() {
 el('btn-intro-begin').addEventListener('click', () => { showTutorial(); showScreen('screen-start'); });
 el('btn-intro-how').addEventListener('click', () => showScreen('screen-how'));
 
+// Sound on/off toggle (persists). Default: on.
+function applySoundIcon() {
+  const on = sfx.isEnabled();
+  const b = el('btn-sound');
+  if (b) b.textContent = on ? '🔊' : '🔇';
+}
+if (localStorage.getItem('sd_muted') === '1') sfx.setEnabled(false);
+applySoundIcon();
+el('btn-sound')?.addEventListener('click', () => {
+  const on = !sfx.isEnabled();
+  sfx.setEnabled(on);
+  localStorage.setItem('sd_muted', on ? '0' : '1');
+  applySoundIcon();
+  if (on) sfx.correct(); // confirm sound back on
+});
+
 el('btn-begin').addEventListener('click', () => {
   const name = el('input-name').value.trim();
   if (!name) { el('input-name').focus(); return; }
@@ -660,6 +812,11 @@ el('btn-daily').addEventListener('click', () => startDaily());
 el('btn-daily-start').addEventListener('click', () => beginDailyList());
 el('btn-daily-back').addEventListener('click', () => showScreen('screen-home'));
 el('btn-next').addEventListener('click', btnNextGo);
+
+// Oil-vial power-ups
+el('pu-skip').addEventListener('click', () => usePowerup('skip'));
+el('pu-5050').addEventListener('click', () => usePowerup('5050'));
+el('pu-freeze').addEventListener('click', () => usePowerup('freeze'));
 el('btn-again').addEventListener('click', startClimb);
 el('btn-home').addEventListener('click', () => { renderCandle(); showScreen('screen-home'); });
 el('btn-profile').addEventListener('click', () => { renderProfile(); showScreen('screen-profile'); });
@@ -685,19 +842,6 @@ el('btn-exit').addEventListener('click', () => {
   stopTimer();
   renderCandle();
   showScreen('screen-home');
-});
-
-// Bid selection
-document.querySelectorAll('.bid').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const id = btn.dataset.bid;
-    const bid = BIDS.find((b) => b.id === id);
-    if (!currentQ) return;
-    currentQ._bid = bid;
-    document.querySelectorAll('.bid').forEach((b) => b.classList.remove('active'));
-    btn.classList.add('active');
-    el('q-options').classList.remove('hidden');
-  });
 });
 
 // Daily share card

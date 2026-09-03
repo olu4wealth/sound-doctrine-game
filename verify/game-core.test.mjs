@@ -43,8 +43,8 @@ check('daily excludes T7', d1.every((q) => tierOf(q) <= 6));
 
 // 2. resolveAnswer
 const q = bank.find((x) => x.id === '1ti-1-15');
-check('resolve: correct with confident = base points', resolveAnswer(q, q.correctIndex, { id: 'confident', mult: 1 }).points === 100);
-check('resolve: correct with preach = 3×', resolveAnswer(q, q.correctIndex, { id: 'preach', mult: 3 }).points === 300);
+check('resolve: correct = base points (flat)', resolveAnswer(q, q.correctIndex, { id: 'confident', mult: 1 }).points === 100);
+check('resolve: correct with preach is still base (bids ignored)', resolveAnswer(q, q.correctIndex, { id: 'preach', mult: 3 }).points === 100);
 const wrongIdx = [0,1,2,3].find((i) => i !== q.correctIndex);
 check('resolve: clean wrong = 0 points', resolveAnswer(q, wrongIdx, { id: 'confident', mult: 1 }).points === 0);
 check('resolve: wrong outcome labeled', resolveAnswer(q, wrongIdx, { id: 'confident', mult: 1 }).outcome === 'wrong');
@@ -55,7 +55,7 @@ const optIdx = [0,1,2,3].find((i) => i !== q2.correctIndex && nearMiss(q2, i));
 check('near-miss found for 1ti-3-6 (close distractor)', optIdx !== undefined);
 if (optIdx !== undefined) {
   const r = resolveAnswer(q2, optIdx, { id: 'certain', mult: 2 });
-  check('near-miss resolves to grace + half points', r.outcome === 'near-miss' && r.points === 100);
+  check('near-miss resolves to grace + half base (flat)', r.outcome === 'near-miss' && r.points === 50);
 }
 
 // 3. pickNextLadder

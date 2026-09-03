@@ -99,10 +99,12 @@ export function nearMiss(q, chosenOrigIdx) {
 
 // Resolve an answer. chosenOrigIdx is the *original* option index the player picked
 // (i.e., after un-shuffling display order). Returns outcome, pot delta, points.
-export function resolveAnswer(q, chosenOrigIdx, bid = BIDS[0]) {
+// Scoring is flat (no confidence bid): correct = BASE_POINTS, grace = half.
+// The `bid` arg is accepted for backward-compat but ignored.
+export function resolveAnswer(q, chosenOrigIdx, bid) {
   const correct = chosenOrigIdx === q.correctIndex;
   const grace = !correct && nearMiss(q, chosenOrigIdx);
-  const mult = bid.id === 'preach' ? 3 : bid.id === 'certain' ? 2 : 1;
+  const mult = 1; // flat scoring — confidence bids removed
 
   let pot = 0;
   let points = 0;
@@ -110,7 +112,6 @@ export function resolveAnswer(q, chosenOrigIdx, bid = BIDS[0]) {
     points = BASE_POINTS * mult;
     pot = points;
   } else if (grace) {
-    // Grace: keep half the pot's promise (a floor of one base point so it feels kind)
     points = Math.round(BASE_POINTS * mult * 0.5);
     pot = points;
   }
