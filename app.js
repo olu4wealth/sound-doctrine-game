@@ -30,6 +30,7 @@ let timeLeft = 0;
 let timeTotal = 0;
 let timeRunning = false;
 let frozenUntil = 0; // timestamp (ms) until which the timer is frozen (power-up)
+let tutorialPaused = false; // while true, the countdown doesn't tick (during tutorial)
 
 const RANKS = [
   { req: 0, name: 'Recruit' },
@@ -173,6 +174,7 @@ function startCountdown(tier, idxInTier = 0) {
   timeRunning = true;
   renderTimerBar();
   timerInt = setInterval(() => {
+    if (tutorialPaused) { renderTimerBar(); return; } // tutorial active — don't tick down
     if (Date.now() < frozenUntil) { renderTimerBar(); return; } // frozen — don't tick down
     timeLeft -= 0.1;
     if (timeLeft <= 0) {
@@ -900,6 +902,7 @@ init();
 function showTutorial() {
   if (localStorage.getItem('sd_tutorial_done')) return;
   if (!currentQ) return; // require a live question to spotlight
+  tutorialPaused = true; // hold the countdown while the tutorial is visible
 
   const backdrop = document.createElement('div');
   backdrop.id = 'tutorial-backdrop';
@@ -994,6 +997,7 @@ function showTutorial() {
 
   function finish() {
     localStorage.setItem('sd_tutorial_done', '1');
+    tutorialPaused = false; // resume the countdown
     backdrop.remove();
   }
 

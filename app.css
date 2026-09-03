@@ -261,11 +261,18 @@ button:disabled { cursor: default; opacity: .55; }
 .hud-hearts { font-size: 1.15rem; letter-spacing: 2px; flex: 1; text-align: center; }
 .hud-progress { color: var(--ink-soft); font-weight: 900; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
 .hud-oil {
-  flex: 0 0 auto; font-weight: 900; color: var(--gold-deep);
-  background: #fff; border: 2px solid #ffe3ae; border-radius: 999px; padding: 4px 10px;
+  flex: 0 0 auto; font-weight: 900; color: #7a4b00;
+  background: linear-gradient(180deg, #fff8e8, #ffecc7);
+  border: 2px solid var(--gold-deep); border-radius: 999px; padding: 4px 12px;
   font-size: .95rem; white-space: nowrap;
+  box-shadow: 0 2px 0 #d9a53a, inset 0 0 8px rgba(243, 180, 49, .28);
+  letter-spacing: .3px;
 }
-.hud-oil.empty { color: var(--ink-soft); border-color: var(--line); opacity: .7; }
+.hud-oil.empty {
+  color: var(--ink-soft);
+  background: #f4f1ea; border: 2px dashed #c9c2b4; box-shadow: none;
+  opacity: .8;
+}
 .hud-timer.timer-ring { margin: 0; flex: 0 0 auto; width: 56px; height: 56px; }
 .hud-timer.timer-ring .ring { width: 56px; height: 56px; }
 .hud-timer.timer-ring .ring-label { font-size: 1.05rem; font-weight: 900; letter-spacing: -1px; line-height: 1; }
@@ -307,18 +314,23 @@ button:disabled { cursor: default; opacity: .55; }
 }
 .streak-combo.hot { color: var(--red); border-color: var(--red); animation: pop .25s ease; }
 
-/* Oil-vial power-ups */
+/* Oil-vial power-ups — warm amber "glass vial" look to match the theme */
 .powerups { display: flex; gap: 8px; justify-content: center; margin: 2px 0 12px; flex-wrap: wrap; }
 .powerup {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
-  background: #fff; border: 2px solid var(--line); border-radius: 14px;
-  padding: 8px 14px; font-size: .9rem; font-weight: 900; color: var(--ink);
+  background: linear-gradient(180deg, #fffdf6, #fff4dc);
+  border: 2px solid #e0a63a; border-radius: 14px;
+  padding: 8px 14px; font-size: .9rem; font-weight: 900; color: #5a3a00;
   cursor: pointer; margin-top: 0; width: auto;
-  box-shadow: 0 2px 0 #ece3d0;
+  box-shadow: 0 2px 0 #d9a53a, inset 0 0 6px rgba(243, 180, 49, .18);
 }
-.powerup .pu-cost { font-size: .72rem; color: var(--gold-deep); }
-.powerup:hover:not(:disabled) { border-color: var(--gold-deep); background: #fff5e6; }
-.powerup:disabled { opacity: .45; cursor: default; }
+.powerup .pu-cost {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: .74rem; font-weight: 800; color: #7a4b00;
+  background: #fff; border: 1px solid #ecc584; border-radius: 999px; padding: 1px 8px;
+}
+.powerup:hover:not(:disabled) { border-color: var(--gold-deep); background: #fff0d4; transform: translateY(-1px); }
+.powerup:disabled { opacity: .5; cursor: default; filter: grayscale(.4); }
 .powerup.no-oil { animation: shake .4s ease; border-color: var(--red); }
 
 /* Sparkle burst particles (on correct / milestone) */
