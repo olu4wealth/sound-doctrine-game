@@ -315,6 +315,29 @@ button:disabled { cursor: default; opacity: .55; }
 }
 .streak-combo.hot { color: var(--red); border-color: var(--red); animation: pop .25s ease; }
 
+/* Peripheral mascot: small, low-emphasis, corner-anchored; brief reaction only */
+.mascot {
+  position: fixed; right: 12px; bottom: 12px; z-index: 5;
+  display: none; flex-direction: column; align-items: center; gap: 2px;
+  pointer-events: none; opacity: .8;
+}
+.mascot img { width: 56px; height: 56px; object-fit: contain; filter: drop-shadow(0 3px 6px rgba(120,90,30,.25)); }
+.mascot span { font-size: .7rem; font-weight: 800; color: var(--ink-soft); background: rgba(255,255,255,.85); padding: 1px 6px; border-radius: 999px; }
+.mascot.mascot-happy, .mascot.mascot-sad { display: flex; }
+.mascot.mascot-happy { animation: mascotHappy .6s ease; }
+.mascot.mascot-sad { animation: mascotSad .6s ease; }
+@keyframes mascotHappy {
+  0% { transform: translateY(0) scale(1); }
+  35% { transform: translateY(-8px) scale(1.08); }
+  100% { transform: translateY(0) scale(1); }
+}
+@keyframes mascotSad {
+  0% { transform: translateY(0) scale(1); opacity: .8; }
+  40% { transform: translateY(4px) scale(.96); opacity: .55; }
+  100% { transform: translateY(0) scale(1); opacity: .8; }
+}
+@media (max-width: 420px) { .mascot img { width: 46px; height: 46px; } }
+
 /* Oil-vial power-ups — warm amber "glass vial" look to match the theme */
 .powerups { display: flex; gap: 8px; justify-content: center; margin: 2px 0 12px; flex-wrap: wrap; }
 .powerup {
@@ -434,6 +457,11 @@ button:disabled { cursor: default; opacity: .55; }
 .feedback-modal-card.grace { border-top: 5px solid var(--amber); }
 .feedback-modal-card.wrong { border-top: 5px solid var(--red); }
 .feedback-modal-head { font-size: 1.1rem; font-weight: 800; color: var(--ink); margin-bottom: 14px; line-height: 1.35; }
+.feedback-answer {
+  background: #d7ffb8; border: 2px solid var(--green); border-radius: 12px;
+  padding: 10px 12px; margin-bottom: 14px; font-size: .98rem; color: #2c7a00;
+}
+.feedback-answer strong { font-weight: 900; }
 .feedback-modal-verse { font-size: 1rem; line-height: 1.6; color: var(--ink); margin-bottom: 14px; padding-left: 12px; border-left: 3px solid var(--gold); font-style: italic; }
 .feedback-modal-ref { display: block; font-size: .85rem; color: var(--ink-soft); font-weight: 700; margin-bottom: 18px; }
 .feedback-modal-btn { width: 100%; padding: 14px; font-size: 1.05rem; }

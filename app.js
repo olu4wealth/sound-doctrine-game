@@ -227,6 +227,47 @@ function updateFlame(frac) {
   // NOTE: 'bright' pulse is NOT cleared here — it times out in pulseFlameBright().
 }
 
+// ---------- Peripheral mascots (Timothy & Titus) ----------
+// Each book is subtly watched by its own mascot. The mascot sits in a quiet
+// corner at low emphasis and only reacts briefly on the feedback beat, so it
+// never distracts while you're actually answering. Animated: a GIF per mood.
+const MASCOTS = {
+  '1 Timothy': { name: 'Timothy', base: 'assets/mascot-timothy' },
+  '2 Timothy': { name: 'Timothy', base: 'assets/mascot-timothy' }, // Paul wrote both to Timothy
+  'Titus': { name: 'Titus', base: 'assets/mascot-titus' },
+};
+let currentMascot = null;
+
+function setMascot(book) {
+  const m = MASCOTS[book] || MASCOTS['1 Timothy'];
+  currentMascot = m;
+  const mi = el('mascot-img');
+  const mn = el('mascot-name');
+  if (mi) mi.src = `${m.base}-idle.gif`; // default idle state
+  if (mn) mn.textContent = m.name || '';
+  const box = el('mascot');
+  if (box) box.classList.remove('mascot-happy', 'mascot-sad');
+}
+
+// Swap to the matching mood GIF and restart the container animation.
+function reactMascot(kind) {
+  const box = el('mascot');
+  const mi = el('mascot-img');
+  if (!box || !currentMascot || !mi) return;
+  const mood = (kind === 'correct' || kind === 'grace') ? 'happy' : 'sad';
+  mi.src = `${currentMascot.base}-${mood}.gif`;
+  box.classList.remove('mascot-happy', 'mascot-sad');
+  void box.offsetWidth; // reflow to restart CSS pop
+  if (mood === 'happy') box.classList.add('mascot-happy');
+  else box.classList.add('mascot-sad');
+  // After a beat, settle back to idle so it stays calm during the next question.
+  setTimeout(() => {
+    const mi2 = el('mascot-img');
+    if (mi2) mi2.src = `${currentMascot.base}-idle.gif`;
+    box.classList.remove('mascot-happy', 'mascot-sad');
+  }, 1400);
+}
+
 // Show/hide the streak-combo "🔥 ×N" badge based on the current consecutive-correct streak.
 function updateStreakCombo() {
   const badge = el('streak-combo');
@@ -273,6 +314,7 @@ function fmtTime(s) {
 // ---------- Question rendering ----------
 function renderQuestion(q) {
   frozenUntil = 0; // reset any freeze power-up for the next question
+  setMascot(q.book);
   el('q-book').textContent = q.book;
   el('q-subject').textContent = q.subject;
   el('q-type').textContent = `${TIER_EMOJI[q.tier]} T${q.tier} · ${TIER_NAMES[q.tier]}`;
@@ -359,10 +401,15 @@ function renderDailyQuestion() {
   el('q-type').textContent = `${TIER_EMOJI[q.tier]} T${q.tier} · Daily Office`;
 }
 
-function showFeedbackModal(head, verse, ref, kind, isLast) {
+function showFeedbackModal(head, verse, ref, kind, isLast, correctText) {
   // Remove old modal if any
   const old = document.getElementById('feedback-modal-backdrop');
   if (old) old.remove();
+
+  // On a wrong/timeout answer, surface the correct option clearly inside the popup.
+  const correctLine = (!correctText || kind === 'correct' || kind === 'grace')
+    ? ''
+    : `<div class="feedback-answer">The correct answer was: <strong>${correctText}</strong></div>`;
 
   const backdrop = document.createElement('div');
   backdrop.id = 'feedback-modal-backdrop';
@@ -370,6 +417,7 @@ function showFeedbackModal(head, verse, ref, kind, isLast) {
   backdrop.innerHTML = `
     <div class="feedback-modal-card ${kind}">
       <div class="feedback-modal-head">${head}</div>
+      ${correctLine}
       <blockquote class="feedback-modal-verse">${verse}</blockquote>
       <cite class="feedback-modal-ref">${ref}</cite>
       <button class="primary feedback-modal-btn" id="feedback-modal-continue">${isLast ? 'See the report' : 'Continue'}</button>
@@ -526,9 +574,9 @@ function onAnswer(displayIdx) {
   updateStreakCombo();
 
   // Flame flares brighter on a correct answer, then settles back.
-  if (isCorrect) { pulseFlameBright(); sfx.correct(); burstSparkles(8); }
-  else if (isGrace) sfx.grace();
-  else sfx.wrong();
+  if (isCorrect) { pulseFlameBright(); sfx.correct(); burstSparkles(8); reactMascot('correct'); }
+  else if (isGrace) { sfx.grace(); reactMascot('grace'); }
+  else { sfx.wrong(); reactMascot('wrong'); }
 
   // Reward for getting far: milestone bonuses as the climb ramps up.
   const milestone = checkMilestoneReward();
@@ -575,7 +623,8 @@ function onAnswer(displayIdx) {
   }
   const verse = quotesOf(q);
   const ref = refsOf(q) + ' (KJV)';
-  showFeedbackModal(head, verse, ref, kind, isLastQuestion());
+  const correctText = q.options[q.correctIndex];
+  showFeedbackModal(head, verse, ref, kind, isLastQuestion(), correctText);
 
   if (mode === 'daily') {
     const g = el('daily-answered');
@@ -590,6 +639,7 @@ function onAnswer(displayIdx) {
 // Timeout = wrong (records fail, shows the verse correction, no bonus time).
 function onTimeout() {
   sfx.timeout();
+  reactMascot('wrong');
   const q = currentQ;
   const qWrap = el('q-options');
   q._correct = false;
@@ -626,7 +676,8 @@ function onTimeout() {
     quotesOf(q),
     refsOf(q) + ' (KJV)',
     'wrong',
-    isLastQuestion()
+    isLastQuestion(),
+    q.options[q.correctIndex]
   );
 
   if (mode === 'daily') {
