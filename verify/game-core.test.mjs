@@ -103,9 +103,11 @@ const fakeSession = {
 };
 const rep = buildChargeReport(fakeSession, bank);
 check('report computes accuracy', rep.acc === 0.5);
-check('report finds strengths (money high)', rep.strengths.some((s) => s.name === 'money'));
-check('report finds weaknesses (elders low)', rep.weaknesses.some((w) => w.name === 'elders'));
+check('report finds strengths (Riches & contentment high)', rep.strengths.some((s) => s.name === 'Riches & contentment'));
+check('report finds weaknesses (Elders & widows low)', rep.weaknesses.some((w) => w.name === 'Elders & widows'));
 check('report writes prescriptions with refs', rep.prescriptions.some((p) => p.refs.length > 0));
+// Chapters to revisit should NOT include chapters the player got 100% on.
+check('report omits perfected chapters from revisit', !rep.chapters.some((c) => c.acc === 1));
 
 // 6. Composite + leaderboard sort
 const a = { totalCorrect: 8, totalAnswered: 10, streak: 2, bestTimeMs: 120000, fails: 2 };

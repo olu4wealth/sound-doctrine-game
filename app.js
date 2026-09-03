@@ -310,13 +310,17 @@ function updateProgress() {
   if (mode === 'daily') {
     total = session._dailyList?.length || 10;
     idx = dailyIdx + 1; // 1-based current question number
+    idx = Math.max(1, Math.min(idx, total));
+    el('progress-bar').style.width = `${Math.round((idx / total) * 100)}%`;
+    el('hud-progress').textContent = `${idx}/${total}`;
   } else {
-    total = 12;
+    // Endless climb: no fixed cap; show the count climbed and a creeping bar.
     idx = session.questions.length + 1;
+    el('hud-progress').textContent = `Q${idx}`;
+    // Creep toward full as the climb goes on (never exceeds 100%).
+    const pct = Math.min(100, Math.round((idx / 20) * 100));
+    el('progress-bar').style.width = `${pct}%`;
   }
-  idx = Math.max(1, Math.min(idx, total));
-  el('progress-bar').style.width = `${Math.round((idx / total) * 100)}%`;
-  el('hud-progress').textContent = `${idx}/${total}`;
 }
 
 function nextQuestion() {
@@ -458,8 +462,7 @@ function usePowerup(type) {
     currentQ._outcome = 'skipped'; currentQ._correct = false;
     session.questions.push(currentQ);
     if (mode === 'daily') { dailyIdx++; renderDailyQuestion(); }
-    else if (session.questions.length >= 12) finishClimb();
-    else nextQuestion();
+    else nextQuestion(); // endless climb — skip just advances
     renderPowerups();
     return;
   }
@@ -638,7 +641,7 @@ function onTimeout() {
 
 function isLastQuestion() {
   if (mode === 'daily') return dailyIdx >= session._dailyList.length - 1;
-  return session.questions.length >= 12;
+  return false; // endless climb — never "last"; it ends when the player fails
 }
 
 function popFeedback(kind) {
@@ -680,8 +683,7 @@ function btnNextGo() {
     dailyIdx++;
     renderDailyQuestion();
   } else {
-    if (session.questions.length >= 12) { finishClimb(); return; }
-    nextQuestion();
+    nextQuestion(); // endless climb — continues until the player fails (hearts 0)
   }
 }
 

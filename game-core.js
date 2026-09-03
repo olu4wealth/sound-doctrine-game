@@ -239,6 +239,57 @@ export function gradeFor(acc) {
 }
 
 // session: { questions: [...answered], correct: n, answered: n, pot, bestTimeMs }
+// ---------- Thematic categories ----------
+// The raw subject tags are uneven ("spirit", "holy ghost", "avoid"). For the Charge
+// Report we group them into clean, meaningful doctrinal categories so strengths
+// and weaknesses read naturally (e.g. "Paul's perseverance", "Christian living").
+const CATEGORY_MAP = {
+  // Doctrine & faith
+  'sound doctrine': 'Sound doctrine', 'doctrine': 'Sound doctrine', 'faithful sayings': 'Faithful sayings',
+  'faith': 'Faith & grace', 'grace': 'Faith & grace', 'grace teaching': 'Faith & grace', 'justification': 'Faith & grace',
+  'salvation': 'Salvation', 'mystery of godliness': 'The mystery of godliness', 'blessed hope': 'The blessed hope',
+  'mediator': 'Christ the mediator', 'the mediator': 'Christ the mediator', 'deity': 'Christ the mediator',
+  'resurrection': 'The resurrection', 'the gift of God': 'The gift of God', 'the gift': 'The gift of God',
+  // Christian living
+  'godliness': 'Godliness', 'contentment': 'Contentment', 'good works': 'Good works', 'purity': 'Purity',
+  'modesty': 'Modesty & conduct', 'youthful lusts': 'Fleeing youthful lusts', 'good fight': 'The good fight',
+  'faith and conscience': 'Faith & a good conscience', 'sound in faith': 'Sound in the faith', 'great gain': 'True contentment',
+  'brotherly conduct': 'Christian conduct', 'mercy on Onesiphorus': 'Faithful companions', 'household': 'Christian conduct',
+  'older women\'s charge': 'Christian conduct', 'redeemed people': 'Redeemed people', 'empty profession': 'Sincere faith',
+  'form of godliness': 'Sincere faith', 'avoid': 'Avoiding error', 'hereticks': 'Avoiding error', 'vessels': 'Vessels of honour',
+  'the great house': 'Vessels of honour', 'purged vessel': 'Vessels of honour', 'faithfulness of God': 'Faithfulness of God',
+  'keeping the faith': 'Perseverance', 'perseverance': 'Perseverance', 'guarding the trust': 'The deposit',
+  'the deposit': 'The deposit', 'sound words': 'Sound words',
+  // Church order & ministry
+  'bishop qualifications': 'Bishops & deacons', 'deacon qualifications': 'Bishops & deacons',
+  'church order': 'Church order', 'elders': 'Elders & widows', 'ruling elders': 'Elders & widows',
+  'widows': 'Elders & widows', 'the office of bishop': 'Bishops & deacons', 'qualities of a bishop': 'Bishops & deacons',
+  'the church': 'Church order', 'authority': 'Church order', 'worship': 'Worship & prayer', 'prayer': 'Worship & prayer',
+  // Paul's life & ministry
+  'paul\'s testimony': 'Paul\'s testimony', 'Paul\'s past': 'Paul\'s testimony', 'Paul\'s calling': 'Paul\'s calling',
+  'pauls calling': 'Paul\'s calling', 'Paul\'s offices': 'Paul\'s apostleship', 'paul\'s perseverance': 'Paul\'s perseverance',
+  'persecution': 'Paul\'s perseverance', 'soldier metaphors': 'Paul\'s perseverance', 'the gift': 'Paul\'s perseverance',
+  'paul\'s longing': 'Paul\'s perseverance', 'pattern': 'Paul\'s perseverance', 'example': 'Paul\'s perseverance',
+  'man of god': 'Man of God', 'preaching': 'Paul\'s preaching', 'opposition': 'Paul\'s perseverance',
+  'shipwreck': 'Paul\'s perseverance', 'personal requests': 'Paul\'s final words', 'personal notes': 'Paul\'s final words',
+  'closings': 'Paul\'s final words', 'doxology': 'Paul\'s final words', 'greetings': 'Paul\'s final words',
+  'travel plans': 'Paul\'s final words', 'Tychicus': 'Paul\'s final words',
+  // Scripture & study
+  'scripture': 'The Scriptures', 'old testament': 'The Scriptures', 'study': 'Studying Scripture', 'reading': 'Studying Scripture',
+  // People & false teaching
+  'false teachers': 'False teaching', 'false teaching': 'False teaching', 'treacherous': 'False teaching',
+  'comprehension': 'Weakness', 'delivered to Satan': 'Judgment on error', 'confidence': 'Confidence in Christ',
+  'cretian proverb': 'The Cretan proverb', 'the rich': 'Riches & contentment', 'money': 'Riches & contentment',
+  'laying up treasure': 'Riches & contentment', 'the poor': 'Riches & contentment', 'family duty': 'Family & the home',
+  'spirit': 'The Holy Spirit', 'holy ghost': 'The Holy Spirit', 'holy spirit': 'The Holy Spirit', 'pneuma': 'The Holy Spirit',
+  'faithfulness': 'Faithfulness', 'timothy\'s family': 'Timothy\'s family', 'calling': 'Calling', 'charge': 'The charge',
+  'duty': 'Christian duty',
+};
+
+function subjectCategory(subject) {
+  return CATEGORY_MAP[subject] || subject;
+}
+
 // bank: full bank (used to resolve subjects to passages for the Rx)
 export function buildChargeReport(session, bank) {
   const answered = session.questions || [];
@@ -248,13 +299,14 @@ export function buildChargeReport(session, bank) {
   const grade = gradeFor(acc);
   const pot = session.pot || 0;
 
-  // Subject stats
+  // Category stats (group minor subject tags into clean doctrinal categories)
   const s = {};
   for (const q of answered) {
-    s[q.subject] = s[q.subject] || { asked: 0, correct: 0, refs: new Set() };
-    s[q.subject].asked++;
-    if (q._correct) s[q.subject].correct++;
-    for (const ref of referencesOf(q)) s[q.subject].refs.add(ref);
+    const cat = subjectCategory(q.subject);
+    s[cat] = s[cat] || { asked: 0, correct: 0, refs: new Set() };
+    s[cat].asked++;
+    if (q._correct) s[cat].correct++;
+    for (const ref of referencesOf(q)) s[cat].refs.add(ref);
   }
   // Book & chapter stats
   const bk = {}, ch = {};
@@ -273,7 +325,9 @@ export function buildChargeReport(session, bank) {
 
   const subjects = toRows(s);
   const books = toRows(bk);
-  const chapters = toRows(ch);
+  // Chapters you actually missed on (acc < 1); these are the ones worth revisiting.
+  const allChapters = toRows(ch);
+  const revisitChapters = allChapters.filter((r) => r.acc < 1);
 
   const strongest = subjects.filter((r) => r.acc >= 0.5).slice(0, 3);
   const weakest = subjects.filter((r) => r.acc < 0.5).slice(-3).reverse();
@@ -303,7 +357,7 @@ export function buildChargeReport(session, bank) {
     weaknesses: weakest.map((r) => ({ name: r.key, acc: r.acc })),
     prescriptions: rx,
     books: books.map((r) => ({ name: r.key, acc: r.acc })),
-    chapters: chapters.map((r) => ({ name: r.key, acc: r.acc })),
+    chapters: revisitChapters.map((r) => ({ name: r.key, acc: r.acc })),
   };
 }
 
