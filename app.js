@@ -53,11 +53,12 @@ function rankOf(pts) {
 
 // ---------- Load ----------
 async function loadBank() {
-  const [a, b] = await Promise.all([
+  const [a, b, c] = await Promise.all([
     fetch('data/questions.json').then((r) => r.json()),
     fetch('data/questions-t47.json').then((r) => r.json()),
+    fetch('data/questions-new.json').then((r) => r.json()),
   ]);
-  bank = [...a, ...b];
+  bank = [...a, ...b, ...c];
   bank.forEach((q) => { q.tier = tierOf(q); });
 }
 

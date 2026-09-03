@@ -58,7 +58,7 @@ function getPassageText(lockbox, ref) {
 
 function main() {
   const lockbox = loadLockbox();
-  const banks = ['questions.json', 'questions-t47.json'];
+  const banks = ['questions.json', 'questions-t47.json', 'questions-new.json'];
   const questions = [];
   for (const f of banks) {
     const raw = JSON.parse(readFileSync(join(root, 'data', f), 'utf8'));

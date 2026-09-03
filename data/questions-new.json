@@ -1,0 +1,602 @@
+[
+  {
+    "id": "gen-1001",
+    "book": "1 Timothy",
+    "chapter": 1,
+    "subject": "Paul's calling",
+    "type": "completion",
+    "prompt": "Complete: \"And I thank Christ Jesus our Lord, who hath enabled me, for that he counted me faithful, ______;\"",
+    "options": [
+      "ordaining me a deacon",
+      "calling me to preach",
+      "making me a teacher",
+      "putting me into the ministry"
+    ],
+    "correctIndex": 3,
+    "passage": "1 Timothy 1:12",
+    "verseText": "And I thank Christ Jesus our Lord, who hath enabled me, for that he counted me faithful, putting me into the ministry;",
+    "tier": 2
+  },
+  {
+    "id": "gen-1002",
+    "book": "1 Timothy",
+    "chapter": 1,
+    "subject": "Paul's past",
+    "type": "completion",
+    "prompt": "Complete: \"Who was before ______: but I obtained mercy, because I did it ignorantly in unbelief.\"",
+    "options": [
+      "a blasphemer, and a persecutor, and injurious",
+      "a faithful witness",
+      "a zealous Pharisee",
+      "an elder of the church"
+    ],
+    "correctIndex": 0,
+    "passage": "1 Timothy 1:13",
+    "verseText": "Who was before a blasphemer, and a persecutor, and injurious: but I obtained mercy, because I did it ignorantly in unbelief.",
+    "tier": 2
+  },
+  {
+    "id": "gen-1003",
+    "book": "1 Timothy",
+    "chapter": 1,
+    "subject": "faith and conscience",
+    "type": "completion",
+    "prompt": "Complete: \"Holding faith, and a good conscience; which some having put away concerning faith have ______:\"",
+    "options": [
+      "made shipwreck",
+      "found blameless",
+      "grown strong",
+      "been perfected"
+    ],
+    "correctIndex": 0,
+    "passage": "1 Timothy 1:19",
+    "verseText": "Holding faith, and a good conscience; which some having put away concerning faith have made shipwreck:",
+    "tier": 2
+  },
+  {
+    "id": "gen-1004",
+    "book": "1 Timothy",
+    "chapter": 1,
+    "subject": "delivered to Satan",
+    "type": "completion",
+    "prompt": "Complete: \"Of whom is ______; whom I have delivered unto Satan, that they may learn not to blaspheme.\"",
+    "options": [
+      "Hymenaeus and Alexander",
+      "Phygellus and Hermogenes",
+      "Onesiphorus and Tychicus",
+      "Demas and Crescens"
+    ],
+    "correctIndex": 0,
+    "passage": "1 Timothy 1:20",
+    "verseText": "Of whom is Hymenaeus and Alexander; whom I have delivered unto Satan, that they may learn not to blaspheme.",
+    "tier": 3
+  },
+  {
+    "id": "gen-1005",
+    "book": "1 Timothy",
+    "chapter": 2,
+    "subject": "the mediator",
+    "type": "completion",
+    "prompt": "Complete: \"For there is ______, the man Christ Jesus;\"",
+    "options": [
+      "one God, and one mediator between God and men",
+      "many gods and many lords",
+      "one judge of all",
+      "one high priest"
+    ],
+    "correctIndex": 0,
+    "passage": "1 Timothy 2:5",
+    "verseText": "For there is one God, and one mediator between God and men, the man Christ Jesus;",
+    "tier": 3
+  },
+  {
+    "id": "gen-1006",
+    "book": "1 Timothy",
+    "chapter": 3,
+    "subject": "the office of bishop",
+    "type": "completion",
+    "prompt": "Complete: \"This is a true saying, ______, he desireth a good work.\"",
+    "options": [
+      "If a man desire the office of a bishop",
+      "If any man lacks wisdom",
+      "If a man be called to teach",
+      "If a man love not his brother"
+    ],
+    "correctIndex": 0,
+    "passage": "1 Timothy 3:1",
+    "verseText": "This is a true saying, If a man desire the office of a bishop, he desireth a good work.",
+    "tier": 1
+  },
+  {
+    "id": "gen-1007",
+    "book": "1 Timothy",
+    "chapter": 5,
+    "subject": "ruling elders",
+    "type": "completion",
+    "prompt": "Complete: \"Let the elders that rule well be ______, especially they who labour in the word and doctrine.\"",
+    "options": [
+      "counted worthy of double honour",
+      "given a seat of honour",
+      "esteemed above all",
+      "rewarded with silver"
+    ],
+    "correctIndex": 0,
+    "passage": "1 Timothy 5:17",
+    "verseText": "Let the elders that rule well be counted worthy of double honour, especially they who labour in the word and doctrine.",
+    "tier": 2
+  },
+  {
+    "id": "gen-1008",
+    "book": "1 Timothy",
+    "chapter": 6,
+    "subject": "great gain",
+    "type": "completion",
+    "prompt": "Complete: \"But ______ is great gain.\"",
+    "options": [
+      "godliness with contentment",
+      "holiness and sobriety",
+      "hope and patience",
+      "faith and charity"
+    ],
+    "correctIndex": 0,
+    "passage": "1 Timothy 6:6",
+    "verseText": "But godliness with contentment is great gain.",
+    "tier": 3
+  },
+  {
+    "id": "gen-1009",
+    "book": "1 Timothy",
+    "chapter": 6,
+    "subject": "the rich",
+    "type": "completion",
+    "prompt": "Complete: \"______, that they be not highminded, nor trust in uncertain riches, but in the living God, who giveth us richly all things to enjoy;\"",
+    "options": [
+      "Charge them that are rich in this world",
+      "Blessed are the poor",
+      "Woe to the wealthy",
+      "Rebuke the covetous"
+    ],
+    "correctIndex": 0,
+    "passage": "1 Timothy 6:17",
+    "verseText": "Charge them that are rich in this world, that they be not highminded, nor trust in uncertain riches, but in the living God, who giveth us richly all things to enjoy;",
+    "tier": 2
+  },
+  {
+    "id": "gen-1010",
+    "book": "1 Timothy",
+    "chapter": 6,
+    "subject": "laying up treasure",
+    "type": "completion",
+    "prompt": "Complete: \"Laying up in store for themselves ______, that they may lay hold on eternal life.\"",
+    "options": [
+      "a house not made with hands",
+      "a crown of righteousness",
+      "a good foundation against the time to come",
+      "an inheritance incorruptible"
+    ],
+    "correctIndex": 2,
+    "passage": "1 Timothy 6:19",
+    "verseText": "Laying up in store for themselves a good foundation against the time to come, that they may lay hold on eternal life.",
+    "tier": 3
+  },
+  {
+    "id": "gen-1011",
+    "book": "2 Timothy",
+    "chapter": 1,
+    "subject": "Paul's longing",
+    "type": "completion",
+    "prompt": "Complete: \"Greatly desiring to see thee, ______, that I may be filled with joy;\"",
+    "options": [
+      "recalling thy baptism",
+      "hearing of thy afflictions",
+      "remembering thy faith",
+      "being mindful of thy tears"
+    ],
+    "correctIndex": 3,
+    "passage": "2 Timothy 1:4",
+    "verseText": "Greatly desiring to see thee, being mindful of thy tears, that I may be filled with joy;",
+    "tier": 2
+  },
+  {
+    "id": "gen-1012",
+    "book": "2 Timothy",
+    "chapter": 1,
+    "subject": "the gift of God",
+    "type": "completion",
+    "prompt": "Complete: \"Wherefore I put thee in remembrance that thou ______, which is in thee by the putting on of my hands.\"",
+    "options": [
+      "neglect not thy wages",
+      "stir up the gift of God",
+      "hide thy talent",
+      "forsake thy calling"
+    ],
+    "correctIndex": 1,
+    "passage": "2 Timothy 1:6",
+    "verseText": "Wherefore I put thee in remembrance that thou stir up the gift of God, which is in thee by the putting on of my hands.",
+    "tier": 2
+  },
+  {
+    "id": "gen-1013",
+    "book": "2 Timothy",
+    "chapter": 1,
+    "subject": "Paul's offices",
+    "type": "completion",
+    "prompt": "Complete: \"Whereunto I am appointed ______.\"",
+    "options": [
+      "a preacher, and an apostle, and a teacher of the Gentiles",
+      "a prophet, and a seer, and a sage",
+      "a ruler, and a scribe, and a judge",
+      "a shepherd, and a bishop, and a deacon"
+    ],
+    "correctIndex": 0,
+    "passage": "2 Timothy 1:11",
+    "verseText": "Whereunto I am appointed a preacher, and an apostle, and a teacher of the Gentiles.",
+    "tier": 3
+  },
+  {
+    "id": "gen-1014",
+    "book": "2 Timothy",
+    "chapter": 1,
+    "subject": "mercy on Onesiphorus",
+    "type": "completion",
+    "prompt": "Complete: \"The Lord give mercy unto ______; for he oft refreshed me, and was not ashamed of my chain:\"",
+    "options": [
+      "the family of Aquila",
+      "the household of Stephanas",
+      "the house of Prisca",
+      "the house of Onesiphorus"
+    ],
+    "correctIndex": 3,
+    "passage": "2 Timothy 1:16",
+    "verseText": "The Lord give mercy unto the house of Onesiphorus; for he oft refreshed me, and was not ashamed of my chain:",
+    "tier": 3
+  },
+  {
+    "id": "gen-1015",
+    "book": "2 Timothy",
+    "chapter": 2,
+    "subject": "faithfulness of God",
+    "type": "completion",
+    "prompt": "Complete: \"If we believe not, yet he abideth faithful: ______.\"",
+    "options": [
+      "he turneth not away",
+      "he cannot deny himself",
+      "he will not forget us",
+      "he abideth not with the proud"
+    ],
+    "correctIndex": 1,
+    "passage": "2 Timothy 2:13",
+    "verseText": "If we believe not, yet he abideth faithful: he cannot deny himself.",
+    "tier": 2
+  },
+  {
+    "id": "gen-1016",
+    "book": "2 Timothy",
+    "chapter": 2,
+    "subject": "the great house",
+    "type": "completion",
+    "prompt": "Complete: \"But in a great house there are not only ______, but also of wood and of earth; and some to honour, and some to dishonour.\"",
+    "options": [
+      "crowns of glory",
+      "wings of angels",
+      "vessels of gold and of silver",
+      "lamps of fire"
+    ],
+    "correctIndex": 2,
+    "passage": "2 Timothy 2:20",
+    "verseText": "But in a great house there are not only vessels of gold and of silver, but also of wood and of earth; and some to honour, and some to dishonour.",
+    "tier": 2
+  },
+  {
+    "id": "gen-1017",
+    "book": "2 Timothy",
+    "chapter": 2,
+    "subject": "purged vessel",
+    "type": "completion",
+    "prompt": "Complete: \"If a man therefore purge himself from these, he shall be ______, sanctified, and meet for the master's use, and prepared unto every good work.\"",
+    "options": [
+      "a vessel unto honour",
+      "a vessel of mercy",
+      "a vessel of wrath",
+      "a broken vessel"
+    ],
+    "correctIndex": 0,
+    "passage": "2 Timothy 2:21",
+    "verseText": "If a man therefore purge himself from these, he shall be a vessel unto honour, sanctified, and meet for the master's use, and prepared unto every good work.",
+    "tier": 2
+  },
+  {
+    "id": "gen-1018",
+    "book": "2 Timothy",
+    "chapter": 3,
+    "subject": "form of godliness",
+    "type": "completion",
+    "prompt": "Complete: \"______, but denying the power thereof: from such turn away.\"",
+    "options": [
+      "Boasting of the law",
+      "Professing great humility",
+      "Lacking all holiness",
+      "Having a form of godliness"
+    ],
+    "correctIndex": 3,
+    "passage": "2 Timothy 3:5",
+    "verseText": "Having a form of godliness, but denying the power thereof: from such turn away.",
+    "tier": 3
+  },
+  {
+    "id": "gen-1019",
+    "book": "2 Timothy",
+    "chapter": 4,
+    "subject": "Tychicus",
+    "type": "completion",
+    "prompt": "Complete: \"And ______.\"",
+    "options": [
+      "Epaphroditus have I sent to Colosse",
+      "Tychicus have I sent to Ephesus",
+      "Timotheus have I sent to Philippi",
+      "Titus have I sent to Crete"
+    ],
+    "correctIndex": 1,
+    "passage": "2 Timothy 4:12",
+    "verseText": "And Tychicus have I sent to Ephesus.",
+    "tier": 3
+  },
+  {
+    "id": "gen-1020",
+    "book": "2 Timothy",
+    "chapter": 4,
+    "subject": "greetings",
+    "type": "completion",
+    "prompt": "Complete: \"______, and the household of Onesiphorus.\"",
+    "options": [
+      "Salute Prisca and Aquila",
+      "Greet Mary and Martha",
+      "Remember Ananias and Sapphira",
+      "Honour Barnabas and Saul"
+    ],
+    "correctIndex": 0,
+    "passage": "2 Timothy 4:19",
+    "verseText": "Salute Prisca and Aquila, and the household of Onesiphorus.",
+    "tier": 3
+  },
+  {
+    "id": "gen-1021",
+    "book": "Titus",
+    "chapter": 1,
+    "subject": "qualities of a bishop",
+    "type": "completion",
+    "prompt": "Complete: \"But ______, a lover of good men, sober, just, holy, temperate;\"",
+    "options": [
+      "a lover of praise",
+      "a lover of power",
+      "a lover of money",
+      "a lover of hospitality"
+    ],
+    "correctIndex": 3,
+    "passage": "Titus 1:8",
+    "verseText": "But a lover of hospitality, a lover of good men, sober, just, holy, temperate;",
+    "tier": 2
+  },
+  {
+    "id": "gen-1022",
+    "book": "Titus",
+    "chapter": 1,
+    "subject": "empty profession",
+    "type": "completion",
+    "prompt": "Complete: \"They profess that they know God; but ______, being abominable, and disobedient, and unto every good work reprobate.\"",
+    "options": [
+      "in works they deny him",
+      "in heart they seek him",
+      "in deed they honour him",
+      "in word they confess him"
+    ],
+    "correctIndex": 0,
+    "passage": "Titus 1:16",
+    "verseText": "They profess that they know God; but in works they deny him, being abominable, and disobedient, and unto every good work reprobate.",
+    "tier": 3
+  },
+  {
+    "id": "gen-1023",
+    "book": "Titus",
+    "chapter": 2,
+    "subject": "older women's charge",
+    "type": "completion",
+    "prompt": "Complete: \"That they may ______, to love their husbands, to love their children,\"",
+    "options": [
+      "teach the young women to be sober",
+      "instruct the servants to obey",
+      "teach the young men to fight",
+      "command the elders to rule"
+    ],
+    "correctIndex": 0,
+    "passage": "Titus 2:4",
+    "verseText": "That they may teach the young women to be sober, to love their husbands, to love their children,",
+    "tier": 3
+  },
+  {
+    "id": "gen-1024",
+    "book": "Titus",
+    "chapter": 2,
+    "subject": "redeemed people",
+    "type": "completion",
+    "prompt": "Complete: \"Who gave himself for us, that he might redeem us from all iniquity, and purify unto himself ______.\"",
+    "options": [
+      "a holy nation, separated and pure",
+      "a royal priesthood, called and chosen",
+      "a chosen generation, holy and blameless",
+      "a peculiar people, zealous of good works"
+    ],
+    "correctIndex": 3,
+    "passage": "Titus 2:14",
+    "verseText": "Who gave himself for us, that he might redeem us from all iniquity, and purify unto himself a peculiar people, zealous of good works.",
+    "tier": 3
+  },
+  {
+    "id": "gen-1025",
+    "book": "Titus",
+    "chapter": 3,
+    "subject": "brotherly conduct",
+    "type": "completion",
+    "prompt": "Complete: \"______, to be no brawlers, but gentle, shewing all meekness unto all men.\"",
+    "options": [
+      "To speak evil of no man",
+      "To judge all men",
+      "To please every man",
+      "To honour all men"
+    ],
+    "correctIndex": 0,
+    "passage": "Titus 3:2",
+    "verseText": "To speak evil of no man, to be no brawlers, but gentle, shewing all meekness unto all men.",
+    "tier": 2
+  },
+  {
+    "id": "gen-1026",
+    "book": "Titus",
+    "chapter": 3,
+    "subject": "justification",
+    "type": "completion",
+    "prompt": "Complete: \"That being ______, we should be made heirs according to the hope of eternal life.\"",
+    "options": [
+      "sanctified by law",
+      "justified by his grace",
+      "saved by our works",
+      "redeemed by blood"
+    ],
+    "correctIndex": 1,
+    "passage": "Titus 3:7",
+    "verseText": "That being justified by his grace, we should be made heirs according to the hope of eternal life.",
+    "tier": 3
+  },
+  {
+    "id": "gen-1027",
+    "book": "Titus",
+    "chapter": 3,
+    "subject": "good works",
+    "type": "completion",
+    "prompt": "Complete: \"And let ours also learn to ______ for necessary uses, that they be not unfruitful.\"",
+    "options": [
+      "maintain good works",
+      "seek great riches",
+      "build great towers",
+      "gain great honour"
+    ],
+    "correctIndex": 0,
+    "passage": "Titus 3:14",
+    "verseText": "And let ours also learn to maintain good works for necessary uses, that they be not unfruitful.",
+    "tier": 2
+  },
+  {
+    "id": "gen-1028",
+    "book": "1 Timothy",
+    "chapter": 6,
+    "subject": "the deposit",
+    "type": "crossref",
+    "prompt": "1 Timothy 6:20 tells Timothy to \"keep that which is committed to thy trust\"; 2 Timothy 1:14 repeats the charge with which phrase?",
+    "options": [
+      "lay hold on eternal life",
+      "flee also youthful lusts",
+      "keep that which is committed to thy trust",
+      "be strong in the grace"
+    ],
+    "correctIndex": 2,
+    "passage": "1 Timothy 6:20",
+    "verseText": "O Timothy, keep that which is committed to thy trust, avoiding profane and vain babblings, and oppositions of science falsely so called:",
+    "tier": 6,
+    "passageB": "2 Timothy 1:14",
+    "verseTextB": "That good thing which was committed unto thee keep by the Holy Ghost which dwelleth in us."
+  },
+  {
+    "id": "gen-1029",
+    "book": "2 Timothy",
+    "chapter": 1,
+    "subject": "sound words",
+    "type": "crossref",
+    "prompt": "2 Timothy 1:13 commands \"Hold fast the form of sound words\"; Titus 1:9 links holding the faithful word to what ability of a bishop?",
+    "options": [
+      "Keep the commandment without spot",
+      "Be thou an example of the believers",
+      "Fight the good fight of faith",
+      "Hold fast the form of sound words"
+    ],
+    "correctIndex": 3,
+    "passage": "2 Timothy 1:13",
+    "verseText": "Hold fast the form of sound words, which thou hast heard of me, in faith and love which is in Christ Jesus.",
+    "tier": 6,
+    "passageB": "Titus 1:9",
+    "verseTextB": "Holding fast the faithful word as he hath been taught, that he may be able by sound doctrine both to exhort and to convince the gainsayers."
+  },
+  {
+    "id": "gen-1030",
+    "book": "1 Timothy",
+    "chapter": 4,
+    "subject": "godliness",
+    "type": "crossref",
+    "prompt": "1 Timothy 4:7 pairs refusing fables with \"exercise thyself rather unto godliness\"; 2 Timothy 3:14 urges Timothy to what in the things he has learned?",
+    "options": [
+      "exercise thyself rather unto godliness",
+      "study to shew thyself approved",
+      "lay hands suddenly on no man",
+      "be thou an example in word"
+    ],
+    "correctIndex": 0,
+    "passage": "1 Timothy 4:7",
+    "verseText": "But refuse profane and old wives' fables, and exercise thyself rather unto godliness.",
+    "tier": 6,
+    "passageB": "2 Timothy 3:14",
+    "verseTextB": "But continue thou in the things which thou hast learned and hast been assured of, knowing of whom thou hast learned them;"
+  },
+  {
+    "id": "gen-1031",
+    "book": "1 Timothy",
+    "chapter": 6,
+    "subject": "guarding the trust",
+    "type": "synthesis",
+    "prompt": "Synthesis: both 1 Timothy 6:20 (\"keep that which is committed to thy trust\") and 2 Timothy 1:14 (\"that good thing...keep\") use the same single verb for guarding the deposit. Which?",
+    "options": [
+      "hold",
+      "guard",
+      "flee",
+      "keep"
+    ],
+    "correctIndex": 3,
+    "passage": "1 Timothy 6:20",
+    "verseText": "O Timothy, keep that which is committed to thy trust, avoiding profane and vain babblings, and oppositions of science falsely so called:",
+    "tier": 7
+  },
+  {
+    "id": "gen-1032",
+    "book": "2 Timothy",
+    "chapter": 1,
+    "subject": "the gift",
+    "type": "synthesis",
+    "prompt": "Synthesis: 2 Timothy 1:6 says \"stir up the gift of God\"; 1 Timothy 4:14 warns \"Neglect not the gift\". What action does Paul urge Timothy to take toward his gift?",
+    "options": [
+      "quench",
+      "stir up",
+      "bury",
+      "neglect"
+    ],
+    "correctIndex": 1,
+    "passage": "2 Timothy 1:6",
+    "verseText": "Wherefore I put thee in remembrance that thou stir up the gift of God, which is in thee by the putting on of my hands.",
+    "tier": 7
+  },
+  {
+    "id": "gen-1033",
+    "book": "Titus",
+    "chapter": 3,
+    "subject": "good works",
+    "type": "synthesis",
+    "prompt": "Synthesis: Titus 3:8 urges believers to \"maintain good works\", 2 Timothy 3:17 says the man of God is furnished \"unto all good works\", and 1 Timothy 5:10 commends those who diligently follow \"every good work\". What is the shared theme?",
+    "options": [
+      "speak evil of no man",
+      "be ready to every good work",
+      "obey magistrates",
+      "maintain good works"
+    ],
+    "correctIndex": 3,
+    "passage": "Titus 3:8",
+    "verseText": "This is a faithful saying, and these things I will that thou affirm constantly, that they which have believed in God might be careful to maintain good works. These things are good and profitable unto men.",
+    "tier": 7
+  }
+]
