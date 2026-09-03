@@ -227,60 +227,46 @@ function updateFlame(frac) {
   // NOTE: 'bright' pulse is NOT cleared here — it times out in pulseFlameBright().
 }
 
-// ---------- Peripheral mascots (Timothy & Titus) ----------
-// Each book is subtly watched by its own mascot. The mascot sits in a quiet
-// corner at low emphasis and only reacts briefly on the feedback beat, so it
-// never distracts while you're actually answering. Animated: a GIF per mood.
+// ---------- Mascots (Timothy & Titus) ----------
+// Only ONE mascot is visible while answering: the book-matched mascot sits
+// idle beside the Freeze button. On feedback Continue, a large happy/sad
+// reaction appears centred ON TOP of the feedback modal (not in the corner).
 const MASCOTS = {
-  '1 Timothy': { name: 'Timothy', base: 'assets/mascot-timothy', id: 'mascot-timothy' },
-  '2 Timothy': { name: 'Timothy', base: 'assets/mascot-timothy', id: 'mascot-timothy' }, // Paul wrote both to Timothy
-  'Titus': { name: 'Titus', base: 'assets/mascot-titus', id: 'mascot-titus' },
+  '1 Timothy': { name: 'Timothy', base: 'assets/mascot-timothy' },
+  '2 Timothy': { name: 'Timothy', base: 'assets/mascot-timothy' },
+  'Titus':     { name: 'Titus',   base: 'assets/mascot-titus' },
 };
-// The "host" mascot for the current book (the one that "brought" the question).
 let hostMascot = null;
 
-// Both mascots are present while you answer; the one matching the question's
-// book steps forward (highlighted) so it reads as "this mascot brought it."
 function setMascot(book) {
   const m = MASCOTS[book] || MASCOTS['1 Timothy'];
   hostMascot = m;
-  // Reset the NEW host to idle (any ongoing reaction on the previous host
-  // finishes on its own — we don't wipe both on every question).
-  ['mascot-timothy', 'mascot-titus'].forEach((id) => {
-    const box = el(id);
-    if (!box) return;
-    box.classList.remove('mascot-host');
-    if (box.id === m.id) {
-      const img = box.querySelector('img');
-      if (img) img.src = `${m.base}-idle.gif`;
-      box.classList.remove('mascot-happy', 'mascot-sad');
-    }
-  });
-  // Highlight the host mascot.
-  if (el(m.id)) el(m.id).classList.add('mascot-host');
+  const box = el('mascot-idle');
+  const img = el('mascot-idle-img');
+  const label = el('mascot-idle-name');
+  if (!box || !img) return;
+  img.src = `${m.base}-idle.gif`;
+  img.alt = m.name;
+  if (label) label.textContent = m.name;
+  box.style.display = 'flex';
+  box.classList.remove('mascot-happy', 'mascot-sad');
 }
 
-// React AFTER the Continue press: host mascot goes happy (correct) / sad (wrong),
-// while the companion stays idle and calm. Both then settle to idle.
 function reactMascot(kind) {
   if (!hostMascot) return;
-  const reactingId = hostMascot.id; // snapshot the reacting mascot
-  const base = hostMascot.base;
-  const host = el(reactingId);
-  if (!host) return;
   const mood = (kind === 'correct' || kind === 'grace') ? 'happy' : 'sad';
-  const img = host.querySelector('img');
-  img.src = `${base}-${mood}.gif`;
-  host.classList.remove('mascot-happy', 'mascot-sad');
-  void host.offsetWidth; // reflow to restart CSS pop
-  host.classList.add(mood === 'happy' ? 'mascot-happy' : 'mascot-sad');
-  // Settle the reacting mascot back to idle after a beat (uses the snapshot).
-  setTimeout(() => {
-    const host2 = el(reactingId);
-    const img2 = host2?.querySelector('img');
-    if (img2) img2.src = `${base}-idle.gif`;
-    host2?.classList.remove('mascot-happy', 'mascot-sad');
-  }, 1800);
+  const src = `${hostMascot.base}-${mood}.gif`;
+  // Large centred overlay — on top of the feedback modal, high z-index.
+  const overlay = document.createElement('div');
+  overlay.className = `mascot-reaction mascot-${mood}`;
+  overlay.id = 'mascot-reaction';
+  // Remove any stale reaction first
+  document.getElementById('mascot-reaction')?.remove();
+  overlay.innerHTML = `<img src="${src}" alt="${hostMascot.name} ${mood}" /><span>${hostMascot.name}</span>`;
+  document.body.appendChild(overlay);
+  // Auto-remove after the feedback transition; showFeedbackModal's Continue
+  // handler also removes it when advancing (so it never lingers).
+  setTimeout(() => overlay.remove(), 1800);
 }
 
 // Show/hide the streak-combo "🔥 ×N" badge based on the current consecutive-correct streak.
@@ -440,11 +426,14 @@ function showFeedbackModal(head, verse, ref, kind, isLast, correctText) {
   `;
   document.body.appendChild(backdrop);
   document.getElementById('feedback-modal-continue').onclick = () => {
-    backdrop.remove();
     reactMascot(kind === 'correct' || kind === 'grace' ? 'correct' : 'wrong');
-    // Let the mascot reaction play briefly before the next question renders,
-    // so the feedback beat is felt (and the correct-answer highlight is read).
-    setTimeout(() => btnNextGo(), 900);
+    // Reaction is a large overlay ON TOP of the still-visible modal; both
+    // dismiss together after a beat so the player sees the mascot react.
+    setTimeout(() => {
+      backdrop.remove();
+      document.getElementById('mascot-reaction')?.remove();
+      btnNextGo();
+    }, 900);
   };
 }
 

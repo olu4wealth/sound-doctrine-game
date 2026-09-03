@@ -115,24 +115,16 @@
         <div class="streak-combo hidden" id="streak-combo">🔥 ×2</div>
       </div>
 
-      <!-- Both mascots present the question; the one matching the book is highlighted.
-           They react (happy/sad) after you press Continue. -->
-      <div class="mascot-stage" id="mascot-stage" aria-hidden="true">
-        <div class="mascot" id="mascot-timothy">
-          <img src="assets/mascot-timothy-idle.gif" alt="" />
-          <span>Timothy</span>
-        </div>
-        <div class="mascot" id="mascot-titus">
-          <img src="assets/mascot-titus-idle.gif" alt="" />
-          <span>Titus</span>
-        </div>
-      </div>
-
-      <!-- Oil-vial power-ups: spend an oil vial to skip, get 50/50, or freeze the timer -->
+      <!-- Oil-vial power-ups + the active mascot sits beside Freeze (visible, non-distracting) -->
       <div class="powerups" id="powerups">
         <button class="powerup" id="pu-skip" data-pu="skip" title="Spend 1 oil to skip this question">⏭️ Skip<span class="pu-cost">1 🫗</span></button>
         <button class="powerup" id="pu-5050" data-pu="5050" title="Spend 1 oil to remove two wrong options">✂️ 50/50<span class="pu-cost">1 🫗</span></button>
         <button class="powerup" id="pu-freeze" data-pu="freeze" title="Spend 1 oil to freeze the timer for 5s">🧊 Freeze<span class="pu-cost">1 🫗</span></button>
+        <!-- Only the mascot matching the current book's question is shown here (idle) -->
+        <div class="mascot-idle" id="mascot-idle" aria-hidden="true">
+          <img id="mascot-idle-img" src="" alt="" />
+          <span id="mascot-idle-name"></span>
+        </div>
       </div>
 
       <div class="question-card">

@@ -315,41 +315,44 @@ button:disabled { cursor: default; opacity: .55; }
 }
 .streak-combo.hot { color: var(--red); border-color: var(--red); animation: pop .25s ease; }
 
-/* Mascot stage: both Timothy & Titus present as a small duo near the question.
-   The one matching the question's book is highlighted (host) so it reads as
-   "this mascot brought the question." The host reacts on Continue only. */
-.mascot-stage {
-  position: fixed; right: 12px; bottom: 12px; z-index: 5;
-  display: flex; align-items: flex-end; gap: 4px;
+/* Mascot idle — single, book-matched mascot beside Freeze (inside .powerups). Only one at a time. */
+.mascot-idle {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 4px 8px;
+}
+.mascot-idle img {
+  width: 64px; height: 64px; object-fit: contain;
+  filter: drop-shadow(0 4px 10px rgba(120,90,30,.28));
+  border-radius: 50%; outline: 3px solid var(--gold); outline-offset: 2px;
+  background: #fff;
+}
+.mascot-idle span { font-size: .68rem; font-weight: 800; color: var(--gold-deep); }
+@media (max-width: 420px) { .mascot-idle img { width: 52px; height: 52px; } }
+
+/* Mascot reaction — large overlay centred ON TOP of the feedback modal. */
+.mascot-reaction {
+  position: fixed; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3000;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
   pointer-events: none;
+  animation: mascotReactionPop .45s ease;
 }
-.mascot {
-  display: flex; flex-direction: column; align-items: center; gap: 1px;
-  opacity: .55; transition: opacity .3s ease, transform .3s ease, filter .3s ease;
+.mascot-reaction img {
+  width: 140px; height: 140px; object-fit: contain;
+  filter: drop-shadow(0 8px 22px rgba(120,90,30,.38));
+  border-radius: 50%; outline: 4px solid #fff; outline-offset: 3px;
+  background: #fff;
 }
-.mascot img { width: 46px; height: 46px; object-fit: contain; filter: drop-shadow(0 3px 6px rgba(120,90,30,.25)); transition: width .3s ease; }
-.mascot span { font-size: .62rem; font-weight: 800; color: var(--ink-soft); background: rgba(255,255,255,.8); padding: 1px 6px; border-radius: 999px; }
-/* The host mascot (matches the book) steps forward, brighter, bordered in gold */
-.mascot.mascot-host { opacity: 1; transform: translateY(-4px); }
-.mascot.mascot-host img { width: 60px; height: 60px; filter: drop-shadow(0 4px 8px rgba(243,167,36,.4)); outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 50%; }
-.mascot.mascot-host span { color: var(--gold-deep); }
-/* reactions */
-.mascot.mascot-happy { animation: mascotHappy .6s ease; }
-.mascot.mascot-sad { animation: mascotSad .6s ease; }
-@keyframes mascotHappy {
-  0% { transform: translateY(0) scale(1); }
-  35% { transform: translateY(-9px) scale(1.08); }
-  100% { transform: translateY(0) scale(1); }
+.mascot-reaction span { font-size: .9rem; font-weight: 900; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.45); }
+.mascot-reaction.mascot-happy img { outline-color: var(--green); }
+.mascot-reaction.mascot-sad img { outline-color: var(--red); }
+@keyframes mascotReactionPop {
+  0% { transform: translate(-50%, -50%) scale(.75); opacity: 0; }
+  60% { transform: translate(-50%, -50%) scale(1.06); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 }
-@keyframes mascotSad {
-  0% { transform: translateY(0) scale(1); opacity: 1; }
-  40% { transform: translateY(4px) scale(.95); opacity: .6; }
-  100% { transform: translateY(0) scale(1); opacity: 1; }
-}
-@media (max-width: 420px) {
-  .mascot img { width: 40px; height: 40px; }
-  .mascot.mascot-host img { width: 52px; height: 52px; }
-}
+@media (max-width: 420px) { .mascot-reaction img { width: 112px; height: 112px; } }
 
 /* Oil-vial power-ups — warm amber "glass vial" look to match the theme */
 .powerups { display: flex; gap: 8px; justify-content: center; margin: 2px 0 12px; flex-wrap: wrap; }
