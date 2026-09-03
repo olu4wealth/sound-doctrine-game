@@ -249,7 +249,7 @@ button:disabled { cursor: default; opacity: .55; }
 /* ---------- HUD (Duolingo-style top bar) ---------- */
 .hud {
   display: flex; justify-content: space-between; align-items: center;
-  gap: 10px; margin-bottom: 10px;
+  gap: 8px; margin-bottom: 10px;
 }
 .hud-exit {
   width: 44px; height: 44px; margin: 0; padding: 0;
@@ -258,7 +258,7 @@ button:disabled { cursor: default; opacity: .55; }
   color: var(--ink-soft); font-size: 1.1rem; font-weight: 900;
   flex: 0 0 auto;
 }
-.hud-hearts { font-size: 1.15rem; letter-spacing: 2px; flex: 1; text-align: center; }
+.hud-hearts { font-size: 1.15rem; letter-spacing: 1px; flex: 1; text-align: center; white-space: nowrap; }
 .hud-progress { color: var(--ink-soft); font-weight: 900; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
 .hud-oil {
   flex: 0 0 auto; font-weight: 900; color: #7a4b00;
@@ -617,9 +617,14 @@ button:disabled { cursor: default; opacity: .55; }
   .q-prompt { font-size: 1rem; }
   .bid { font-size: .72rem; padding: 8px 4px; }
   .option { padding: 12px 12px; font-size: .94rem; }
-  .hud-hearts { font-size: 1rem; letter-spacing: 1px; }
-  .hud-timer.timer-ring { width: 50px; height: 50px; }
-  .hud-timer.timer-ring .ring { width: 50px; height: 50px; }
+  .hud { gap: 6px; }
+  .hud-exit { width: 38px; height: 38px; font-size: .95rem; }
+  .hud-hearts { font-size: .9rem; letter-spacing: 0; }
+  .hud-progress { font-size: .85rem; }
+  .hud-oil { font-size: .82rem; padding: 3px 8px; }
+  .hud-timer.timer-ring { width: 46px; height: 46px; }
+  .hud-timer.timer-ring .ring { width: 46px; height: 46px; }
+  .hud-timer.timer-ring .ring-label { font-size: .95rem; }
   .title { font-size: 1.6rem; }
   .subtitle { font-size: .95rem; }
   .report-columns { grid-template-columns: 1fr; }
@@ -632,6 +637,13 @@ button:disabled { cursor: default; opacity: .55; }
   .q-prompt { font-size: 1.08rem; }
   .bid { font-size: .78rem; }
   .option { padding: 13px 14px; }
+  .hud { gap: 7px; }
+  .hud-exit { width: 40px; height: 40px; }
+  .hud-hearts { font-size: 1rem; letter-spacing: 0; }
+  .hud-oil { font-size: .85rem; padding: 3px 9px; }
+  .hud-timer.timer-ring { width: 50px; height: 50px; }
+  .hud-timer.timer-ring .ring { width: 50px; height: 50px; }
+  .hud-timer.timer-ring .ring-label { font-size: 1rem; }
 }
 
 /* Tablets (600–1023px): widen content, 2-col report */
