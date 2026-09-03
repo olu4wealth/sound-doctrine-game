@@ -126,6 +126,10 @@ function startClimb() {
   renderHearts();
   nextQuestion();
   showScreen('screen-game');
+  // Fire the interactive tutorial on the player's very first climb (only if not yet done).
+  if (!localStorage.getItem('sd_tutorial_done')) {
+    setTimeout(() => showTutorial(), 500);
+  }
 }
 
 function startDaily() {
@@ -769,7 +773,7 @@ function renderProfile() {
 
 // ---------- Wire up ----------
 // Intro → start (first-time cinematic)
-el('btn-intro-begin').addEventListener('click', () => { showTutorial(); showScreen('screen-start'); });
+el('btn-intro-begin').addEventListener('click', () => showScreen('screen-start'));
 el('btn-intro-how').addEventListener('click', () => showScreen('screen-how'));
 
 // Sound on/off toggle (persists). Default: on.
@@ -885,58 +889,110 @@ async function init() {
 init();
 
 // ---------- Tutorial for first-time players ----------
+// Interactive spotlight walkthrough shown over the real game screen on the first climb.
+// Each step highlights a live element (hearts, timer, options, flame, power-ups) with a
+// crisp tip. Correct, current content (bids were removed) + a Skip for returning players.
 function showTutorial() {
   if (localStorage.getItem('sd_tutorial_done')) return;
+  if (!currentQ) return; // require a live question to spotlight
+
   const backdrop = document.createElement('div');
   backdrop.id = 'tutorial-backdrop';
   backdrop.className = 'tutorial-backdrop';
-  backdrop.innerHTML = `
-    <div class="tutorial-card">
-      <div class="tutorial-step" data-step="1">
-        <h3>Welcome, young elder</h3>
-        <p>Type your name and press <strong>Begin the Charge</strong> to start.</p>
-      </div>
-      <div class="tutorial-step hidden" data-step="2">
-        <h3>The Candle</h3>
-        <p>This is your lamp. <strong>Keep it lit</strong> with correct answers.</p>
-      </div>
-      <div class="tutorial-step hidden" data-step="3">
-        <h3>Answer with confidence</h3>
-        <p>Choose <strong>Confident / Certain / I'll preach it</strong> before picking an answer.</p>
-      </div>
-      <div class="tutorial-step hidden" data-step="4">
-        <h3>The Verse Corrects You</h3>
-        <p>Every answer shows the Scripture — correct or wrong — so you learn.</p>
-      </div>
-      <div class="tutorial-nav">
-        <button id="tut-prev" class="ghost small">Back</button>
-        <button id="tut-next" class="primary">Next</button>
-      </div>
-    </div>
-  `;
+
+  const steps = [
+    {
+      target: '#hud-hearts',
+      place: 'below',
+      h3: 'Your Lamps',
+      p: 'You carry <strong>5 lives</strong>. A wrong answer or a timed-out question costs one. Answer well to reach the hardest rungs.',
+    },
+    {
+      target: '#ring-label',
+      place: 'below',
+      h3: 'The Clock',
+      p: 'This ring <strong>counts down</strong>. The further you climb, the less time you get. Answer before it empties.',
+    },
+    {
+      target: '#q-options',
+      place: 'above',
+      h3: 'Answer Now',
+      p: 'Tap an option. Every answer — right <em>or</em> wrong — shows you the very verse that settles it, with its reference.',
+    },
+    {
+      target: '#powerups',
+      place: 'below',
+      h3: 'Power-ups',
+      p: 'Spend an <strong>oil vial (🫗)</strong> to <strong>Skip</strong> a question, cut it to <strong>50/50</strong>, or <strong>Freeze</strong> the clock for 5 seconds.',
+    },
+  ];
+
+  const tip = document.createElement('div');
+  tip.className = 'tutorial-tip';
+  const spot = document.createElement('div');
+  spot.className = 'tutorial-spot';
+  backdrop.appendChild(spot);
+  backdrop.appendChild(tip);
+
+  const skipBtn = document.createElement('button');
+  skipBtn.className = 'tutorial-skip';
+  skipBtn.textContent = 'Skip';
+  backdrop.appendChild(skipBtn);
+
+  const dots = document.createElement('div');
+  dots.className = 'tutorial-dots';
+  backdrop.appendChild(dots);
+
   document.body.appendChild(backdrop);
-  
-  let step = 1;
-  const goTo = (n) => {
-    backdrop.querySelectorAll('.tutorial-step').forEach(s => s.classList.add('hidden'));
-    const target = backdrop.querySelector(`[data-step="${n}"]`);
-    if (target) target.classList.remove('hidden');
-    step = n;
-    // Hide Back with display:none on step 1 so it doesn't reserve flex space (keeps Next steady).
-    const prev = document.getElementById('tut-prev');
-    prev.style.display = step <= 1 ? 'none' : 'inline-block';
-    document.getElementById('tut-next').textContent = step >= 4 ? 'Begin' : 'Next';
-  };
-  document.getElementById('tut-next').onclick = () => {
-    if (step >= 4) {
-      localStorage.setItem('sd_tutorial_done', '1');
-      backdrop.remove();
-    } else {
-      goTo(step + 1);
+
+  let idx = 0;
+
+  function layout() {
+    const target = document.querySelector(steps[idx].target);
+    if (!target) { finish(); return; }
+    const r = target.getBoundingClientRect();
+    // Position + size the spotlight hole on the target (top-left origin).
+    spot.style.left = (r.left - 6) + 'px';
+    spot.style.top = (r.top - 6) + 'px';
+    spot.style.width = (r.width + 12) + 'px';
+    spot.style.height = (r.height + 12) + 'px';
+
+    // Place the tip card near the target (above/below), within the viewport,
+    // and never under the Skip button (top-right).
+    const tipW = 300;
+    let tx = Math.max(16, Math.min((r.left + r.width / 2 - tipW / 2), (window.innerWidth - tipW - 16)));
+    tip.style.left = tx + 'px';
+    if (steps[idx].place === 'below') tip.style.top = (r.bottom + 12) + 'px';
+    else {
+      // above: keep at least 56px from the top so it clears the Skip button
+      tip.style.top = Math.max(70, (r.top - tip.offsetHeight - 12)) + 'px';
     }
-  };
-  document.getElementById('tut-prev').onclick = () => {
-    if (step > 1) goTo(step - 1);
-  };
-  goTo(1);
+  }
+
+  function drawDots() {
+    dots.innerHTML = steps.map((_, i) => `<span class="${i === idx ? 'on' : ''}"></span>`).join('');
+  }
+
+  function render() {
+    const s = steps[idx];
+    tip.innerHTML = `<h3>${s.h3}</h3><p>${s.p}</p>
+      <div class="tutorial-tip-btns">
+        <button class="ghost small" id="tut-next2">${idx === steps.length - 1 ? 'Done' : 'Next'}</button>
+      </div>`;
+    layout();
+    drawDots();
+    document.getElementById('tut-next2').onclick = () => {
+      if (idx >= steps.length - 1) finish();
+      else { idx++; render(); }
+    };
+  }
+
+  function finish() {
+    localStorage.setItem('sd_tutorial_done', '1');
+    backdrop.remove();
+  }
+
+  skipBtn.onclick = finish;
+  window.addEventListener('resize', layout);
+  render();
 }

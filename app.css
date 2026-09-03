@@ -419,32 +419,55 @@ button:disabled { cursor: default; opacity: .55; }
 .feedback-modal-btn { width: 100%; padding: 14px; font-size: 1.05rem; }
 
 /* ---------- Tutorial overlay ---------- */
+/* ---------- Tutorial (spotlight walkthrough over the real game) ---------- */
 .tutorial-backdrop {
   position: fixed; inset: 0;
-  background: rgba(43, 42, 51, 0.55);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
   z-index: 1500;
-  display: flex; align-items: center; justify-content: center;
-  padding: 20px;
-  animation: fade .25s ease;
+  /* The "hole" is punched with a radial-gradient mask over a dim layer. */
+  background: rgba(20, 18, 26, .62);
+  /* spot target elements get a bright ring via SVG overlay */
 }
-.tutorial-card {
-  background: #fff;
-  border-radius: var(--radius);
-  padding: 28px 22px;
-  max-width: 92%;
-  width: 420px;
-  box-shadow: 0 20px 50px rgba(120, 90, 30, .30);
-  animation: pop .28s ease;
+.tutorial-backdrop.mask { backdrop-filter: none; }
+.tutorial-spot {
+  position: absolute;
+  width: 0; height: 0;
+  pointer-events: none;
+  transition: all .3s ease;
 }
-.tutorial-step h3 { color: var(--ink); font-size: 1.2rem; margin-bottom: 12px; }
-.tutorial-step p { color: var(--ink-soft); line-height: 1.6; }
-.tutorial-step strong { color: var(--gold-deep); }
-.tutorial-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 22px; width: 100%; }
-.tutorial-nav .ghost { flex: 0 0 auto; padding: 12px 22px; width: auto; display: inline-block; margin-top: 0; }
-.tutorial-nav .primary { flex: 1 1 auto; text-align: center; width: auto; display: inline-block; margin-top: 0; }
-/* Back button visibility is toggled via inline display:none on step 1 in JS */
+.tutorial-spot::before {
+  content: ''; position: absolute; inset: -10px;
+  border: 3px solid var(--gold); border-radius: 16px;
+  box-shadow: 0 0 0 9999px rgba(20, 18, 26, .62); /* dim everything except the hole */
+  animation: spotPulse 1.4s ease-in-out infinite;
+}
+@keyframes spotPulse {
+  0%, 100% { border-color: var(--gold); }
+  50% { border-color: var(--gold-deep); }
+}
+.tutorial-tip {
+  position: absolute; z-index: 1501;
+  background: #fff; border-radius: 18px; padding: 18px 20px;
+  max-width: 300px; width: 92%;
+  box-shadow: 0 16px 44px rgba(120, 90, 30, .30);
+  animation: pop .3s ease;
+}
+.tutorial-tip h3 { font-size: 1.1rem; color: var(--ink); margin-bottom: 6px; }
+.tutorial-tip p { font-size: .95rem; color: var(--ink-soft); line-height: 1.55; }
+.tutorial-tip strong { color: var(--gold-deep); }
+.tutorial-tip-btns { display: flex; gap: 8px; margin-top: 14px; }
+.tutorial-tip-btns .ghost { flex: 0 0 auto; padding: 10px 16px; width: auto; display: inline-block; margin-top: 0; }
+.tutorial-tip-btns .primary { flex: 1 1 auto; margin-top: 0; width: auto; padding: 12px 18px; }
+.tutorial-skip {
+  position: absolute; top: 18px; right: 18px; z-index: 1501;
+  background: rgba(255,255,255,.92); color: var(--ink-soft);
+  border: 2px solid var(--line); border-radius: 999px; padding: 8px 16px;
+  font-weight: 800; cursor: pointer;
+}
+.tutorial-skip:hover { border-color: var(--sky-b); }
+/* progress dots */
+.tutorial-dots { display: flex; gap: 6px; justify-content: center; margin-top: 10px; }
+.tutorial-dots span { width: 8px; height: 8px; border-radius: 50%; background: #e5e0d2; }
+.tutorial-dots span.on { background: var(--gold-deep); }
 
 /* ---------- Circular countdown ring ---------- */
 .timer-ring {
