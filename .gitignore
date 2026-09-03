@@ -1,64 +1,48 @@
-# Compiled and binary files
-*.pyc
-*.class
-*.o
-*.exe
-*.dll
-*.so
-*.a
-*.obj
-*.out
-
 # Dependencies
 node_modules/
-venv/
-.venv/
-__pycache__/
+
+# Playwright / test artefacts
+test-results/
+playwright-report/
+verify/shots/
+
+# Tooling
+.dsh-vision-toolkit/
+
+# Unused / intermediate DALL·E assets (kept locally, not deployed)
+assets/candle-alpha.png
+assets/candle-states-alpha.png
+assets/rank-emblems-alpha.png
+assets/clay-decorations-alpha.png
+data/questions.prompt.md
+
+# Env
+.env
+.env.local
+.env.*
+
+# System
+.DS_Store
+Thumbs.db
+
+# Build
 dist/
 build/
-target/
-.gradle/
 
-# Editor/IDE files
+# Editor / IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *.tmp
 
-# System files
-.DS_Store
-Thumbs.db
-.env
-.env.local
-*.env.*
-
-# Logs and coverage
+# Logs / coverage
 *.log
 coverage/
 htmlcov/
 .coverage
 
-# Compressed files
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-*.Z
-*.lz
-*.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
+# Python leftovers (serve venv, etc.)
+__pycache__/
+venv/
+.venv/
