@@ -406,17 +406,18 @@ function showFeedbackModal(head, verse, ref, kind, isLast, correctText) {
   // Remove old modal if any
   const old = document.getElementById('feedback-modal-backdrop');
   if (old) old.remove();
-
+  
   // On a wrong/timeout answer, surface the correct option clearly inside the popup.
   const correctLine = (!correctText || kind === 'correct' || kind === 'grace')
     ? ''
     : `<div class="feedback-answer">The correct answer was: <strong>${correctText}</strong></div>`;
-
+  
   const backdrop = document.createElement('div');
   backdrop.id = 'feedback-modal-backdrop';
   backdrop.className = 'feedback-modal-backdrop';
   backdrop.innerHTML = `
     <div class="feedback-modal-card ${kind}">
+      <div class="mascot-reaction-host"></div>
       <div class="feedback-modal-head">${head}</div>
       ${correctLine}
       <blockquote class="feedback-modal-verse">${verse}</blockquote>
@@ -425,15 +426,22 @@ function showFeedbackModal(head, verse, ref, kind, isLast, correctText) {
     </div>
   `;
   document.body.appendChild(backdrop);
+  
+  // Show mascot reaction immediately when modal appears (not on Continue click)
+  const mood = (kind === 'correct' || kind === 'grace') ? 'happy' : 'sad';
+  const src = hostMascot ? `${hostMascot.base}-${mood}.gif` : '';
+  const name = hostMascot ? hostMascot.name : '';
+  const hostEl = backdrop.querySelector('.mascot-reaction-host');
+  if (hostEl && hostMascot) {
+    hostEl.innerHTML = `<div class="mascot-reaction mascot-${mood}" id="mascot-reaction"><img src="${src}" alt="${name} ${mood}" /><span>${name}</span></div>`;
+  }
+  
   document.getElementById('feedback-modal-continue').onclick = () => {
-    reactMascot(kind === 'correct' || kind === 'grace' ? 'correct' : 'wrong');
-    // Reaction is a large overlay ON TOP of the still-visible modal; both
-    // dismiss together after a beat so the player sees the mascot react.
+    // Reaction is already visible; just dismiss together with the modal
     setTimeout(() => {
       backdrop.remove();
-      document.getElementById('mascot-reaction')?.remove();
       btnNextGo();
-    }, 900);
+    }, 200);
   };
 }
 
