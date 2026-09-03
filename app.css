@@ -262,11 +262,12 @@ button:disabled { cursor: default; opacity: .55; }
 .hud-progress { color: var(--ink-soft); font-weight: 900; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
 .hud-oil {
   flex: 0 0 auto; font-weight: 900; color: #7a4b00;
+  width: 38px; height: 38px;
+  display: flex; align-items: center; justify-content: center;
   background: linear-gradient(180deg, #fff8e8, #ffecc7);
-  border: 2px solid var(--gold-deep); border-radius: 999px; padding: 4px 12px;
-  font-size: .95rem; white-space: nowrap;
+  border: 2px solid var(--gold-deep); border-radius: 50%;
+  font-size: .9rem; white-space: nowrap; line-height: 1;
   box-shadow: 0 2px 0 #d9a53a, inset 0 0 8px rgba(243, 180, 49, .28);
-  letter-spacing: .3px;
 }
 .hud-oil.empty {
   color: var(--ink-soft);
@@ -325,9 +326,10 @@ button:disabled { cursor: default; opacity: .55; }
   box-shadow: 0 2px 0 #d9a53a, inset 0 0 6px rgba(243, 180, 49, .18);
 }
 .powerup .pu-cost {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: .74rem; font-weight: 800; color: #7a4b00;
-  background: #fff; border: 1px solid #ecc584; border-radius: 999px; padding: 1px 8px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 1px;
+  min-width: 28px; height: 28px; line-height: 1; padding: 0 4px;
+  font-size: .78rem; font-weight: 800; color: #7a4b00;
+  background: #fff; border: 1px solid #ecc584; border-radius: 50%;
 }
 .powerup:hover:not(:disabled) { border-color: var(--gold-deep); background: #fff0d4; transform: translateY(-1px); }
 .powerup:disabled { opacity: .5; cursor: default; filter: grayscale(.4); }
@@ -616,7 +618,7 @@ button:disabled { cursor: default; opacity: .55; }
   .hud-exit { width: 38px; height: 38px; font-size: .95rem; }
   .hud-hearts { font-size: .9rem; letter-spacing: 0; }
   .hud-progress { font-size: .85rem; }
-  .hud-oil { font-size: .82rem; padding: 3px 8px; }
+  .hud-oil { width: 34px; height: 34px; font-size: .8rem; }
   .hud-timer.timer-ring { width: 46px; height: 46px; }
   .hud-timer.timer-ring .ring { width: 46px; height: 46px; }
   .hud-timer.timer-ring .ring-label { font-size: .95rem; }
@@ -635,7 +637,7 @@ button:disabled { cursor: default; opacity: .55; }
   .hud { gap: 7px; }
   .hud-exit { width: 40px; height: 40px; }
   .hud-hearts { font-size: 1rem; letter-spacing: 0; }
-  .hud-oil { font-size: .85rem; padding: 3px 9px; }
+  .hud-oil { width: 36px; height: 36px; font-size: .85rem; }
   .hud-timer.timer-ring { width: 50px; height: 50px; }
   .hud-timer.timer-ring .ring { width: 50px; height: 50px; }
   .hud-timer.timer-ring .ring-label { font-size: 1rem; }
