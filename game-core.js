@@ -100,24 +100,24 @@ export function nearMiss(q, chosenOrigIdx) {
 }
 
 // Resolve an answer. chosenOrigIdx is the *original* option index the player picked
-// (i.e., after un-shuffling display order). Returns outcome, pot delta, points.
-// Scoring is flat (no confidence bid): correct = BASE_POINTS, grace = half.
-// The `bid` arg is accepted for backward-compat but ignored.
+// (i.e., after un-shuffling display order). bid is a BIDS entry (or null → 1×).
+// D3 two-step stake (REFOCUS Phase 6): Correct +stake, Wrong −stake, Grace +half-stake (50% retained).
+// Grace only when nearIndexes marks this distractor as a close, Scripture-grounded near-miss.
 export function resolveAnswer(q, chosenOrigIdx, bid) {
+  const mult = bid?.mult ?? 1;
   const correct = chosenOrigIdx === q.correctIndex;
   const grace = !correct && nearMiss(q, chosenOrigIdx);
-  const mult = 1; // flat scoring — confidence bids removed
 
-  let pot = 0;
-  let points = 0;
   if (correct) {
-    points = BASE_POINTS * mult;
-    pot = points;
-  } else if (grace) {
-    points = Math.round(BASE_POINTS * mult * 0.5);
-    pot = points;
+    const p = BASE_POINTS * mult;
+    return { outcome: 'correct', points: p, pot: p, mult };
   }
-  return { outcome: correct ? 'correct' : grace ? 'near-miss' : 'wrong', points, pot, mult };
+  if (grace) {
+    const p = Math.round(BASE_POINTS * mult * 0.5);
+    return { outcome: 'near-miss', points: p, pot: p, mult };
+  }
+  const p = BASE_POINTS * mult;
+  return { outcome: 'wrong', points: -p, pot: -p, mult };
 }
 
 // ---------- Tier helpers ----------

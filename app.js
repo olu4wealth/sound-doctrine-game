@@ -2,7 +2,7 @@
 // Duolingo-style: countdown timer (bonus time on correct), kind hearts, color-coded
 // options, juicy micro-interactions. Content stays scripturally verified.
 import {
-  TIER_NAMES, TIER_EMOJI, BASE_POINTS, MAX_STREAK, MAX_HEARTS,
+  TIER_NAMES, TIER_EMOJI, BIDS, BASE_POINTS, MAX_STREAK, MAX_HEARTS,
   timeForTier, bonusTime,
   dailyCharge, dailySeed, resolveAnswer, tierOf,
   pickNextLadder, applyDailyVisit, buildChargeReport, compositeScore,
@@ -572,16 +572,105 @@ function usePowerup(type) {
   }
 }
 
-// ---------- Answering ----------
+// ---------- Answering (D3 two-step: answer → stake → commit) ----------
+let _pending = null; // { displayIdx, chosenOrig }
+
 function onAnswer(displayIdx) {
-  if (!timeRunning) return; // already answered / timed out
+  if (!timeRunning) return;
+  if (_pending) return; // already pending a stake
+  const q = currentQ;
+  const chosenOrig = q._displayOrder[displayIdx];
+  _pending = { displayIdx, chosenOrig };
+  // Pause the clock while the stake card is up (player has already chosen knowledge)
   stopTimer();
+  // Dim the chosen option to show selection, but keep all enabled until stake commits
+  const qWrap = el('q-options');
+  qWrap.querySelectorAll('.option').forEach((btn) => {
+    btn.classList.toggle('pending', Number(btn.dataset.display) === displayIdx);
+  });
+  showStakeCard(q, displayIdx, chosenOrig);
+}
+
+function showStakeCard(q, displayIdx, chosenOrig) {
+  const old = document.getElementById('stake-modal-backdrop');
+  if (old) old.remove();
+  const chosenText = q.options[chosenOrig] || '';
+  const letter = ['A', 'B', 'C', 'D'][displayIdx] || '?';
+  let selectedBid = BIDS[0]; // default 1× Safe
+
+  const backdrop = document.createElement('div');
+  backdrop.id = 'stake-modal-backdrop';
+  backdrop.className = 'feedback-modal-backdrop stake-backdrop';
+  backdrop.innerHTML = `
+    <div class="stake-card">
+      <div class="stake-head">You chose ${letter} — how sure are you?</div>
+      <div class="stake-chosen">&ldquo;${chosenText}&rdquo;</div>
+      <div class="stake-options" id="stake-options"></div>
+      <div class="stake-preview" id="stake-preview"></div>
+      <div class="stake-actions">
+        <button class="ghost" id="stake-cancel">Change answer</button>
+        <button class="primary" id="stake-confirm">Confirm</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+
+  const optsWrap = backdrop.querySelector('#stake-options');
+  const prevEl = backdrop.querySelector('#stake-preview');
+
+  function renderPreview() {
+    const p = BASE_POINTS * selectedBid.mult;
+    const grace = Math.round(p * 0.5);
+    const near = Array.isArray(q.nearIndexes) && q.nearIndexes.includes(chosenOrig);
+    const graceLine = near ? ` · Grace (near-miss): +${grace}` : ' · Grace: — (only close distractors)';
+    prevEl.textContent = `Correct: +${p}  ·  Wrong: −${p}${graceLine}`;
+  }
+
+  BIDS.forEach((bid) => {
+    const btn = document.createElement('button');
+    btn.className = 'stake-opt' + (bid.mult === selectedBid.mult ? ' active' : '');
+    btn.dataset.mult = String(bid.mult);
+    btn.innerHTML = `<span class="stake-mult">${bid.mult}×</span> ${bid.label} <span class="stake-pts">+${BASE_POINTS * bid.mult}/−${BASE_POINTS * bid.mult}</span>`;
+    btn.addEventListener('click', () => {
+      selectedBid = bid;
+      optsWrap.querySelectorAll('.stake-opt').forEach((b) => b.classList.toggle('active', Number(b.dataset.mult) === bid.mult));
+      renderPreview();
+    });
+    optsWrap.appendChild(btn);
+  });
+  renderPreview();
+
+  backdrop.querySelector('#stake-cancel').onclick = () => {
+    backdrop.remove();
+    _pending = null;
+    el('q-options')?.querySelectorAll('.option').forEach((b) => b.classList.remove('pending'));
+    // resume the clock from where it was (give at least 5s so stake time doesn't punish)
+    timeLeft = Math.max(5, timeLeft);
+    timeRunning = true;
+    renderTimerBar();
+    timerInt = setInterval(() => {
+      if (tutorialPaused) { renderTimerBar(); return; }
+      if (Date.now() < frozenUntil) { renderTimerBar(); return; }
+      timeLeft -= 0.1;
+      if (timeLeft <= 0) { timeLeft = 0; stopTimer(); onTimeout(); return; }
+      renderTimerBar();
+    }, 100);
+  };
+  backdrop.querySelector('#stake-confirm').onclick = () => {
+    backdrop.remove();
+    const pending = _pending;
+    _pending = null;
+    el('q-options')?.querySelectorAll('.option').forEach((b) => b.classList.remove('pending'));
+    commitAnswer(pending.displayIdx, pending.chosenOrig, selectedBid);
+  };
+}
+
+function commitAnswer(displayIdx, chosenOrig, bid) {
   const q = currentQ;
   const qWrap = el('q-options');
   const buttons = qWrap.querySelectorAll('.option');
-  const chosenOrig = q._displayOrder[displayIdx];
 
-  const res = resolveAnswer(q, chosenOrig);
+  const res = resolveAnswer(q, chosenOrig, bid);
   const isCorrect = res.outcome === 'correct';
   const isGrace = res.outcome === 'near-miss';
 
@@ -648,14 +737,16 @@ function onAnswer(displayIdx) {
   const gained = bonusTime(res.outcome);
   let head = '';
   let kind = 'correct';
+  const stakePts = BASE_POINTS * (bid?.mult ?? 1);
   if (isCorrect) {
     head = `Rightly divided! +${res.points} ⚜ · +${gained}s${comboLine}${bonusLine}`;
     kind = 'correct';
   } else if (isGrace) {
-    head = `Grace — near to it. ${res.points} ⚜ kept · +${gained}s`;
+    // Grace transparency: show kept vs would-have-lost
+    head = `Grace — near-miss kept. +${res.points} ⚜ (50% of ${stakePts} retained) · +${gained}s<br><span class="grace-detail">Normal loss would have been −${stakePts}</span>`;
     kind = 'grace';
   } else {
-    head = 'Not quite. Scripture corrects us —';
+    head = `Not quite. −${stakePts} ⚜ — Scripture corrects us —`;
     kind = 'wrong';
   }
   const verse = quotesOf(q);

@@ -530,6 +530,29 @@ button:disabled { cursor: default; opacity: .55; }
 .option.correct { background: #d7ffb8; border-color: var(--green); color: #2c7a00; }
 .option.wrong { background: #ffdfdf; border-color: var(--red); color: #a61e1e; }
 .option.grace { background: #fff3d6; border-color: var(--amber); color: #8a5a00; }
+.option.pending { background: #fff5e6; border-color: var(--gold-deep); box-shadow: 0 0 0 3px rgba(243,180,49,.22); }
+
+/* ---------- Two-step stake card (D3) ---------- */
+.stake-card {
+  background: #fff; border: 2px solid #fff; border-radius: var(--radius);
+  padding: 22px 18px 16px; max-width: 92%; width: 420px;
+  box-shadow: 0 20px 50px rgba(120,90,30,.30); animation: pop .28s ease;
+}
+.stake-head { font-size: 1.05rem; font-weight: 900; color: var(--ink); margin-bottom: 6px; text-align: center; }
+.stake-chosen { font-size: .92rem; color: var(--ink-soft); text-align: center; margin-bottom: 12px; font-style: italic; }
+.stake-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.stake-opt {
+  background: #fff; border: 2px solid var(--line); border-radius: 12px;
+  padding: 10px 8px; font-size: .84rem; font-weight: 800; color: var(--ink);
+  text-align: center; margin-top: 0; width: auto;
+}
+.stake-opt .stake-mult { color: var(--gold-deep); font-weight: 900; }
+.stake-opt .stake-pts { display: block; font-size: .72rem; color: var(--ink-soft); font-weight: 700; }
+.stake-opt.active { background: #fff5e6; border-color: var(--gold-deep); color: var(--ink); }
+.stake-opt:last-child { grid-column: 1 / -1; }
+.stake-preview { text-align: center; font-size: .82rem; font-weight: 800; color: var(--ink-soft); margin-bottom: 12px; min-height: 1.2em; }
+.stake-actions { display: flex; gap: 8px; }
+.stake-actions .ghost, .stake-actions .primary { flex: 1; margin-top: 0; padding: 12px 10px; font-size: .92rem; }
 
 .feedback-modal-backdrop {
   position: fixed;
@@ -564,13 +587,24 @@ button:disabled { cursor: default; opacity: .55; }
 .feedback-modal-card.grace { border-top: 5px solid var(--amber); }
 .feedback-modal-card.wrong { border-top: 5px solid var(--red); }
 .feedback-modal-head { font-size: 1.1rem; font-weight: 800; color: var(--ink); margin-bottom: 14px; line-height: 1.35; }
+.grace-detail { display: inline-block; font-size: .82rem; font-weight: 700; color: var(--ink-soft); background: #fff5e6; border: 1px solid #ffe3ae; border-radius: 999px; padding: 2px 10px; margin-top: 6px; }
 .feedback-answer {
   background: #d7ffb8; border: 2px solid var(--green); border-radius: 12px;
   padding: 10px 12px; margin-bottom: 14px; font-size: .98rem; color: #2c7a00;
 }
 .feedback-answer strong { font-weight: 900; }
-.feedback-modal-verse { font-size: 1rem; line-height: 1.6; color: var(--ink); margin-bottom: 14px; padding-left: 12px; border-left: 3px solid var(--gold); font-style: italic; }
-.feedback-modal-ref { display: block; font-size: .85rem; color: var(--ink-soft); font-weight: 700; margin-bottom: 18px; }
+.feedback-modal-verse {
+  font-size: 1.08rem; line-height: 1.65; color: var(--ink);
+  margin-bottom: 10px; padding: 12px 14px 12px 16px;
+  border-left: 4px solid var(--gold); border-radius: 0 12px 12px 0;
+  background: linear-gradient(180deg, #fffdf6 0%, #fff6e0 100%);
+  font-style: italic; quotes: "“" "”";
+}
+.feedback-modal-ref {
+  display: block; font-size: .88rem; color: var(--gold-deep);
+  font-weight: 800; margin-bottom: 18px; letter-spacing: .2px;
+}
+.feedback-modal-ref::before { content: '📖 '; }
 .feedback-modal-btn { width: 100%; padding: 14px; font-size: 1.05rem; }
 
 /* ---------- Tutorial overlay ---------- */
