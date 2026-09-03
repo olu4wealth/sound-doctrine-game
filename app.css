@@ -329,10 +329,10 @@ button:disabled { cursor: default; opacity: .55; }
 .mascot-idle span { font-size: .68rem; font-weight: 800; color: var(--gold-deep); }
 @media (max-width: 420px) { .mascot-idle img { width: 52px; height: 52px; } }
 
-/* Mascot reaction — large overlay centred ON TOP of the feedback modal. */
+/* Mascot reaction — positioned ABOVE the feedback modal, not overshadowing it. */
 .mascot-reaction {
-  position: fixed; left: 50%; top: 50%;
-  transform: translate(-50%, -50%);
+  position: absolute; left: 50%; top: -160px;
+  transform: translateX(-50%);
   z-index: 3000;
   display: flex; flex-direction: column; align-items: center; gap: 6px;
   pointer-events: none;
@@ -348,9 +348,9 @@ button:disabled { cursor: default; opacity: .55; }
 .mascot-reaction.mascot-happy img { outline-color: var(--green); }
 .mascot-reaction.mascot-sad img { outline-color: var(--red); }
 @keyframes mascotReactionPop {
-  0% { transform: translate(-50%, -50%) scale(.75); opacity: 0; }
-  60% { transform: translate(-50%, -50%) scale(1.06); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  0% { transform: translateX(-50%) scale(.75) translateY(20px); opacity: 0; }
+  60% { transform: translateX(-50%) scale(1.06) translateY(0); opacity: 1; }
+  100% { transform: translateX(-50%) scale(1) translateY(0); opacity: 1; }
 }
 @media (max-width: 420px) { .mascot-reaction img { width: 112px; height: 112px; } }
 
@@ -468,6 +468,14 @@ button:disabled { cursor: default; opacity: .55; }
   width: 420px;
   box-shadow: 0 20px 50px rgba(120, 90, 30, .30);
   animation: pop .28s ease;
+  position: relative;
+}
+.mascot-reaction-host {
+  height: 160px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  margin-bottom: -10px;
 }
 .feedback-modal-card.correct { border-top: 5px solid var(--green); }
 .feedback-modal-card.grace { border-top: 5px solid var(--amber); }
