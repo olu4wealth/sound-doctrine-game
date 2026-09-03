@@ -427,12 +427,17 @@ function spendOil() {
   return true;
 }
 
-// Refresh the power-up buttons' enabled/disabled state.
+// Refresh the power-up buttons' enabled/disabled state + the HUD oil counter.
 function renderPowerups() {
   const n = oilCount();
   document.querySelectorAll('.powerup').forEach((b) => {
     b.disabled = n < 1 || !timeRunning; // need oil and a live question to spend it
   });
+  const hud = el('hud-oil');
+  if (hud) {
+    hud.textContent = `🫗 ${n}`;
+    hud.classList.toggle('empty', n < 1);
+  }
 }
 
 function usePowerup(type) {

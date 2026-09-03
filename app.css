@@ -260,6 +260,12 @@ button:disabled { cursor: default; opacity: .55; }
 }
 .hud-hearts { font-size: 1.15rem; letter-spacing: 2px; flex: 1; text-align: center; }
 .hud-progress { color: var(--ink-soft); font-weight: 900; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+.hud-oil {
+  flex: 0 0 auto; font-weight: 900; color: var(--gold-deep);
+  background: #fff; border: 2px solid #ffe3ae; border-radius: 999px; padding: 4px 10px;
+  font-size: .95rem; white-space: nowrap;
+}
+.hud-oil.empty { color: var(--ink-soft); border-color: var(--line); opacity: .7; }
 .hud-timer.timer-ring { margin: 0; flex: 0 0 auto; width: 56px; height: 56px; }
 .hud-timer.timer-ring .ring { width: 56px; height: 56px; }
 .hud-timer.timer-ring .ring-label { font-size: 1.05rem; font-weight: 900; letter-spacing: -1px; line-height: 1; }
