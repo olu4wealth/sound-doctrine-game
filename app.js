@@ -761,17 +761,29 @@ function refsOf(q) {
 
 function btnNextGo() {
   // When lives are 0, the game should have already ended (see onTimeout guard).
-  // No automatic heart refill — the charge is over when hearts reach zero.
   if (hearts() <= 0) {
-    finishCommon(); // End the game properly with report
+    finishCommon();
     return;
   }
   if (mode === 'daily') {
     dailyIdx++;
     renderDailyQuestion();
-  } else {
-    nextQuestion(); // endless climb — continues until the player fails (hearts 0)
+    return;
   }
+  // Retest mode (Phase 5): consume the focused 10Q list before returning to endless
+  if (session && Array.isArray(session._retestList)) {
+    session._retestIdx = (session._retestIdx || 0) + 1;
+    if (session._retestIdx >= session._retestList.length) {
+      // retest complete — clear retest state and show report (already handled via finish)
+      // If not already finishing, fall through to normal climb
+      delete session._retestList; delete session._retestIdx;
+      nextQuestion();
+    } else {
+      renderRetestQuestion();
+    }
+    return;
+  }
+  nextQuestion();
 }
 
 // ---------- Finishing ----------
@@ -801,7 +813,10 @@ function finishCommon() {
 function finishClimb() { finishCommon(); }
 function finishDaily() { finishCommon(); }
 
-// ---------- Report ----------
+// ---------- Report (Phase 5: Mastery Map + Retest) ----------
+let _lastWeakest = null;
+let _lastMissedSubjects = [];
+
 function renderReport(report, session) {
   el('report-grade').innerHTML =
     `<div class="grade-big">${report.grade.label}</div>
@@ -812,6 +827,55 @@ function renderReport(report, session) {
     <div class="stat"><span class="stat-num">⚜ ${report.pot}</span><span class="stat-label">pot</span></div>
     <div class="stat"><span class="stat-num">${fmtTime(Math.round((session.bestTimeMs || 0) / 1000))}</span><span class="stat-label">solve time</span></div>
   `;
+
+  // Mastery map (per-book chapter breakdown)
+  const masteryEl = el('report-mastery');
+  if (masteryEl) {
+    if (report.mastery && report.mastery.length) {
+      const bookBlocks = report.mastery.map((b) => {
+        const pct = Math.round((b.acc || 0) * 100);
+        const barW = pct + '%';
+        const chRows = (b.chapters || []).map((c) => {
+          const cp = Math.round((c.acc || 0) * 100);
+          const weakest = report.weakestChapter && report.weakestChapter.name === c.name;
+          return `<li class="mastery-ch${weakest ? ' weakest' : ''}"><span class="r-label">${c.name}${weakest ? ' ← WEAKEST' : ''}</span><span class="r-bar"><span class="r-fill" style="width:${cp}%"></span></span><span class="r-pct">${cp}%</span></li>`;
+        }).join('') || '<li class="empty">No chapter data yet</li>';
+        return `<div class="mastery-book"><div class="mastery-book-head"><span>${b.name}</span><span class="mastery-pct">${pct}%</span><span class="r-bar"><span class="r-fill" style="width:${barW}"></span></span></div><ul class="mastery-chapters">${chRows}</ul></div>`;
+      }).join('');
+      masteryEl.innerHTML = `<h3>YOUR SCRIPTURE MASTERY</h3>${bookBlocks}`;
+    } else {
+      masteryEl.innerHTML = '';
+    }
+  }
+
+  // Weakest chapter card
+  const weakestEl = el('report-weakest');
+  if (weakestEl) {
+    const wc = report.weakestChapter;
+    if (wc) {
+      const pct = Math.round((wc.acc || 0) * 100);
+      const versesList = wc.verses && wc.verses.length
+        ? `<ul class="weakest-verses">${wc.verses.map((v) => `<li><strong>${v.passage || wc.name}</strong> — &ldquo;${v.text}&rdquo;</li>`).join('')}</ul>`
+        : '';
+      weakestEl.innerHTML = `<h3>SPECIFIC WEAKNESS: ${wc.name}</h3><div class="weakest-meta">Accuracy: ${pct}% (${Math.round(wc.acc * wc.asked)}/${wc.asked} correct)</div>${versesList}`;
+      _lastWeakest = wc;
+    } else {
+      weakestEl.innerHTML = '';
+      _lastWeakest = null;
+    }
+  }
+
+  // Missed verses
+  const missedEl = el('report-missed');
+  if (missedEl) {
+    const mv = report.missedVerses || [];
+    _lastMissedSubjects = [...new Set(mv.map((v) => v.subject))];
+    if (mv.length) {
+      missedEl.innerHTML = `<h3>Missed Verses</h3><ul>${mv.map((v) => `<li><strong>${v.passage}</strong> — &ldquo;${v.text}&rdquo;</li>`).join('')}</ul>`;
+    } else {
+      missedEl.innerHTML = '<h3>Missed Verses</h3><p class="empty">None — well done. No verses missed this charge.</p>';
+    }
+  }
 
   const col = (title, rows) => {
     const body = rows.length
@@ -830,6 +894,66 @@ function renderReport(report, session) {
     ? `<h3>How to do better</h3><ul>${report.prescriptions.map((p) => `<li>${p.instruction}</li>`).join('')}</ul>`
     : '<h3>How to do better</h3><p>Keep climbing — seek the harder rungs.</p>';
   el('report-rx').innerHTML = rx;
+
+  // Retest row
+  const retestEl = el('report-retest');
+  if (retestEl) {
+    if (report.missedVerses && report.missedVerses.length) {
+      const label = _lastWeakest ? _lastWeakest.name : (_lastMissedSubjects[0] || 'My Weakness');
+      retestEl.innerHTML = `<button class="primary" id="btn-retest">Retest My Weakness</button><button class="ghost" id="btn-study-weak">Study ${label}</button>`;
+      // wire after innerHTML
+      setTimeout(() => {
+        el('btn-retest')?.addEventListener('click', startRetest);
+        el('btn-study-weak')?.addEventListener('click', () => {
+          const target = el('report-missed');
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      }, 0);
+    } else {
+      retestEl.innerHTML = '';
+    }
+  }
+}
+
+function startRetest() {
+  const wc = _lastWeakest;
+  const subjects = _lastMissedSubjects;
+  // Build a focused 10Q pool: same chapter first, then same subjects, then same book
+  let pool = [];
+  if (wc) {
+    pool = bank.filter((q) => `${q.book} ${q.chapter}` === wc.name);
+  }
+  if (pool.length < 10 && subjects.length) {
+    const bySubject = bank.filter((q) => subjects.includes(q.subject) && !pool.some((p) => p.id === q.id));
+    pool = [...pool, ...bySubject];
+  }
+  if (pool.length < 10 && wc) {
+    const book = wc.name.split(' ').slice(0, -1).join(' ') || wc.name;
+    const byBook = bank.filter((q) => q.book === book && !pool.some((p) => p.id === q.id));
+    pool = [...pool, ...byBook];
+  }
+  if (pool.length < 6) {
+    pool = [...bank];
+  }
+  pool = shuffle(Math.random, pool).slice(0, 10);
+  mode = 'ladder';
+  resetSession();
+  session._retestList = pool;
+  session._retestIdx = 0;
+  pool.forEach((q) => { q._usedThisRun = true; });
+  renderHearts();
+  showScreen('screen-game');
+  renderRetestQuestion();
+}
+
+function renderRetestQuestion() {
+  const list = session._retestList;
+  if (!list || session._retestIdx >= list.length) { finishClimb(); return; }
+  const q = list[session._retestIdx];
+  q.tier = tierOf(q);
+  currentQ = q;
+  renderQuestion(q);
+  el('q-type').textContent = `${TIER_EMOJI[q.tier]} T${q.tier} · Retest`;
 }
 
 // ---------- Leaderboard ----------

@@ -17,9 +17,11 @@ export const TIER_NAMES = [
 export const TIER_EMOJI = [null, '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣'];
 
 export const BIDS = [
-  { id: 'confident', label: 'Confident', mult: 1 },
-  { id: 'certain', label: 'Certain', mult: 2 },
-  { id: 'preach', label: "I'll preach it", mult: 3 },
+  { id: 'safe',      label: 'Safe',       mult: 1 },
+  { id: 'cautious',  label: 'Cautious',   mult: 2 },
+  { id: 'confident', label: 'Confident',  mult: 3 },
+  { id: 'certain',   label: 'Certain',    mult: 4 },
+  { id: 'preach',    label: 'Preach It',  mult: 5 },
 ];
 
 export const BASE_POINTS = 100; // per correct question at 1× bid
@@ -350,6 +352,28 @@ export function buildChargeReport(session, bank) {
     };
   });
 
+  // Mastery Map extras (Phase 5): weakest chapter/book + missed verses + per-book mastery
+  let weakestChapter = null;
+  if (allChapters.length) {
+    const sortedWorst = [...allChapters].sort((a, b) => a.acc - b.acc || b.asked - a.asked);
+    const wc = sortedWorst[0];
+    const missedForChapter = answered.filter((q) => !q._correct && `${q.book} ${q.chapter}` === wc.key);
+    weakestChapter = {
+      name: wc.key, acc: wc.acc, asked: wc.asked,
+      refs: [...(wc.refs || [])],
+      verses: missedForChapter.map((q) => ({ passage: referencesOf(q).join(' · '), text: (q.verseText || (Array.isArray(q.verses) ? q.verses.map((v) => v.verseText).join(' ') : '')) })),
+    };
+  }
+  const missedVerses = answered.filter((q) => !q._correct).map((q) => ({
+    id: q.id, book: q.book, chapter: q.chapter, subject: q.subject,
+    passage: referencesOf(q).join(' · '),
+    text: q.verseText || (Array.isArray(q.verses) ? q.verses.map((v) => v.verseText).join(' ') : ''),
+  }));
+  const mastery = books.map((b) => ({
+    name: b.key, acc: b.acc, asked: b.asked,
+    chapters: allChapters.filter((c) => c.key.startsWith(b.key + ' ')).map((c) => ({ name: c.key, acc: c.acc, asked: c.asked })),
+  }));
+
   return {
     acc, grade, pot,
     answered: total, correct,
@@ -358,6 +382,9 @@ export function buildChargeReport(session, bank) {
     prescriptions: rx,
     books: books.map((r) => ({ name: r.key, acc: r.acc })),
     chapters: revisitChapters.map((r) => ({ name: r.key, acc: r.acc })),
+    weakestChapter,
+    missedVerses,
+    mastery,
   };
 }
 

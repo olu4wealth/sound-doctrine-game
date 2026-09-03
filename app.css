@@ -695,6 +695,33 @@ button:disabled { cursor: default; opacity: .55; }
 .r-bar { height: 10px; background: #e5e0d2; border-radius: 5px; overflow: hidden; }
 .r-fill { display: block; height: 100%; background: linear-gradient(90deg, var(--sky-a), var(--sky-b)); border-radius: 5px; }
 .r-pct { text-align: right; color: var(--ink-soft); font-size: .8rem; font-weight: 800; }
+/* Mastery Map (Phase 5) */
+.mastery-map { margin: 18px 0 14px; background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); }
+.mastery-map h3 { font-size: .9rem; letter-spacing: .6px; text-transform: uppercase; color: var(--ink); margin-bottom: 12px; text-align: center; }
+.mastery-book { margin-bottom: 14px; }
+.mastery-book-head { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; margin-bottom: 6px; font-weight: 900; color: var(--ink); }
+.mastery-book-head .mastery-pct { font-variant-numeric: tabular-nums; color: var(--sky-b); }
+.mastery-book .r-bar { height: 8px; }
+.mastery-chapters { list-style: none; }
+.mastery-chapters li { display: grid; grid-template-columns: 1fr 90px 42px; align-items: center; gap: 8px; margin-bottom: 6px; font-size: .88rem; color: var(--ink-soft); }
+.mastery-chapters li.weakest { color: #a61e1e; font-weight: 800; }
+.mastery-chapters li.empty { grid-template-columns: 1fr; font-style: italic; }
+
+.weakest-card { margin: 0 0 14px; background: #fff0f0; border: 2px solid #ffcccc; border-radius: 16px; padding: 16px; }
+.weakest-card h3 { font-size: .85rem; letter-spacing: .5px; text-transform: uppercase; color: #a61e1e; margin-bottom: 6px; }
+.weakest-meta { font-size: .88rem; font-weight: 800; color: var(--ink); margin-bottom: 8px; }
+.weakest-verses { list-style: none; }
+.weakest-verses li { margin-bottom: 6px; font-size: .9rem; color: var(--ink-soft); }
+
+.missed-verses { margin: 0 0 14px; background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); }
+.missed-verses h3 { font-size: .9rem; letter-spacing: .5px; text-transform: uppercase; color: var(--ink); margin-bottom: 8px; }
+.missed-verses ul { list-style: none; }
+.missed-verses li { margin-bottom: 8px; font-size: .92rem; color: var(--ink-soft); line-height: 1.5; }
+.missed-verses li strong { color: var(--gold-deep); }
+
+.retest-row { display: flex; gap: 10px; margin: 14px 0; flex-wrap: wrap; }
+.retest-row .primary, .retest-row .ghost { flex: 1; min-width: 140px; }
+
 .report-rx { margin-top: 18px; background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); }
 .report-rx h3 { color: var(--ink); margin-bottom: 8px; }
 .report-rx ul { padding-left: 18px; color: var(--ink-soft); }
