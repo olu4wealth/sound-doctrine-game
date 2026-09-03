@@ -388,11 +388,12 @@ function onAnswer(displayIdx) {
     bonusLine = ` · ${milestone.label} +${milestone.points} ⚜`;
   }
 
-  // Hearts: lose one on wrong/timeout, refund gracefully on grace (Duolingo-style lives)
+  // Hearts: only lost on wrong/timeout. Correct and grace neither gain nor lose
+  // a life — getting answers right should not reward extra lives (in climb or daily).
   if (isCorrect) {
-    if (hearts() < MAX_HEARTS) setHearts(hearts() + 1); // gentle refill
+    // no heart change
   } else if (isGrace) {
-    // no heart lost on grace
+    // no heart change on grace
   } else {
     setHearts(hearts() - 1);
   }
@@ -649,7 +650,11 @@ el('btn-how').addEventListener('click', () => showScreen('screen-how'));
 el('btn-how-back').addEventListener('click', () => showScreen('screen-start'));
 el('btn-leaderboard').addEventListener('click', () => { renderLeaderboard(); showScreen('screen-lb'); });
 el('btn-lb2').addEventListener('click', () => { renderLeaderboard(); showScreen('screen-lb'); });
-el('btn-lb-back').addEventListener('click', () => showScreen('screen-home'));
+el('btn-lb-back').addEventListener('click', () => {
+  // A new player (no name yet) came from the start screen; Back returns there with the name input.
+  // A returning player (name set) came from the candle home; Back returns to the game modes.
+  showScreen(player.name ? 'screen-home' : 'screen-start');
+});
 el('btn-climb').addEventListener('click', () => startClimb());
 el('btn-daily').addEventListener('click', () => startDaily());
 el('btn-daily-start').addEventListener('click', () => beginDailyList());
