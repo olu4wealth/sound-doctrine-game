@@ -108,13 +108,14 @@ function renderCandle() {
 
 // ---------- Session setup ----------
 function resetSession() {
-  // Full reset when starting new charge (after a lost game): hearts, scores, session
-  if (hearts() <= 0) setHearts(MAX_HEARTS); // only restore if lost
+  // A new game always starts afresh: full lives, empty session, cleared per-question state.
+  setHearts(MAX_HEARTS);
   session = { questions: [], pot: 0, elapsedMs: 0, daily: false, oilVialsEarned: 0, bestTimeMs: 0, runTiers: [], maxRunTier: 0 };
   dailyIdx = 0;
   bank.forEach((q) => {
     delete q._usedThisRun; delete q._outcome; delete q._correct; delete q._bid; delete q._displayOrder;
   });
+  savePlayer(player);
 }
 
 function startClimb() {
