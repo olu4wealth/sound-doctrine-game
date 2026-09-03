@@ -472,16 +472,11 @@ button:disabled { cursor: default; opacity: .55; }
 .tutorial-tip h3 { font-size: 1.1rem; color: var(--ink); margin-bottom: 6px; }
 .tutorial-tip p { font-size: .95rem; color: var(--ink-soft); line-height: 1.55; }
 .tutorial-tip strong { color: var(--gold-deep); }
-.tutorial-tip-btns { display: flex; gap: 8px; margin-top: 14px; }
-.tutorial-tip-btns .ghost { flex: 0 0 auto; padding: 10px 16px; width: auto; display: inline-block; margin-top: 0; }
-.tutorial-tip-btns .primary { flex: 1 1 auto; margin-top: 0; width: auto; padding: 12px 18px; }
-.tutorial-skip {
-  position: absolute; top: 18px; right: 18px; z-index: 1501;
-  background: rgba(255,255,255,.92); color: var(--ink-soft);
-  border: 2px solid var(--line); border-radius: 999px; padding: 8px 16px;
-  font-weight: 800; cursor: pointer;
-}
-.tutorial-skip:hover { border-color: var(--sky-b); }
+.tutorial-tip-btns { display: flex; align-items: stretch; gap: 8px; margin-top: 14px; }
+/* Skip — same green look as Next but compact */
+.tutorial-tip-btns #tut-now { flex: 0 1 auto; padding: 12px 18px; font-size: .9rem; margin-top: 0; }
+/* Next — the prominent, full-width button */
+.tutorial-tip-btns #tut-next2 { flex: 1 1 auto; margin-top: 0; padding: 12px 18px; }
 /* progress dots */
 .tutorial-dots { display: flex; gap: 6px; justify-content: center; margin-top: 10px; }
 .tutorial-dots span { width: 8px; height: 8px; border-radius: 50%; background: #e5e0d2; }

@@ -942,11 +942,6 @@ function showTutorial() {
   backdrop.appendChild(spot);
   backdrop.appendChild(tip);
 
-  const skipBtn = document.createElement('button');
-  skipBtn.className = 'tutorial-skip';
-  skipBtn.textContent = 'Skip';
-  backdrop.appendChild(skipBtn);
-
   const dots = document.createElement('div');
   dots.className = 'tutorial-dots';
   backdrop.appendChild(dots);
@@ -985,7 +980,8 @@ function showTutorial() {
     const s = steps[idx];
     tip.innerHTML = `<h3>${s.h3}</h3><p>${s.p}</p>
       <div class="tutorial-tip-btns">
-        <button class="ghost small" id="tut-next2">${idx === steps.length - 1 ? 'Done' : 'Next'}</button>
+        <button class="primary" id="tut-now">Skip</button>
+        <button class="primary" id="tut-next2">${idx === steps.length - 1 ? 'Done' : 'Next'}</button>
       </div>`;
     layout();
     drawDots();
@@ -993,6 +989,7 @@ function showTutorial() {
       if (idx >= steps.length - 1) finish();
       else { idx++; render(); }
     };
+    document.getElementById('tut-now').onclick = finish;
   }
 
   function finish() {
@@ -1001,7 +998,6 @@ function showTutorial() {
     backdrop.remove();
   }
 
-  skipBtn.onclick = finish;
   window.addEventListener('resize', layout);
   render();
 }
