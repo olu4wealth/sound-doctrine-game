@@ -331,7 +331,7 @@ button:disabled { cursor: default; opacity: .55; }
 
 /* Mascot reaction — positioned ABOVE the feedback modal, not overshadowing it. */
 .mascot-reaction {
-  position: absolute; left: 50%; top: -100px;
+  position: absolute; left: 50%; top: -80px;
   transform: translateX(-50%);
   z-index: 3000;
   display: flex; flex-direction: column; align-items: center; gap: 4px;
@@ -339,7 +339,7 @@ button:disabled { cursor: default; opacity: .55; }
   animation: mascotReactionPop .45s ease;
 }
 .mascot-reaction img {
-  width: 120px; height: 120px; object-fit: contain;
+  width: 100px; height: 100px; object-fit: contain;
   filter: drop-shadow(0 8px 22px rgba(120,90,30,.38));
   border-radius: 50%; outline: 4px solid #fff; outline-offset: 3px;
   background: #fff;
@@ -352,7 +352,7 @@ button:disabled { cursor: default; opacity: .55; }
   60% { transform: translateX(-50%) scale(1.06) translateY(0); opacity: 1; }
   100% { transform: translateX(-50%) scale(1) translateY(0); opacity: 1; }
 }
-@media (max-width: 420px) { .mascot-reaction img { width: 100px; height: 100px; } }
+@media (max-width: 420px) { .mascot-reaction img { width: 80px; height: 80px; } }
 
 /* Oil-vial power-ups — warm amber "glass vial" look to match the theme */
 .powerups { display: flex; gap: 8px; justify-content: center; margin: 2px 0 12px; flex-wrap: wrap; }
@@ -471,7 +471,7 @@ button:disabled { cursor: default; opacity: .55; }
   position: relative;
 }
 .mascot-reaction-host {
-  height: 100px;
+  height: 80px;
   display: flex;
   justify-content: center;
   align-items: flex-end;
