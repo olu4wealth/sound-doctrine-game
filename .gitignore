@@ -10,6 +10,24 @@ venv/
 .venv/
 .ENV
 .ENV.local
+# Dependencies
+node_modules/
+
+# Playwright / test artefacts
+test-results/
+playwright-report/
+verify/shots/
+
+# Tooling
+.dsh-vision-toolkit/
+
+# Unused / intermediate DALL·E assets (kept locally, not deployed)
+assets/candle-alpha.png
+assets/candle-states-alpha.png
+assets/rank-emblems-alpha.png
+assets/clay-decorations-alpha.png
+
+# Env
 .env
 .env.local
 .env.*
@@ -34,6 +52,15 @@ dist/
 Thumbs.db
 
 # Editors
+# System
+.DS_Store
+Thumbs.db
+
+# Build
+dist/
+build/
+
+# Editor / IDE
 .vscode/
 .idea/
 *.swp
@@ -43,3 +70,17 @@ Thumbs.db
 # Dependencies
 node_modules/
 ```
+# Logs / coverage
+*.log
+coverage/
+htmlcov/
+.coverage
+
+# Python leftovers (serve venv, etc.)
+__pycache__/
+venv/
+.venv/
+
+# AI candidates (build-time, not shipped)
+data/questions-ai.json
+
