@@ -65,11 +65,14 @@ play" and "Leaderboard" as secondary links. Returning players (already named) sk
 screen straight to the Candle home. Mechanics are taught **in-context** by the
 first-climb spotlight tutorial — there is no separate lore page.
 
-When generated art is present (`assets/start-bg.png` painted background,
+When generated art is present (`assets/start-bg-portrait.png` phone background,
+`assets/start-bg-landscape.png` tablet/landscape background,
 `assets/hero-timothy.png` / `assets/hero-titus.png` full-body transparent characters),
-the screen upgrades automatically into a game-store-style composition: painted
-background under a warm parchment veil, full-body characters bobbing beside the panel.
-Missing files fall back gracefully to the gradient + circle GIFs — no broken images.
+the screen upgrades automatically into a game-store-style composition: phones get the
+painted background under a warm parchment veil inside the column; landscape devices get
+the scene full-bleed across the viewport with the column floating as a parchment card,
+plus full-body characters bobbing beside the panel. Missing files fall back gracefully
+to the gradient + circle GIFs — no broken images; every asset upgrades independently.
 
 ### 3.2 The Ladder (core loop)
 One question at a time, **full-bleed, no chrome** — focus is the point. The climb is

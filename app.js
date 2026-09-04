@@ -81,6 +81,8 @@ async function loadBank() {
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach((s) => s.classList.add('hidden'));
   el(id).classList.remove('hidden');
+  // Painted title scene (generated art) spans the viewport only while the title screen is up.
+  document.body.classList.toggle('on-start', id === 'screen-start');
   window.scrollTo(0, 0);
 }
 
@@ -1347,10 +1349,12 @@ async function init() {
 init();
 
 // ---------- Title-screen art upgrade ----------
-// When generated art exists (assets/hero-*.png full-body characters and
-// assets/start-bg.png painted background), the title screen and hero-select
-// upgrade to it automatically; otherwise the mascot GIFs and the gradient
-// fallback stay in place. A missing file simply never fires onload.
+// When generated art exists (assets/hero-*.png full-body characters,
+// assets/start-bg-portrait.png phone background, assets/start-bg-landscape.png
+// tablet/landscape background), the title screen and hero-select upgrade to it
+// automatically; otherwise the mascot GIFs and the gradient fallback stay in
+// place. A missing file simply never fires onload, so each piece upgrades
+// independently and nothing breaks when only some of the art exists.
 function upgradeHeroArt() {
   document.querySelectorAll('img[data-png]').forEach((img) => {
     const probe = new Image();
@@ -1360,9 +1364,16 @@ function upgradeHeroArt() {
     };
     probe.src = img.dataset.png;
   });
-  const bg = new Image();
-  bg.onload = () => el('screen-start')?.classList.add('has-bg');
-  bg.src = 'assets/start-bg.png';
+  const start = el('screen-start');
+  const bgPortrait = new Image();
+  bgPortrait.onload = () => start?.classList.add('has-bg', 'bg-portrait');
+  bgPortrait.src = 'assets/start-bg-portrait.png';
+  const bgLandscape = new Image();
+  bgLandscape.onload = () => {
+    start?.classList.add('has-bg');
+    document.body.classList.add('art-landscape');
+  };
+  bgLandscape.src = 'assets/start-bg-landscape.png';
 }
 upgradeHeroArt();
 

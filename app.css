@@ -970,15 +970,31 @@ button:disabled { cursor: default; opacity: .55; }
 /* True/False questions get the wide centered 2-option look */
 .options.count-2 .option { text-align: center; font-size: 1.08rem; padding: 16px 16px; }
 
-/* Title screen — painted background composition (activates when assets/start-bg.png exists) */
+/* Title screen — painted background composition (activates when generated art exists).
+   Phones: the portrait painting fills the column under a warm parchment veil.
+   Landscape devices (tablets): the landscape scene spans the full viewport and the
+   column floats above it as a parchment card. Missing files degrade gracefully. */
 #screen-start { position: relative; }
 #screen-start.has-bg {
-  background:
-    linear-gradient(180deg, rgba(255, 251, 240, .84) 0%, rgba(255, 251, 240, .92) 100%),
-    url('assets/start-bg.png') center / cover no-repeat;
+  background: linear-gradient(180deg, rgba(255, 251, 240, .84) 0%, rgba(255, 251, 240, .92) 100%);
   border-radius: 26px;
   box-shadow: var(--shadow);
   padding: 30px 18px;
+}
+#screen-start.has-bg.bg-portrait {
+  background:
+    linear-gradient(180deg, rgba(255, 251, 240, .84) 0%, rgba(255, 251, 240, .92) 100%),
+    url('assets/start-bg-portrait.png') center / cover no-repeat;
+}
+@media (orientation: landscape) {
+  body.on-start.art-landscape {
+    background:
+      linear-gradient(180deg, rgba(253, 243, 227, .38) 0%, rgba(238, 243, 255, .52) 100%),
+      url('assets/start-bg-landscape.png') center / cover no-repeat;
+  }
+  body.on-start.art-landscape #screen-start.has-bg {
+    background: linear-gradient(180deg, rgba(255, 251, 240, .9) 0%, rgba(255, 251, 240, .96) 100%);
+  }
 }
 /* Full-body hero art replaces the circle GIFs when generated PNGs are present */
 .mascot-duo-member.fullbody img {
