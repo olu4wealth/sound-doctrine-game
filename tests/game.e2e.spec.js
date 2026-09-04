@@ -115,7 +115,7 @@ test.describe('daily office + report + leaderboard', () => {
     await page.getByRole('button', { name: /begin the charge/i }).click();
     await page.getByRole('button', { name: /daily office/i }).click();
     await expect(page.locator('#screen-daily')).toBeVisible();
-    await expect(page.locator('#daily-intro')).toContainText("Today's Office");
+    await expect(page.locator('#daily-charge-intro')).toContainText("Today's Charge");
     await page.getByRole('button', { name: /begin today's office/i }).click();
     await expect(page.locator('#screen-game')).toBeVisible();
     await expect(page.locator('.option')).toHaveCount(4);
