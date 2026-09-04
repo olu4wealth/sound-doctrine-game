@@ -23,7 +23,7 @@ let mode = 'ladder'; // 'ladder' | 'daily'
 let session = null;
 let timerInt = null;
 let currentQ = null;
-let dailyIdx = 0; // index into session._dailyList during a Daily Charge
+let dailyIdx = 0; // index into session._dailyList during a Daily Quest
 
 // Countdown state (per question)
 let timeLeft = 0;
@@ -163,7 +163,7 @@ function startDaily() {
   resetSession();
   session.daily = true;
   session._dailyList = list;
-  el('daily-charge-intro').textContent = `Today's Charge — ${list.length} questions (${today}). Same for everyone, so the board is fair.`;
+  el('daily-charge-intro').textContent = `Today's Quest — ${list.length} questions (${today}). Same for everyone, so the board is fair.`;
   el('btn-daily-start').classList.remove('hidden');
   el('btn-daily-share').classList.add('hidden');
   el('daily-answered').classList.add('hidden');
@@ -421,7 +421,7 @@ function renderDailyQuestion() {
   q.tier = tierOf(q);
   currentQ = q; // onAnswer/onTimeout/isLastQuestion treat currentQ as the object
   renderQuestion(q);
-  el('q-type').textContent = `${TIER_EMOJI[q.tier]} T${q.tier} · Daily Charge`;
+  el('q-type').textContent = `${TIER_EMOJI[q.tier]} T${q.tier} · Daily Quest`;
 }
 
 function showFeedbackModal(head, verse, ref, kind, isLast, correctText) {
@@ -1084,9 +1084,8 @@ function renderProfile() {
 }
 
 // ---------- Wire up ----------
-// Intro → start (first-time cinematic)
-el('btn-intro-begin').addEventListener('click', () => showScreen('screen-start'));
-el('btn-intro-how').addEventListener('click', () => showScreen('screen-how'));
+// The title screen is the single opening page on first visit; returning players
+// skip straight to the Candle home (see init() below).
 
 // Sound on/off toggle (persists). Default: on.
 function applySoundIcon() {
@@ -1124,8 +1123,7 @@ el('btn-lb-back').addEventListener('click', () => {
   showScreen(player.name ? 'screen-home' : 'screen-start');
 });
 el('btn-climb').addEventListener('click', () => startClimb());
-el('btn-daily').addEventListener('click', () => startDaily());
-el('btn-office-start')?.addEventListener('click', () => startDaily());
+el('btn-daily-card')?.addEventListener('click', () => startDaily());
 el('btn-daily-start').addEventListener('click', () => beginDailyList());
 el('btn-daily-back').addEventListener('click', () => showScreen('screen-home'));
 el('btn-next').addEventListener('click', btnNextGo);
@@ -1167,7 +1165,7 @@ document.addEventListener('click', (e) => {
     const out = session.questions.map((q) => q._outcome);
     const grid = shareGrid(out);
     const pct = Math.round((session.questions.filter((q) => q._correct).length / session.questions.length) * 100);
-    const text = `Sound Doctrine — Daily Charge ${dailySeed(new Date())}\n${grid}\n${pct}%`;
+    const text = `Sound Doctrine — Daily Quest ${dailySeed(new Date())}\n${grid}\n${pct}%`;
     if (navigator.share) {
       navigator.share({ text }).catch(() => {});
     } else {
@@ -1194,8 +1192,9 @@ async function init() {
     renderCandle();
     showScreen('screen-home');
   } else {
-    // First-visit: show the cinematic intro; then the start screen (with tutorial).
-    showScreen('screen-intro');
+    // First-visit: straight to the title screen (name entry). Mechanics are taught
+    // in-context by the first-climb spotlight tutorial, not by a separate lore page.
+    showScreen('screen-start');
   }
 }
 

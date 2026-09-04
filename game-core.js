@@ -26,7 +26,7 @@ export const BIDS = [
 
 export const BASE_POINTS = 100; // per correct question at 1× bid
 export const MAX_STREAK = 7;    // candle cap
-export const DAILY_LENGTH = 10; // Daily Charge questions per day
+export const DAILY_LENGTH = 10; // Daily Quest questions per day
 export const MAX_HEARTS = 5;    // lives (kind hearts) — refilled gently, never a paywall
 
 // Per-question countdown (seconds) — tighter on harder rungs (Duolingo-style pressure).
@@ -416,7 +416,7 @@ export function sortLeaderboard(entries) {
   });
 }
 
-// ---------- Share card (Daily Charge) ----------
+// ---------- Share card (Daily Quest) ----------
 export function shareGrid(answers, size = 10) {
   // answers: array of 'correct' | 'near-miss' | 'wrong' (session outcomes)
   const cells = answers.slice(0, size).map((a) =>

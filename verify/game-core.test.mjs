@@ -16,9 +16,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, '..');
 
 function loadBank() {
-  const a = JSON.parse(readFileSync(join(root, 'data', 'questions.json'), 'utf8'));
-  const b = JSON.parse(readFileSync(join(root, 'data', 'questions-t47.json'), 'utf8'));
-  return [...a, ...b];
+  // D2: the game loads the canonical merged bank — tests must verify the same data.
+  // (The legacy questions.json + questions-t47.json pair contains 26 duplicate ids,
+  // which made the 'no immediate repeat' check flaky.)
+  return JSON.parse(readFileSync(join(root, 'data', 'questions-merged.json'), 'utf8'));
 }
 
 let passed = 0, failed = 0;

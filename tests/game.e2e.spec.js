@@ -106,30 +106,30 @@ test.describe('core player journey', () => {
   });
 });
 
-test.describe('daily office + report + leaderboard', () => {
-  test('daily office lists a seeded day', async ({ page }) => {
+test.describe('daily quest + report + leaderboard', () => {
+  test('daily quest lists a seeded day', async ({ page }) => {
     await dismissTutorial(page);
     await page.goto('/');
     await passIntro(page);
     await page.getByPlaceholder(/your name/i).fill('Playwright Tester');
     await page.getByRole('button', { name: /begin the charge/i }).click();
-    await page.getByRole('button', { name: /daily office/i }).click();
+    await page.getByRole('button', { name: /begin daily quest/i }).click();
     await expect(page.locator('#screen-daily')).toBeVisible();
-    await expect(page.locator('#daily-charge-intro')).toContainText("Today's Charge");
-    await page.getByRole('button', { name: /begin today's office/i }).click();
+    await expect(page.locator('#daily-charge-intro')).toContainText("Today's Quest");
+    await page.getByRole('button', { name: /begin today's quest/i }).click();
     await expect(page.locator('#screen-game')).toBeVisible();
     await expect(page.locator('.option')).toHaveCount(4);
   });
 
-  test('report renders a grade and how-to-do-better after a full office', async ({ page }) => {
+  test('report renders a grade and how-to-do-better after a full daily quest', async ({ page }) => {
     test.setTimeout(60_000);
     await dismissTutorial(page);
     await page.goto('/');
     await passIntro(page);
     await page.getByPlaceholder(/your name/i).fill('Playwright Tester');
     await page.getByRole('button', { name: /begin the charge/i }).click();
-    await page.getByRole('button', { name: /daily office/i }).click();
-    await page.getByRole('button', { name: /begin today's office/i }).click();
+    await page.getByRole('button', { name: /begin daily quest/i }).click();
+    await page.getByRole('button', { name: /begin today's quest/i }).click();
 
     for (let i = 0; i < 10; i++) {
       const ok = await answerOne(page);
@@ -151,8 +151,8 @@ test.describe('daily office + report + leaderboard', () => {
     await passIntro(page);
     await page.getByPlaceholder(/your name/i).fill('Playwright Tester');
     await page.getByRole('button', { name: /begin the charge/i }).click();
-    await page.getByRole('button', { name: /daily office/i }).click();
-    await page.getByRole('button', { name: /begin today's office/i }).click();
+    await page.getByRole('button', { name: /begin daily quest/i }).click();
+    await page.getByRole('button', { name: /begin today's quest/i }).click();
     for (let i = 0; i < 10; i++) {
       const ok = await answerOne(page);
       if (!ok) break;

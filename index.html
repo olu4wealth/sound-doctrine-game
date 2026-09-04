@@ -16,35 +16,30 @@
 <body>
   <div class="app">
 
-    <!-- INTRO (cinematic showcase, shown first on load) -->
-    <section id="screen-intro" class="screen">
-      <div class="intro-stage">
-        <img class="crest" src="assets/icon-crest.png" alt="Sound Doctrine crest" />
-        <h1 class="title">Sound Doctrine</h1>
-        <p class="subtitle">Saints, Martyrs &amp; Heroes<br />1 &amp; 2 Timothy &middot; Titus</p>
-        <p class="intro-story">A young elder is entrusted with a lamp and a charge. Each question feeds the flame; each climb carries him toward sound doctrine. How far will you carry the light?</p>
-        <ul class="intro-bullets">
-          <li>Climb the Ladder — easy recall to very hard synthesis</li>
-          <li>Keep the Candle lit — correct answers burn brighter</li>
-          <li>Never shamed — every miss is corrected by Scripture</li>
-        </ul>
-      </div>
-      <button class="primary" id="btn-intro-begin">Enter the Charge</button>
-      <button class="ghost" id="btn-intro-how">How to play</button>
-    </section>
-
-    <!-- START -->
-    <section id="screen-start" class="screen hidden">
+    <!-- START (title screen — the game's single opening page; returning players skip straight home) -->
+    <section id="screen-start" class="screen">
       <img class="crest" src="assets/icon-crest.png" alt="Sound Doctrine crest" />
       <h1 class="title">Sound Doctrine</h1>
       <p class="subtitle">Saints, Martyrs &amp; Heroes<br />1 &amp; 2 Timothy &middot; Titus</p>
+      <div class="mascot-duo">
+        <figure class="mascot-duo-member">
+          <img src="assets/mascot-timothy-idle.gif" alt="Timothy — your guide through 1 &amp; 2 Timothy" />
+          <figcaption>Timothy</figcaption>
+        </figure>
+        <figure class="mascot-duo-member">
+          <img src="assets/mascot-titus-idle.gif" alt="Titus — your guide through Titus" />
+          <figcaption>Titus</figcaption>
+        </figure>
+      </div>
       <p class="tagline">Three books. One charge. Know the doctrine.</p>
       <div class="name-entry">
         <input id="input-name" type="text" maxlength="24" placeholder="Your name (shown on the board)" autocomplete="off" />
       </div>
       <button class="primary" id="btn-begin">Begin the Charge</button>
-      <button class="ghost" id="btn-how">How to play</button>
-      <button class="ghost" id="btn-leaderboard">Leaderboard</button>
+      <div class="start-secondary">
+        <button class="ghost" id="btn-how">How to play</button>
+        <button class="ghost" id="btn-leaderboard">Leaderboard</button>
+      </div>
     </section>
 
     <!-- HOW -->
@@ -88,11 +83,11 @@
         </div>
       </div>
 
-      <!-- Today's Office -->
-      <div class="office-card" id="office-card">
-        <div class="office-card-title">TODAY'S OFFICE</div>
-        <div class="office-card-meta">10 QUESTIONS · 05:00 · Same for everyone</div>
-        <button class="primary" id="btn-office-start">Begin Office</button>
+      <!-- Daily Quest (one seeded quest per day — identical for everyone) -->
+      <div class="daily-card" id="daily-card">
+        <div class="daily-card-title">DAILY QUEST</div>
+        <div class="daily-card-meta">10 QUESTIONS · Same for everyone</div>
+        <button class="primary" id="btn-daily-card">Begin Daily Quest</button>
       </div>
 
       <!-- Visual Ladder T7→T1 -->
@@ -103,7 +98,6 @@
 
       <div class="home-cta">
         <button class="primary" id="btn-climb">Begin a Climb</button>
-        <button class="ghost" id="btn-daily">Daily Charge</button>
       </div>
       <div class="home-second">
         <button class="ghost small" id="btn-profile">Profile</button>
@@ -179,12 +173,12 @@
       <button class="ghost" id="btn-home">Back to the Candle</button>
     </section>
 
-    <!-- DAILY OFFICE -->
+    <!-- DAILY QUEST -->
     <section id="screen-daily" class="screen hidden">
-      <h2>Daily Charge</h2>
+      <h2>Daily Quest</h2>
       <p class="daily-charge-intro" id="daily-charge-intro"></p>
       <div class="daily-grid hidden" id="daily-answered"></div>
-      <button class="primary hidden" id="btn-daily-start">Begin Today's Charge</button>
+      <button class="primary hidden" id="btn-daily-start">Begin Today's Quest</button>
       <button class="ghost hidden" id="btn-daily-share"></button>
       <button class="ghost" id="btn-daily-back">Back to the Candle</button>
     </section>
