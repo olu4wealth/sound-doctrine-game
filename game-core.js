@@ -259,6 +259,22 @@ export function applyDailyVisit(model, todayStr) {
   return next;
 }
 
+// Candle melt: how far the home candle has burned down today, driven by the
+// browser's local clock. A fresh candle appears each morning (06:00) and the
+// wick burns slowly through the day, accelerating into the night, then resets
+// at dawn. Returns 0 (fresh candle) .. 1 (all but spent just before the next
+// dawn). Pure — the caller supplies the clock so this stays unit-testable.
+export const CANDLE_MORNING_HOUR = 6; // 06:00 — the home candle is replaced fresh
+export function candleMeltFraction(now = new Date()) {
+  const mins = (now.getHours() || 0) * 60 + (now.getMinutes() || 0);
+  const morning = CANDLE_MORNING_HOUR * 60;
+  let since = mins - morning;
+  if (since < 0) since += 24 * 60; // before dawn = the tail of the previous candle
+  const dayProgress = since / (24 * 60); // 0 (06:00) -> 1 (just before the next 06:00)
+  const melt = dayProgress * dayProgress; // slow burn by day, faster into the night
+  return Math.min(1, Math.max(0, melt));
+}
+
 // ---------- Charge Report ----------
 export function gradeFor(acc) {
   for (const g of GRADE_TABLE) if (acc >= g.min) return g;

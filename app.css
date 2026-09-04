@@ -177,6 +177,23 @@ button:disabled { cursor: default; opacity: .55; }
   .title-hero { width: 240px; bottom: -4vh; }
 }
 
+/* The same two full-body mascots continue from the title screen onto the game
+   menu (Candle home). Slightly smaller + fainter than on the title so the
+   menu stays readable above them. */
+.home-hero {
+  position: fixed; bottom: -3vh; z-index: 0;
+  width: clamp(220px, 28vw, 460px); height: auto;
+  pointer-events: none; user-select: none;
+  filter: drop-shadow(0 12px 28px rgba(120, 90, 30, .3));
+  opacity: .85;
+}
+.home-hero-left { left: 0; transform: translateX(-46%); }
+.home-hero-right { right: 0; transform: translateX(46%); }
+.home-inner { position: relative; z-index: 1; }
+@media (max-width: 420px) {
+  .home-hero { width: 190px; bottom: -2vh; opacity: .72; }
+}
+
 /* ---------- How-to ---------- */
 .how-list { list-style: none; }
 .how-list li {
@@ -219,13 +236,20 @@ button:disabled { cursor: default; opacity: .55; }
 }
 .sound-toggle:hover { border-color: var(--sky-b); background: #f6faff; }
 
-.candle-stage { position: relative; width: 200px; height: 200px; margin: 8px auto 0; }
+.candle-stage { position: relative; width: 200px; height: 200px; margin: 8px auto 0; --melt-top: 6%; }
 .candle-img {
   display: block;
   width: 200px; height: 200px;
   object-fit: contain;
   filter: drop-shadow(0 8px 16px rgba(243, 167, 36, .28));
   transition: opacity .4s ease, filter .4s ease;
+}
+/* Melt: the candle body is clipped from the top as the night approaches and a
+   fresh candle (clip reset) appears each dawn. --melt-top is set by app.js. */
+.candle-wrap {
+  position: absolute; inset: 0;
+  clip-path: inset(var(--melt-top) 0 0 0);
+  transition: clip-path 1.2s ease;
 }
 .candle-stage[data-state="guttering"] .candle-img {
   filter: drop-shadow(0 4px 10px rgba(243, 167, 36, .22));
@@ -235,6 +259,43 @@ button:disabled { cursor: default; opacity: .55; }
   filter: grayscale(.5) drop-shadow(0 3px 6px rgba(120, 90, 30, .3));
 }
 .candle-caption { text-align: center; color: var(--ink-soft); font-weight: 700; margin-top: 8px; }
+
+/* Animated live flame on the home candle. It rides the melt line (--melt-top),
+   so it sinks slowly as the night approaches; the 6% melt floor masks the tiny
+   flame baked into the candle art, keeping this the only flame shown. */
+.candle-flame {
+  position: absolute;
+  left: 50%; margin-left: -8px;
+  /* bottom edge lands on the melt line (wick), so the flame sinks as it burns */
+  top: calc(var(--melt-top) - 22px);
+  width: 16px; height: 22px;
+  background:
+    radial-gradient(circle at 50% 72%, #fff7d6 0%, #ffd54f 34%, #ff9d2e 62%, rgba(255, 120, 20, .55) 86%, transparent 100%);
+  border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+  box-shadow: 0 0 16px 6px rgba(255, 180, 60, .5);
+  transform-origin: 50% 100%;
+  animation: candleFlame .4s ease-in-out infinite alternate;
+  transition: top 1.2s ease, opacity .6s ease, filter .6s ease;
+  pointer-events: none;
+}
+.candle-stage[data-state="guttering"] .candle-flame {
+  opacity: .7;
+  width: 13px; height: 18px;
+  margin-left: -6.5px;
+  filter: brightness(.8);
+  animation-duration: .16s;
+}
+.candle-stage[data-state="smouldering"] .candle-flame {
+  opacity: .1;
+  width: 10px; height: 12px;
+  margin-left: -5px;
+  filter: grayscale(.8) brightness(.5);
+  animation-duration: .6s;
+}
+@keyframes candleFlame {
+  0%   { transform: skewX(-3deg) scale(1) translateY(0); }
+  100% { transform: skewX(3deg) scale(1.08) translateY(-2px); }
+}
 
 /* Soft halo + sparkles behind the candle (CSS-only, crisp at every resolution) */
 .candle-glow {
@@ -262,7 +323,6 @@ button:disabled { cursor: default; opacity: .55; }
 }
 .streak-num { font-size: 1.6rem; font-weight: 900; color: var(--gold-deep); }
 .streak-label { font-size: .85rem; font-weight: 700; }
-.oil { background: #fff; border: 2px solid #ffe3ae; padding: 5px 12px; border-radius: 999px; font-weight: 800; }
 
 .flame-card {
   background: var(--card);

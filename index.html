@@ -54,6 +54,10 @@
 
     <!-- HOME (Candle + Ladder) -->
     <section id="screen-home" class="screen hidden">
+      <!-- Same mascots as the title screen, flanking the game menu -->
+      <img class="home-hero home-hero-left" src="assets/hero-timothy.png" alt="" decoding="async" onerror="this.style.display='none'" />
+      <img class="home-hero home-hero-right" src="assets/hero-titus.png" alt="" decoding="async" onerror="this.style.display='none'" />
+      <div class="home-inner">
       <header class="home-head">
         <button class="profile-chip" id="btn-profile-head" aria-label="Open my profile">
           <span class="avatar"><img src="assets/icon-crest.png" alt="" /></span>
@@ -75,13 +79,13 @@
           <div class="candle-glow" aria-hidden="true"></div>
           <span class="candle-spark spark-a" aria-hidden="true">✦</span>
           <span class="candle-spark spark-b" aria-hidden="true">✧</span>
-          <img class="candle-img" id="candle-img" src="assets/candle-lit.png" alt="Lit candle" />
+          <div class="candle-wrap"><img class="candle-img" id="candle-img" src="assets/candle-lit.png" alt="Lit candle" /></div>
+          <div class="candle-flame" aria-hidden="true"></div>
         </div>
         <div class="candle-caption" id="candle-caption">Your lamp is lit</div>
         <div class="streak-row">
           <span class="streak-num" id="streak-num">0</span>
-          <span class="streak-label">day streak (of 7)</span>
-          <span class="oil" id="oil-count">🫗 0</span>
+          <span class="streak-label">day streak</span>
         </div>
       </div>
 
@@ -114,6 +118,7 @@
       <div class="home-second">
         <button class="ghost small" id="btn-lb2">Leaderboard</button>
       </div>
+      </div><!-- /.home-inner -->
     </section>
 
     <!-- LADDER GAME -->

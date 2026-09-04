@@ -7,7 +7,7 @@ import {
   dailyCharge, dailySeed, resolveAnswer, tierOf,
   pickNextLadder, applyDailyVisit, buildChargeReport, compositeScore,
   sortLeaderboard, shareGrid, shuffle, mulberry32, hashCode,
-  heroRun, HEROES,
+  heroRun, HEROES, candleMeltFraction,
 } from './game-core.js';
 import {
   loadPlayer, savePlayer, recordCharge, updateLeaderboard,
@@ -116,22 +116,46 @@ function candleState() {
   return 'smouldering';
 }
 
+// Apply the day's melt to the home candle: --melt (0..1) for any JS math and
+// --melt-top (%) = how much of the candle body is clipped from the top. The
+// 6% floor always masks the tiny flame baked into the candle art so the CSS
+// flame below is the only flame shown; at night the melt reaches ~72%, leaving
+// a short stub that a fresh dawn (melt resets) replaces.
+function applyCandleMelt(stage) {
+  const melt = candleMeltFraction(new Date());
+  stage.style.setProperty('--melt', melt.toFixed(3));
+  stage.style.setProperty('--melt-top', `${(6 + melt * 66).toFixed(1)}%`);
+}
+
 function renderCandle() {
   el('home-name').textContent = player.name || '—';
   el('home-rank').textContent = rankOf(player.totalCorrect * BASE_POINTS || 0);
   el('streak-num').textContent = player.streak || 0;
-  el('oil-count').textContent = `🫗 ${player.oilVials || 0}`;
 
   // New-player gating: Daily Quest + Choose Your Hero unlock after a Ladder climb.
   const ladderDone = !!player.ladderPlayed;
   el('daily-card')?.classList.toggle('locked', !ladderDone);
   el('hero-card')?.classList.toggle('locked', !ladderDone);
 
+  // The candle melts through the day (browser clock), fresh again each dawn.
+  applyCandleMelt(el('candle-stage'));
+
   const state = candleState();
   el('candle-stage').dataset.state = state;
   el('candle-img').src = CANDLE_IMGS[state];
   el('candle-caption').textContent = CANDLE_CAPTIONS[state];
   renderLadder();
+}
+
+// Keep the candle's melt in sync with the wall clock while the page stays open
+// (a long-lived home screen shouldn't freeze at morning forever). Light touch:
+// refresh every 5 minutes — the burn is imperceptible in between.
+function setupCandleClock() {
+  setInterval(() => {
+    const stage = el('candle-stage');
+    if (!stage) return;
+    applyCandleMelt(stage);
+  }, 5 * 60 * 1000);
 }
 
 function renderLadder() {
@@ -1270,6 +1294,7 @@ async function init() {
 }
 
 init();
+setupCandleClock(); // keep the home candle melting with the wall clock
 
 // ---------- Title-screen art upgrade ----------
 // When generated art exists (assets/hero-*.png full-body characters,

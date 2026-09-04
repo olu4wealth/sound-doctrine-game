@@ -9,7 +9,7 @@ import {
   mulberry32, hashCode, dailySeed, dailyCharge, resolveAnswer, nearMiss,
   pickNextLadder, applyDailyVisit, buildChargeReport, compositeScore,
   sortLeaderboard, shareGrid, tierOf, MAX_STREAK, DAILY_LENGTH,
-  timeForTier, bonusTime, MAX_HEARTS,
+  timeForTier, bonusTime, MAX_HEARTS, candleMeltFraction, CANDLE_MORNING_HOUR,
 } from '../game-core.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -134,5 +134,20 @@ check('bonusTime: correct > grace > wrong', bonusTime('correct') > bonusTime('ne
 check('bonusTime: timeout = 0', bonusTime('timeout') === 0);
 check('bonusTime: wrong = 0', bonusTime('wrong') === 0);
 check('MAX_HEARTS defined (kind hearts)', Number.isInteger(MAX_HEARTS) && MAX_HEARTS >= 3);
+
+// 10. Candle melt — driven by the browser clock, fresh at dawn, spent by next dawn.
+const at = (h, m = 0) => { const d = new Date(); d.setHours(h, m, 0, 0); return d; };
+check('CANDLE_MORNING_HOUR is 6 (fresh candle at dawn)', CANDLE_MORNING_HOUR === 6);
+check('melt is 0 exactly at dawn (new candle)', candleMeltFraction(at(6)) === 0);
+check('melt is nearly spent right before the next dawn', candleMeltFraction(at(5, 59)) > 0.99);
+check('melt is monotonic from dawn to next dawn',
+  candleMeltFraction(at(7)) <= candleMeltFraction(at(12)) &&
+  candleMeltFraction(at(12)) <= candleMeltFraction(at(18)) &&
+  candleMeltFraction(at(18)) <= candleMeltFraction(at(23)));
+check('melt burns much faster into the night than at midday',
+  candleMeltFraction(at(23)) > candleMeltFraction(at(12)) * 3);
+check('melt stays in [0,1] across the whole day',
+  Array.from({ length: 24 }, (_, h) => candleMeltFraction(at(h))).every((v) => v >= 0 && v <= 1));
+
 console.log(`\n— ${passed} passed, ${failed} failed —\n`);
 process.exit(failed ? 1 : 0);

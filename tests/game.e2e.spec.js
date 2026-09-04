@@ -64,12 +64,24 @@ test.describe('core player journey', () => {
 
     await expect(page.locator('#screen-home')).toBeVisible();
     await expect(page.locator('#home-name')).toHaveText('Playwright Tester');
-    // candle + streak + oil counts are present
+    // candle + streak are present (oil-vial pill removed from the menu)
     await expect(page.locator('#candle-stage')).toBeVisible();
     await expect(page.locator('#streak-num')).toBeVisible();
     // candle sprite loads a real state image and stage is in a valid state
     await expect(page.locator('#candle-img')).toHaveAttribute('src', /candle-(lit|guttering|smouldering)\.png/);
     await expect(page.locator('#candle-img')).toHaveJSProperty('complete', true);
+// live animated flame sits on the candle and the melt is driven by the clock
+    await expect(page.locator('.candle-flame')).toBeVisible();
+    const meltTop = await page.locator('#candle-stage').evaluate((el) => getComputedStyle(el).getPropertyValue('--melt-top').trim());
+    expect(meltTop).toMatch(/^\d+(\.\d+)?%$/);
+    expect(parseFloat(meltTop)).toBeGreaterThanOrEqual(6);
+    expect(parseFloat(meltTop)).toBeLessThanOrEqual(72);
+    // the two full-body mascots continue from the title screen onto the menu
+    await expect(page.locator('.home-hero-left')).toBeVisible();
+    await expect(page.locator('.home-hero-right')).toBeVisible();
+    // oil-vial icon removed + "(of 7)" trimmed from the streak label
+    await expect(page.locator('#oil-count')).toHaveCount(0);
+    await expect(page.locator('.streak-label')).not.toContainText('(of 7)');
   });
 
   test('HUD shows hearts, progress, and a countdown ring', async ({ page }) => {
