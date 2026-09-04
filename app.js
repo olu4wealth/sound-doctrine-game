@@ -23,7 +23,7 @@ let mode = 'ladder'; // 'ladder' | 'daily'
 let session = null;
 let timerInt = null;
 let currentQ = null;
-let dailyIdx = 0; // index into session._dailyList during a Daily Office
+let dailyIdx = 0; // index into session._dailyList during a Daily Charge
 
 // Countdown state (per question)
 let timeLeft = 0;
@@ -141,7 +141,7 @@ function startDaily() {
   resetSession();
   session.daily = true;
   session._dailyList = list;
-  el('daily-intro').textContent = `Today's Office — ${list.length} questions (${today}). Same for everyone, so the board is fair.`;
+  el('daily-charge-intro').textContent = `Today's Charge — ${list.length} questions (${today}). Same for everyone, so the board is fair.`;
   el('btn-daily-start').classList.remove('hidden');
   el('btn-daily-share').classList.add('hidden');
   el('daily-answered').classList.add('hidden');
@@ -399,7 +399,7 @@ function renderDailyQuestion() {
   q.tier = tierOf(q);
   currentQ = q; // onAnswer/onTimeout/isLastQuestion treat currentQ as the object
   renderQuestion(q);
-  el('q-type').textContent = `${TIER_EMOJI[q.tier]} T${q.tier} · Daily Office`;
+  el('q-type').textContent = `${TIER_EMOJI[q.tier]} T${q.tier} · Daily Charge`;
 }
 
 function showFeedbackModal(head, verse, ref, kind, isLast, correctText) {
@@ -929,7 +929,7 @@ document.addEventListener('click', (e) => {
     const out = session.questions.map((q) => q._outcome);
     const grid = shareGrid(out);
     const pct = Math.round((session.questions.filter((q) => q._correct).length / session.questions.length) * 100);
-    const text = `Sound Doctrine — Daily Office ${dailySeed(new Date())}\n${grid}\n${pct}%`;
+    const text = `Sound Doctrine — Daily Charge ${dailySeed(new Date())}\n${grid}\n${pct}%`;
     if (navigator.share) {
       navigator.share({ text }).catch(() => {});
     } else {

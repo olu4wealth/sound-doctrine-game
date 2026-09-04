@@ -24,7 +24,7 @@ export const BIDS = [
 
 export const BASE_POINTS = 100; // per correct question at 1× bid
 export const MAX_STREAK = 7;    // candle cap
-export const DAILY_LENGTH = 10; // Daily Office questions per day
+export const DAILY_LENGTH = 10; // Daily Charge questions per day
 export const MAX_HEARTS = 5;    // lives (kind hearts) — refilled gently, never a paywall
 
 // Per-question countdown (seconds) — tighter on harder rungs (Duolingo-style pressure).
@@ -132,7 +132,7 @@ export function dailySeed(date) {
   return `${y}-${m}-${day}`;
 }
 
-// Daily Office: 10 deterministic questions, balanced across books and tiers.
+// Daily Charge: 10 deterministic questions, balanced across books and tiers.
 // Guarantees ≥2 per book (leaves 1 wildcard) and excludes T7 from the shared daily
 // (T7 stays a personal Ladder extreme), but includes one T6 stretch.
 export function dailyCharge(bank, date, rng = mulberry32(hashCode(dailySeed(date)))) {
@@ -389,7 +389,7 @@ export function sortLeaderboard(entries) {
   });
 }
 
-// ---------- Share card (Daily Office) ----------
+// ---------- Share card (Daily Charge) ----------
 export function shareGrid(answers, size = 10) {
   // answers: array of 'correct' | 'near-miss' | 'wrong' (session outcomes)
   const cells = answers.slice(0, size).map((a) =>
