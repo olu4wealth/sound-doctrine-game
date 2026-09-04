@@ -9,11 +9,11 @@ Three books. One charge. Know the doctrine.
 - **The Ladder** — a progressive climb from easy recall to extremely-hard synthesis
   (T1–T7). Stake your confidence (1× / 2× / 3×) before answering; near-misses earn
   *Grace* (half kept).
-- **The Candle** — a 7-day capped streak that keeps your lamp lit; oil vials are
-  earned shields; misses gutter gently and never shame you.
+- **The Candle** — a 7-day capped streak that keeps your lamp lit; every new player
+  starts with 10 oil vials (earned shields); misses gutter gently and never shame you.
 - **Daily Quest** — one seeded 10-question quest per day, identical for everyone,
   ending in a shareable spoiler-safe card.
-- **Choose Your Hero** — pick **Timothy** (1 & 2 Timothy) or **Titus** (Titus) and get a
+- **Choose Your Hero** — pick **Timothy** (1 Timothy · 2 Timothy) or **Titus** (Titus) for a
   seeded 10-question run from *his own book only*, mixing three fresh question types:
   **True or False**, **Word Order** (rebuild the verse by tapping its words), and
   **Who Did This** (four names, one verse-backed answer).

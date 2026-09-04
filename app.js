@@ -122,6 +122,11 @@ function renderCandle() {
   el('streak-num').textContent = player.streak || 0;
   el('oil-count').textContent = `🫗 ${player.oilVials || 0}`;
 
+  // New-player gating: Daily Quest + Choose Your Hero unlock after a Ladder climb.
+  const ladderDone = !!player.ladderPlayed;
+  el('daily-card')?.classList.toggle('locked', !ladderDone);
+  el('hero-card')?.classList.toggle('locked', !ladderDone);
+
   const state = candleState();
   el('candle-stage').dataset.state = state;
   el('candle-img').src = CANDLE_IMGS[state];
@@ -171,6 +176,7 @@ function startClimb() {
 }
 
 function startDaily() {
+  if (!player.ladderPlayed) return; // locked until the player finishes a Ladder climb
   mode = 'daily';
   const today = dailySeed(new Date());
   const list = dailyCharge(bank, today, mulberry32(hashCode(today)));
@@ -208,6 +214,7 @@ function heroTypeLabel(q) {
 
 function openHeroSelect() {
   if (!heroBank.length) return;
+  if (!player.ladderPlayed) return; // locked until the player finishes a Ladder climb
   showScreen('screen-hero');
 }
 
@@ -423,6 +430,7 @@ function renderQuestion(q) {
   el('feedback').classList.add('hidden');
   el('feedback').classList.remove('correct', 'wrong', 'grace');
   updateProgress();
+  renderScore();
   renderTimerBar();
 
   // Timer scales with the effective (ramped) run tier, so harder progress = less time.
@@ -449,6 +457,12 @@ function updateProgress() {
     const pct = Math.min(100, Math.round((idx / 20) * 100));
     el('progress-bar').style.width = `${pct}%`;
   }
+}
+
+// Live score chip: the running pot is always visible in the HUD.
+function renderScore() {
+  const chip = el('hud-score');
+  if (chip) chip.textContent = `⚜ ${session?.pot || 0}`;
 }
 
 function nextQuestion() {
@@ -688,6 +702,7 @@ function renderWordOrder(q) {
 
   wrap.append(line, pool, tools);
   updateProgress();
+  renderScore();
   renderTimerBar();
   // Word order needs time to read: ~2.2s per word, minimum 24s.
   startCountdown(q.tier || 5, session?.questions?.length || 0, Math.max(24, Math.round(q.words.length * 2.2)));
@@ -848,6 +863,7 @@ function commitAnswer(displayIdx, chosenOrig, bid) {
     sfx.milestone();
     burstSparkles(16, 0.5, 0.4); // bigger burst on a milestone
   }
+  renderScore();
 
   // Hearts: only lost on wrong/timeout. Correct and grace neither gain nor lose
   // a life — getting answers right should not reward extra lives (in climb or daily).
@@ -1024,6 +1040,7 @@ function finishCommon() {
   session.bestTimeMs = session.elapsedMs || 0;
   const report = buildChargeReport(session, bank);
 
+  if (mode === 'ladder') player.ladderPlayed = true; // a finished climb unlocks the other modes
   const earlier = player.streak || 0;
   player = applyDailyVisit(player, dailySeed(new Date()));
   player = { ...player, streak: Math.max(player.streak || 0, earlier) };
@@ -1282,7 +1299,7 @@ el('pu-5050').addEventListener('click', () => usePowerup('5050'));
 el('pu-freeze').addEventListener('click', () => usePowerup('freeze'));
 el('btn-again').addEventListener('click', startClimb);
 el('btn-home').addEventListener('click', () => { renderCandle(); showScreen('screen-home'); });
-el('btn-profile').addEventListener('click', () => { renderProfile(); showScreen('screen-profile'); });
+el('btn-profile-head').addEventListener('click', () => { renderProfile(); showScreen('screen-profile'); });
 el('btn-profile-back').addEventListener('click', () => showScreen('screen-home'));
 
 // Sign out: keep history, clear the active name, return to the start screen.
@@ -1350,7 +1367,7 @@ init();
 
 // ---------- Title-screen art upgrade ----------
 // When generated art exists (assets/hero-*.png full-body characters,
-// assets/start-bg-portrait.png phone background, assets/start-bg-landscape.png
+// assets/start-bg-portrait.jpg phone background, assets/start-bg-landscape.jpg
 // tablet/landscape background), the title screen and hero-select upgrade to it
 // automatically; otherwise the mascot GIFs and the gradient fallback stay in
 // place. A missing file simply never fires onload, so each piece upgrades
@@ -1367,13 +1384,13 @@ function upgradeHeroArt() {
   const start = el('screen-start');
   const bgPortrait = new Image();
   bgPortrait.onload = () => start?.classList.add('has-bg', 'bg-portrait');
-  bgPortrait.src = 'assets/start-bg-portrait.png';
+  bgPortrait.src = 'assets/start-bg-portrait.jpg';
   const bgLandscape = new Image();
   bgLandscape.onload = () => {
     start?.classList.add('has-bg');
     document.body.classList.add('art-landscape');
   };
-  bgLandscape.src = 'assets/start-bg-landscape.png';
+  bgLandscape.src = 'assets/start-bg-landscape.jpg';
 }
 upgradeHeroArt();
 

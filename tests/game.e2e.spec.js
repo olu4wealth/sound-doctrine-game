@@ -7,6 +7,15 @@ async function dismissTutorial(page) {
   await page.addInitScript(() => localStorage.setItem('sd_tutorial_done', '1'));
 }
 
+// Helper: seed an unlocked player so the gated modes (Daily Quest, Hero) are playable.
+async function seedPlayer(page, name = 'Playwright Tester') {
+  await page.addInitScript(([n]) => {
+    localStorage.setItem('sd.player.v1', JSON.stringify({
+      name: n, ladderPlayed: true, hearts: 5, oilVials: 3, createdAt: Date.now(),
+    }));
+  }, [name]);
+}
+
 // Helper: pass through the intro screen (shown on first visit) to reach the start screen.
 async function passIntro(page) {
   const introBtn = page.getByRole('button', { name: /enter the charge/i });
@@ -70,6 +79,9 @@ test.describe('core player journey', () => {
     await expect(page.locator('#hud-progress')).toBeVisible();
     await expect(page.locator('#ring-fill')).toBeVisible();
     await expect(page.locator('#ring-label')).toBeVisible();
+    // Live score chip is present and starts at the pot of 0
+    await expect(page.locator('#hud-score')).toBeVisible();
+    await expect(page.locator('#hud-score')).toContainText('⚜');
     // 4 options present
     await expect(page.locator('.option')).toHaveCount(4);
   });
@@ -109,11 +121,9 @@ test.describe('core player journey', () => {
 test.describe('daily quest + report + leaderboard', () => {
   test('daily quest lists a seeded day', async ({ page }) => {
     await dismissTutorial(page);
+    await seedPlayer(page);
     await page.goto('/');
-    await passIntro(page);
-    await page.getByPlaceholder(/your name/i).fill('Playwright Tester');
-    await page.getByRole('button', { name: /begin the charge/i }).click();
-    await page.getByRole('button', { name: /begin daily quest/i }).click();
+    await page.getByRole('button', { name: /daily quest/i }).click();
     await expect(page.locator('#screen-daily')).toBeVisible();
     await expect(page.locator('#daily-charge-intro')).toContainText("Today's Quest");
     await page.getByRole('button', { name: /begin today's quest/i }).click();
@@ -124,11 +134,9 @@ test.describe('daily quest + report + leaderboard', () => {
   test('report renders a grade and how-to-do-better after a full daily quest', async ({ page }) => {
     test.setTimeout(60_000);
     await dismissTutorial(page);
+    await seedPlayer(page);
     await page.goto('/');
-    await passIntro(page);
-    await page.getByPlaceholder(/your name/i).fill('Playwright Tester');
-    await page.getByRole('button', { name: /begin the charge/i }).click();
-    await page.getByRole('button', { name: /begin daily quest/i }).click();
+    await page.getByRole('button', { name: /daily quest/i }).click();
     await page.getByRole('button', { name: /begin today's quest/i }).click();
 
     for (let i = 0; i < 10; i++) {
@@ -147,11 +155,9 @@ test.describe('daily quest + report + leaderboard', () => {
 
   test('leaderboard shows the player after completing a charge', async ({ page }) => {
     await dismissTutorial(page);
+    await seedPlayer(page);
     await page.goto('/');
-    await passIntro(page);
-    await page.getByPlaceholder(/your name/i).fill('Playwright Tester');
-    await page.getByRole('button', { name: /begin the charge/i }).click();
-    await page.getByRole('button', { name: /begin daily quest/i }).click();
+    await page.getByRole('button', { name: /daily quest/i }).click();
     await page.getByRole('button', { name: /begin today's quest/i }).click();
     for (let i = 0; i < 10; i++) {
       const ok = await answerOne(page);
@@ -165,6 +171,35 @@ test.describe('daily quest + report + leaderboard', () => {
     await page.getByRole('button', { name: /back to the candle/i }).click();
     await page.getByRole('button', { name: /leaderboard/i }).first().click();
     await expect(page.locator('#lb-list')).toContainText('Playwright Tester');
+  });
+
+  test('new players must finish a Ladder climb before Daily Quest and Choose Your Hero unlock', async ({ page }) => {
+    await dismissTutorial(page);
+    await page.goto('/');
+    await passIntro(page);
+    await page.getByPlaceholder(/your name/i).fill('Rookie Climber');
+    await page.getByRole('button', { name: /begin the charge/i }).click();
+    await expect(page.locator('#screen-home')).toBeVisible();
+    // Both secondary modes are locked for a brand-new player.
+    await expect(page.locator('#daily-card')).toHaveClass(/locked/);
+    await expect(page.locator('#hero-card')).toHaveClass(/locked/);
+    await expect(page.locator('#daily-card .lock-note')).toBeVisible();
+    await expect(page.locator('#hero-card .lock-note')).toBeVisible();
+    // Locked buttons never open their screens (the JS guard backs the CSS).
+    await page.evaluate(() => document.getElementById('btn-hero-card').click());
+    await expect(page.locator('#screen-hero')).toBeHidden();
+    await page.evaluate(() => document.getElementById('btn-daily-card').click());
+    await expect(page.locator('#screen-daily')).toBeHidden();
+    // Finishing a Ladder climb sets the flag (finishCommon); simulate it, then reload.
+    await page.evaluate(() => {
+      const p = JSON.parse(localStorage.getItem('sd.player.v1'));
+      p.ladderPlayed = true;
+      localStorage.setItem('sd.player.v1', JSON.stringify(p));
+    });
+    await page.reload();
+    await expect(page.locator('#screen-home')).toBeVisible();
+    await expect(page.locator('#daily-card')).not.toHaveClass(/locked/);
+    await expect(page.locator('#hero-card')).not.toHaveClass(/locked/);
   });
 });
 
@@ -185,10 +220,8 @@ test.describe('persistence', () => {
 test.describe('choose your hero', () => {
   async function toHome(page, name = 'Hero Tester') {
     await dismissTutorial(page);
+    await seedPlayer(page, name);
     await page.goto('/');
-    await passIntro(page);
-    await page.getByPlaceholder(/your name/i).fill(name);
-    await page.getByRole('button', { name: /begin the charge/i }).click();
     await expect(page.locator('#screen-home')).toBeVisible();
   }
 

@@ -58,21 +58,22 @@ Profile (name, stats, edit)
 ```
 
 ### 3.1 Start (title screen)
-One game-style opening screen: crest + title + subtitle, then **Timothy & Titus** — the
-two mascots (idle loops, gentle bob) — flank the tagline *Three books. One charge. Know
-the doctrine.* Below: name entry and the primary **"Begin the Charge"**, with "How to
+One game-style opening screen: crest + title + subtitle, then **Timothy & Titus** as
+huge transparent key art — each anchored half off a screen edge (no GIFs on this
+screen; the idle GIF loops live only in-game) — flanking the tagline *Three books. One
+charge. Know the doctrine.* Below: name entry and the primary **"Begin the Charge"**, with "How to
 play" and "Leaderboard" as secondary links. Returning players (already named) skip this
 screen straight to the Candle home. Mechanics are taught **in-context** by the
 first-climb spotlight tutorial — there is no separate lore page.
 
-When generated art is present (`assets/start-bg-portrait.png` phone background,
-`assets/start-bg-landscape.png` tablet/landscape background,
+When generated art is present (`assets/start-bg-portrait.jpg` phone background,
+`assets/start-bg-landscape.jpg` tablet/landscape background,
 `assets/hero-timothy.png` / `assets/hero-titus.png` full-body transparent characters),
 the screen upgrades automatically into a game-store-style composition: phones get the
 painted background under a warm parchment veil inside the column; landscape devices get
 the scene full-bleed across the viewport with the column floating as a parchment card,
-plus full-body characters bobbing beside the panel. Missing files fall back gracefully
-to the gradient + circle GIFs — no broken images; every asset upgrades independently.
+with the full-body characters standing half off the left/right screen edges. Missing
+files fall back gracefully — no broken images; every asset upgrades independently.
 
 ### 3.2 The Ladder (core loop)
 One question at a time, **full-bleed, no chrome** — focus is the point. The climb is
@@ -95,7 +96,10 @@ ascends from easy recognition to extremely-hard cross-book synthesis (see `GDD.m
 A single lamp flame as the hero. **Lit** = streak alive; **guttering** = at risk;
 **smoke** = broken (with a warm "welcome back," never shame). Below it: **oil vials**
 (streak shields, earned by play), days-remaining, and a quiet reminder of the daily
-Quest. Landing here every day is the Appointment Dynamic.
+Quest. Landing here every day is the Appointment Dynamic. Home order: **The Ladder**
+first, **Choose Your Hero**, then the **Daily Quest** — and new players see Hero + Daily
+locked until they finish their first Ladder climb. The top-left avatar + name chip opens
+the profile, and a live ⚜ score chip shows the running pot during play.
 
 ### 3.4 The Daily Quest (shared daily quest)
 One timed 10-question Quest seeded per day (same seed → same questions for everyone, so
@@ -103,8 +107,9 @@ the leaderboard is fair). Ends in a **spoiler-safe share card** (emoji grid + % 
 this is the social engine that makes the men's challenge competitive.
 
 ### 3.5 Choose Your Hero (per-book runs)
-A home card under the Daily Quest opens the **hero-select screen**: two large character
-cards — **Timothy** (1 & 2 TIMOTHY) and **Titus** (TITUS) — with art slot, book badge,
+A home card (below The Ladder, above the Daily Quest) opens the **hero-select screen**:
+two large character cards — **Timothy** (1 TIMOTHY · 2 TIMOTHY) and **Titus** (TITUS) —
+with art slot, book badge,
 blurb, and a "Play as …" pill. Choosing a hero starts a seeded 10-question run made only
 of his own book's material, hosted by the book-matched mascot. Three new question types
 rotate inside the run:

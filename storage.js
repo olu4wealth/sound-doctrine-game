@@ -22,26 +22,35 @@ function write(key, value) {
 }
 
 // ---------- Player profile ----------
+const PLAYER_DEFAULTS = {
+  name: '',
+  createdAt: null,
+  streak: 0,
+  lastChargeDay: null,
+  oilVials: 10, // every new player starts with 10 oil vials
+  totalDays: 0,
+  totalAnswered: 0,
+  totalCorrect: 0,
+  fails: 0,
+  bestTimeMs: null,
+  bestStreak: 0,
+  entryTier: 1,
+  weakSubjects: [],
+  seenIds: [],
+  lifetimeChapters: {}, // "book ch" -> {asked, correct}
+  lifetimeBooks: {},
+  lifetimeSubjects: {},
+  ladderPlayed: false, // Daily Quest + Choose Your Hero unlock after a Ladder climb
+};
 export function loadPlayer() {
-  return read(KEYS.player, {
-    name: '',
-    createdAt: null,
-    streak: 0,
-    lastChargeDay: null,
-    oilVials: 0,
-    totalDays: 0,
-    totalAnswered: 0,
-    totalCorrect: 0,
-    fails: 0,
-    bestTimeMs: null,
-    bestStreak: 0,
-    entryTier: 1,
-    weakSubjects: [],
-    seenIds: [],
-    lifetimeChapters: {}, // "book ch" -> {asked, correct}
-    lifetimeBooks: {},
-    lifetimeSubjects: {},
-  });
+  // Merge defaults under whatever is saved so new fields exist for old saves too.
+  const saved = read(KEYS.player, {});
+  const merged = { ...PLAYER_DEFAULTS, ...saved };
+  // Returning players who predate the Ladder-first gate keep everything unlocked.
+  if (saved.ladderPlayed === undefined && (merged.totalAnswered || 0) > 0) {
+    merged.ladderPlayed = true;
+  }
+  return merged;
 }
 export function savePlayer(p) { write(KEYS.player, p); }
 

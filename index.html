@@ -18,19 +18,13 @@
 
     <!-- START (title screen — the game's single opening page; returning players skip straight home) -->
     <section id="screen-start" class="screen">
+      <!-- Key art: huge transparent mascots anchored half off each screen edge -->
+      <img class="title-hero title-hero-left" src="assets/hero-timothy.png" alt="" decoding="async" onerror="this.style.display='none'" />
+      <img class="title-hero title-hero-right" src="assets/hero-titus.png" alt="" decoding="async" onerror="this.style.display='none'" />
+      <div class="start-inner">
       <img class="crest" src="assets/icon-crest.png" alt="Sound Doctrine crest" />
       <h1 class="title">Sound Doctrine</h1>
       <p class="subtitle">Saints, Martyrs &amp; Heroes<br />1 &amp; 2 Timothy &middot; Titus</p>
-      <div class="mascot-duo">
-        <figure class="mascot-duo-member">
-          <img src="assets/mascot-timothy-idle.gif" data-png="assets/hero-timothy.png" alt="Timothy — your guide through 1 &amp; 2 Timothy" />
-          <figcaption>Timothy</figcaption>
-        </figure>
-        <figure class="mascot-duo-member">
-          <img src="assets/mascot-titus-idle.gif" data-png="assets/hero-titus.png" alt="Titus — your guide through Titus" />
-          <figcaption>Titus</figcaption>
-        </figure>
-      </div>
       <p class="tagline">Three books. One charge. Know the doctrine.</p>
       <div class="name-entry">
         <input id="input-name" type="text" maxlength="24" placeholder="Your name (shown on the board)" autocomplete="off" />
@@ -40,6 +34,7 @@
         <button class="ghost" id="btn-how">How to play</button>
         <button class="ghost" id="btn-leaderboard">Leaderboard</button>
       </div>
+      </div><!-- /.start-inner -->
     </section>
 
     <!-- HOW -->
@@ -60,7 +55,13 @@
     <!-- HOME (Candle + Ladder) -->
     <section id="screen-home" class="screen hidden">
       <header class="home-head">
-        <div class="home-name" id="home-name">—</div>
+        <button class="profile-chip" id="btn-profile-head" aria-label="Open my profile">
+          <span class="avatar"><img src="assets/icon-crest.png" alt="" /></span>
+          <span class="profile-chip-text">
+            <span class="profile-name" id="home-name">—</span>
+            <span class="profile-hint">My Profile</span>
+          </span>
+        </button>
         <div class="home-head-right">
           <div class="home-rank" id="home-rank">Recruit</div>
           <button class="sound-toggle" id="btn-sound" aria-label="Toggle sound">🔊</button>
@@ -84,20 +85,6 @@
         </div>
       </div>
 
-      <!-- Daily Quest (one seeded quest per day — identical for everyone) -->
-      <div class="daily-card" id="daily-card">
-        <div class="daily-card-title">DAILY QUEST</div>
-        <div class="daily-card-meta">10 QUESTIONS · Same for everyone</div>
-        <button class="primary" id="btn-daily-card">Begin Daily Quest</button>
-      </div>
-
-      <!-- Choose Your Hero (run scoped to Timothy or Titus — only his own book) -->
-      <div class="hero-card-home" id="hero-card">
-        <div class="hero-card-home-title">CHOOSE YOUR HERO</div>
-        <div class="hero-card-home-meta">Timothy or Titus · questions only from his book</div>
-        <button class="primary" id="btn-hero-card">Choose Your Hero</button>
-      </div>
-
       <!-- Visual Ladder T7→T1 -->
       <div class="ladder" id="ladder">
         <div class="ladder-title">THE LADDER</div>
@@ -107,8 +94,24 @@
       <div class="home-cta">
         <button class="primary" id="btn-climb">Begin a Climb</button>
       </div>
+
+      <!-- Choose Your Hero (unlocks after a Ladder climb) -->
+      <div class="hero-card-home" id="hero-card">
+        <div class="hero-card-home-title">CHOOSE YOUR HERO</div>
+        <div class="hero-card-home-meta">Timothy or Titus · questions only from his book</div>
+        <button class="primary" id="btn-hero-card">Choose Your Hero</button>
+        <div class="lock-note">🔒 Finish a Ladder climb to unlock</div>
+      </div>
+
+      <!-- Daily Quest last (unlocks after a Ladder climb) -->
+      <div class="daily-card" id="daily-card">
+        <div class="daily-card-title">DAILY QUEST</div>
+        <div class="daily-card-meta">10 QUESTIONS · Same for everyone</div>
+        <button class="primary" id="btn-daily-card">Daily Quest</button>
+        <div class="lock-note">🔒 Finish a Ladder climb to unlock</div>
+      </div>
+
       <div class="home-second">
-        <button class="ghost small" id="btn-profile">Profile</button>
         <button class="ghost small" id="btn-lb2">Leaderboard</button>
       </div>
     </section>
@@ -119,6 +122,7 @@
         <button class="hud-exit" id="btn-exit" aria-label="Quit">✕</button>
         <div class="hud-hearts" id="hud-hearts">❤️❤️❤️❤️❤️</div>
         <div class="hud-progress" id="hud-progress">0/10</div>
+        <div class="hud-score" id="hud-score" title="Your score this run">⚜ 0</div>
         <div class="hud-oil" id="hud-oil" title="Oil vials — spend on power-ups">🫗 0</div>
         <div class="timer-ring hud-timer">
           <svg class="ring" viewBox="0 0 80 80">
@@ -199,7 +203,7 @@
         <button class="hero-card" data-hero="timothy">
           <span class="hero-art"><img src="assets/mascot-timothy-idle.gif" data-png="assets/hero-timothy.png" alt="Timothy" /></span>
           <span class="hero-name">Timothy</span>
-          <span class="hero-books">1 &amp; 2 Timothy</span>
+          <span class="hero-books">1 Timothy &middot; 2 Timothy</span>
           <span class="hero-blurb">&ldquo;Let no man despise thy youth&rdquo; &mdash; steadfast keeper of the deposit.</span>
           <span class="hero-play">Play as Timothy</span>
         </button>

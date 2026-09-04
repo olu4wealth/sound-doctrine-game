@@ -76,7 +76,7 @@ Duolingo), Appointment Dynamics.
 - **7-day capped streak** (per Chou: cap avoids infinite-dread burnout). A separate
   **lifetime total-days** counter absorbs the long-term pride.
 - **Oil vials** = earned streak shields (a "Streak Freeze" equivalent). Spend one to keep
-  the flame through a missed day.
+  the flame through a missed day. Every new player starts with **10 oil vials**.
 - **Gutter, never cliff**: miss a day and the flame *gutters* (gentle ramp-down); it is
   never catastrophically snuffed with shame. Broken → **welcome-back + revival path**
   (earn the streak back with play, never pay).

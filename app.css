@@ -163,26 +163,18 @@ button:disabled { cursor: default; opacity: .55; }
   50% { filter: drop-shadow(0 10px 34px rgba(243, 167, 36, .5)); }
 }
 
-/* Title-screen mascots: Timothy & Titus welcome the player */
-.mascot-duo {
-  display: flex; justify-content: center; align-items: flex-end;
-  gap: 34px; margin: 8px 0 4px;
+/* Title-screen key art: huge transparent mascots anchored half off each screen edge */
+.title-hero {
+  position: fixed; bottom: -3vh; z-index: 0;
+  width: clamp(260px, 34vw, 560px); height: auto;
+  pointer-events: none; user-select: none;
+  filter: drop-shadow(0 12px 28px rgba(120, 90, 30, .35));
 }
-.mascot-duo-member { margin: 0; text-align: center; }
-.mascot-duo-member img {
-  width: 110px; height: 110px; object-fit: contain;
-  animation: mascotBob 2.6s ease-in-out infinite;
-  filter: drop-shadow(0 6px 14px rgba(120, 90, 30, .25));
-}
-.mascot-duo-member:nth-child(2) img { animation-delay: 1.3s; }
-.mascot-duo-member figcaption {
-  font-size: .72rem; font-weight: 900; letter-spacing: .5px;
-  color: var(--gold-deep); margin-top: 2px;
-}
-@keyframes mascotBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.title-hero-left { left: 0; transform: translateX(-46%); }
+.title-hero-right { right: 0; transform: translateX(46%); }
+.start-inner { position: relative; z-index: 1; }
 @media (max-width: 420px) {
-  .mascot-duo { gap: 24px; }
-  .mascot-duo-member img { width: 88px; height: 88px; }
+  .title-hero { width: 240px; bottom: -4vh; }
 }
 
 /* ---------- How-to ---------- */
@@ -200,7 +192,23 @@ button:disabled { cursor: default; opacity: .55; }
 
 /* ---------- Home / Candle ---------- */
 .home-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.home-name { font-size: 1.25rem; font-weight: 900; color: var(--ink); }
+/* Profile chip: avatar-in-circle + name; clicking it opens the profile */
+.profile-chip {
+  display: flex; align-items: center; gap: 10px;
+  background: none; border: none; padding: 4px 10px 4px 4px;
+  border-radius: 999px; cursor: pointer; text-align: left;
+}
+.profile-chip:hover { background: rgba(255, 255, 255, .75); box-shadow: var(--shadow); }
+.avatar {
+  width: 46px; height: 46px; border-radius: 50%;
+  border: 3px solid var(--gold); background: #fff;
+  overflow: hidden; flex: 0 0 auto;
+  box-shadow: 0 2px 8px rgba(120, 90, 30, .2);
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.profile-chip-text { display: flex; flex-direction: column; line-height: 1.2; }
+.profile-name { font-size: 1.1rem; font-weight: 900; color: var(--ink); }
+.profile-hint { font-size: .68rem; font-weight: 900; letter-spacing: .8px; text-transform: uppercase; color: var(--gold-deep); }
 .home-head-right { display: flex; align-items: center; gap: 10px; }
 .home-rank { color: var(--gold-deep); font-weight: 800; letter-spacing: 1px; }
 .sound-toggle {
@@ -288,6 +296,14 @@ button:disabled { cursor: default; opacity: .55; }
 }
 .daily-card .primary { max-width: 260px; margin: 0 auto; }
 
+/* New-player gating: the Ladder comes first; these unlock after one finished climb */
+.lock-note { display: none; margin-top: 10px; font-size: .78rem; font-weight: 800; color: var(--ink-soft); }
+.daily-card.locked, .hero-card-home.locked { opacity: .8; }
+.daily-card.locked .primary, .hero-card-home.locked .primary {
+  filter: grayscale(.5); opacity: .65; pointer-events: none;
+}
+.daily-card.locked .lock-note, .hero-card-home.locked .lock-note { display: block; }
+
 .ladder {
   background: var(--card);
   border: 2px solid var(--line);
@@ -358,6 +374,12 @@ button:disabled { cursor: default; opacity: .55; }
 }
 .hud-hearts { font-size: 1.15rem; letter-spacing: 1px; flex: 1; text-align: center; white-space: nowrap; }
 .hud-progress { color: var(--ink-soft); font-weight: 900; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+.hud-score {
+  flex: 0 0 auto; font-weight: 900; color: var(--gold-deep);
+  background: #fff; border: 2px solid var(--line); border-radius: var(--pill);
+  padding: 6px 12px; font-size: .95rem; font-variant-numeric: tabular-nums;
+  white-space: nowrap; box-shadow: var(--shadow);
+}
 .hud-oil {
   flex: 0 0 auto; font-weight: 900; color: #7a4b00;
   width: 38px; height: 38px;
@@ -829,6 +851,7 @@ button:disabled { cursor: default; opacity: .55; }
   .hud-exit { width: 38px; height: 38px; font-size: .95rem; }
   .hud-hearts { font-size: .9rem; letter-spacing: 0; }
   .hud-progress { font-size: .85rem; }
+.hud-score { padding: 4px 8px; font-size: .8rem; }
   .hud-oil { width: 34px; height: 34px; font-size: .8rem; }
   .hud-timer.timer-ring { width: 46px; height: 46px; }
   .hud-timer.timer-ring .ring { width: 46px; height: 46px; }
@@ -984,25 +1007,16 @@ button:disabled { cursor: default; opacity: .55; }
 #screen-start.has-bg.bg-portrait {
   background:
     linear-gradient(180deg, rgba(255, 251, 240, .84) 0%, rgba(255, 251, 240, .92) 100%),
-    url('assets/start-bg-portrait.png') center / cover no-repeat;
+    url('assets/start-bg-portrait.jpg') center / cover no-repeat;
 }
 @media (orientation: landscape) {
   body.on-start.art-landscape {
     background:
       linear-gradient(180deg, rgba(253, 243, 227, .38) 0%, rgba(238, 243, 255, .52) 100%),
-      url('assets/start-bg-landscape.png') center / cover no-repeat;
+      url('assets/start-bg-landscape.jpg') center / cover no-repeat;
   }
   body.on-start.art-landscape #screen-start.has-bg {
     background: linear-gradient(180deg, rgba(255, 251, 240, .9) 0%, rgba(255, 251, 240, .96) 100%);
   }
 }
-/* Full-body hero art replaces the circle GIFs when generated PNGs are present */
-.mascot-duo-member.fullbody img {
-  width: 128px; height: 164px;
-  border-radius: 18px;
-  animation: mascotBob 2.6s ease-in-out infinite;
-}
-.mascot-duo-member.fullbody:nth-child(2) img { animation-delay: 1.3s; }
-@media (max-width: 420px) {
-  .mascot-duo-member.fullbody img { width: 104px; height: 134px; }
-}
+
