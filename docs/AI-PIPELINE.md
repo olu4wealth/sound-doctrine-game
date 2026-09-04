@@ -85,8 +85,10 @@ or pipe through an external LLM, then validate with `verify/check.mjs` before me
 
 ## Verification
 
-```
-node verify/check.mjs        # 6 gates + coverage (current bank: 150, PASSED with 4 warnings)
-node verify/game-core.test.mjs  # 36 unit tests
+```text
+node verify/check.mjs        # 6 gates + coverage (canonical bank: 166 questions)
+                             # ⚠ current status: FAILED — 84 errors (missing category/skill
+                             #   metadata + a Gate-A KJV mismatch); repair tracked as follow-up
+node verify/game-core.test.mjs  # 37 unit tests (run against the canonical bank)
 node scripts/backfill-metadata.mjs  # category/skill audit
 ```

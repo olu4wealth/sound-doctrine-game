@@ -41,23 +41,28 @@ wall on a phone. First-run asks only for a display name — everything else is o
 ## 3. The screens (mobile-first, portrait)
 
 ```
-Start (⇣)
- ├─ One-tap sign-in → name entry → Ladder
+Start (title screen — the single opening page)
+ ├─ Name entry → "Begin the Charge" → Candle home
  ├─ How to play
  └─ Leaderboard (tab)
 Ladder (the core play screen)
- ├─ Question + confidence bid + live timer
+ ├─ Question + confidence stake + countdown ring
  ├─ Correction panel (verse + reference) on miss / near-miss
  └─ Charge-complete → faithful report → share card
 Candle (retention screen — the "keep it lit" home)
+Daily Quest (one seeded 10-question quest per day)
 Report (per-session + lifetime)
-Leaderboard (global, real-time)
+Leaderboard (local; Supabase-ready)
 Profile (name, stats, edit)
 ```
 
-### 3.1 Start
-Crest ✦, title, subtitle, then the **walk-up**: name entry + "Begin the Charge."
-Global leaderboard peeks here (top 5) so the social pull is visible at first glance.
+### 3.1 Start (title screen)
+One game-style opening screen: crest + title + subtitle, then **Timothy & Titus** — the
+two mascots (idle loops, gentle bob) — flank the tagline *Three books. One charge. Know
+the doctrine.* Below: name entry and the primary **"Begin the Charge"**, with "How to
+play" and "Leaderboard" as secondary links. Returning players (already named) skip this
+screen straight to the Candle home. Mechanics are taught **in-context** by the
+first-climb spotlight tutorial — there is no separate lore page.
 
 ### 3.2 The Ladder (core loop)
 One question at a time, **full-bleed, no chrome** — focus is the point. The climb is
@@ -80,16 +85,16 @@ ascends from easy recognition to extremely-hard cross-book synthesis (see `GDD.m
 A single lamp flame as the hero. **Lit** = streak alive; **guttering** = at risk;
 **smoke** = broken (with a warm "welcome back," never shame). Below it: **oil vials**
 (streak shields, earned by play), days-remaining, and a quiet reminder of the daily
-Office. Landing here every day is the Appointment Dynamic.
+Quest. Landing here every day is the Appointment Dynamic.
 
-### 3.4 The Daily Office (shared daily charge)
-One timed 10-question Charge seeded per day (same seed → same questions for everyone, so
+### 3.4 The Daily Quest (shared daily quest)
+One timed 10-question Quest seeded per day (same seed → same questions for everyone, so
 the leaderboard is fair). Ends in a **spoiler-safe share card** (emoji grid + % + time) —
 this is the social engine that makes the men's challenge competitive.
 
 ### 3.5 Leaderboard
 Ranked, real-time, scrollable. Columns: rank · name · rank-title · streak · fails ·
-best time. **Tabs**: Today's Office / This week / All time. Your own row is pinned and
+best time. **Tabs**: Today's Quest / This week / All time. Your own row is pinned and
 highlighted. (Supabase Realtime pushes updates, no refresh.)
 
 ### 3.6 The Charge Report (post-game scoring + guidance)
@@ -190,14 +195,13 @@ when we run the design-system pass — this section is the intent, that pass is 
 | **Progressive 7-rung ladder (easy → extremely hard)** | 🟢 shipped |
 | **Charge Report (grade + strengths/weaknesses + study Rx)** | 🟢 shipped |
 | Candle: capped streak + oil shields + gutter | 🟢 shipped |
-| Daily Office: seeded daily + share card | 🟢 shipped |
+| Daily Quest: seeded daily + share card | 🟢 shipped |
 | Global real-time leaderboard | 🟡 spec'd — local board shipped |
 | Formal design tokens (design.md / design.html) | ⚪ planned |
-| Supabase backend implementation | ⚪ planned (needs approval) |
 | Supabase backend implementation | ⚪ planned (needs approval) |
 
 ---
 
 *Next: run the design-system pass to freeze visual tokens into `docs/design.md` +
-`docs/design.html`, then decide build order (Ladder + Candle first, then Daily Office,
+`docs/design.html`, then decide build order (Ladder + Candle first, then Daily Quest,
 then the Supabase leaderboard).*

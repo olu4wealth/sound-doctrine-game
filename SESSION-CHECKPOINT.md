@@ -1,5 +1,9 @@
 # Session Checkpoint — Sound Doctrine Scripture Trivia
 
+> **ℹ️ Historical snapshot (2026-09-01).** Numbers below reflect that date (95-question
+> bank, 35 unit tests). Current state: 166 questions in `data/questions-merged.json`,
+> 37 unit tests, Daily Quest mode. Canonical status lives in `README.md` + `docs/GDD.md`.
+
 **Saved:** 2026-09-01
 **Status:** Game built, verified, visually inspected. Ready for next step.
 

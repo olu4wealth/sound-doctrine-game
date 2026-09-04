@@ -18,7 +18,7 @@ books, one charge, an endless ladder of knowledge.
    but **never invents**.
 2. **Tension over trivia** — progression carries risk (the Ladder), not just points.
 3. **Kind retention** — streaks are capped and forgiving (the Candle), never a guilt trap.
-4. **Shared ritual** — a once-a-day common challenge + leaderboard (the Daily Office).
+4. **Shared ritual** — a once-a-day common challenge + leaderboard (the Daily Quest).
 
 ## 2. The three systems (adopted from research)
 
@@ -26,7 +26,7 @@ A full mechanics trace lives in `docs/research-notes.md`; here is the spec.
 
 ---
 
-### 2.1 The Ladder — core adrenaline loop 🟡
+### 2.1 The Ladder — core adrenaline loop 🟢 (shipped)
 
 **Adopts:** double-or-nothing risk (Problyx *The Ladder*, Cash Cab) + near-miss effect +
 goal-gradient (Wordle).
@@ -67,7 +67,7 @@ flowchart TD
 
 ---
 
-### 2.2 The Candle — retention / identity 🟡
+### 2.2 The Candle — retention / identity 🟢 (shipped)
 
 **Adopts:** streak→identity + capped streaks + recovery ("Streak Shield") (Yu-kai Chou /
 Duolingo), Appointment Dynamics.
@@ -98,12 +98,12 @@ flowchart LR
 
 ---
 
-### 2.3 The Daily Office — shared social engine 🟡 (phase 2)
+### 2.3 The Daily Quest — shared social engine 🟢 (shipped)
 
 **Adopts:** NYT one-a-day + share-card ritual + shared-social payoff; fairness through
 a common seed.
 
-- One **10-question timed Charge** per calendar day, **identical for every player**
+- One **10-question timed Quest** per calendar day, **identical for every player**
   (seeded by date) → everyone climbs the *same* rungs, so competition is fair.
 - Ends in a **spoiler-safe share card**: emoji grid (⩝⩞⩟) + accuracy % + solve time,
   posted to the men's chat/leaderboard.
@@ -129,8 +129,8 @@ earning it, and the whole ladder escalates from recall to synthesis. Difficulty 
 | T6 | **Cross-reference** | Tie two verses from *different* books | "Where do 'fight the good fight' and 'war a good warfare' each appear?" |
 | T7 | **Synthesis ("extremely hard")** | Derive doctrine across all three books, still objectively answerable | "Which single subject do 1 Tim 6, 2 Tim 3, and Titus 1 all warn against? (cite the references)" |
 
-- The **69-question seed bank** currently covers **T1–T5**; **T6–T7** are new question
-  *types* to author (still 100% lockbox-verifiable — see §3.3).
+- The **166-question bank** covers **T1–T7** (T1 17 / T2 20 / T3 48 / T4 33 /
+  T5 16 / T6 18 / T7 14).
 - Tiers **unlock sequentially** within a climb: board the ladder at T1, advance a tier
   after a correct answer in the current tier (or a near-miss *grace* in T3+).
 
@@ -166,7 +166,7 @@ earning it, and the whole ladder escalates from recall to synthesis. Difficulty 
 
 ### 4.2 The Charge Report — post-game grading + "how to do better"
 
-After every climb (and every Daily Office), the player gets a **Charge Report**, which is
+After every climb (and every Daily Quest), the player gets a **Charge Report**, which is
 the *reward* of finishing, not an afterthought. It has four parts:
 
 1. **Grade** — a letter + title from the composite:
@@ -210,14 +210,14 @@ The game is "won" by *knowing the doctrine*, not by grinding:
 
 | System | Status |
 |---|---|
-| Verified 150-question bank (7-tier, 6-gate KJV lockbox) | 🟢 shipped (`data/questions-merged.json` canonical, D2) |
+| Verified 166-question bank (7-tier, 6-gate KJV lockbox) | 🟢 shipped (`data/questions-merged.json` canonical, D2) |
 | The Ladder (progressive T1→T7 ramp, adaptive weak-subject picker, countdown) | 🟢 shipped |
-| The Candle (capped 7-day streak, oil shields, gutter) + Flame card + Ladder on Home | 🟢 shipped (Phase 4: visual Ladder T7→T1 with 🔥YOU, Flame card, Today's Office card) |
-| **7-tier progression (T1–T7)** | 🟢 shipped (all tiers authored & verified: T1 15 / T2 20 / T3 48 / T4 33 / T5 11 / T6 13 / T7 10) |
+| The Candle (capped 7-day streak, oil shields, gutter) + Flame card + Ladder on Home | 🟢 shipped (Phase 4: visual Ladder T7→T1 with 🔥YOU, Flame card, Daily Quest card) |
+| **7-tier progression (T1–T7)** | 🟢 shipped (all tiers authored & verified: T1 17 / T2 20 / T3 48 / T4 33 / T5 16 / T6 18 / T7 14) |
 | **Confidence stake — two-step (D3): answer → stake card 1×…5×, Grace half** | 🟢 shipped (Phase 6: `BIDS` 5-tier, `resolveAnswer(q, idx, bid)` → ± stake×100, Grace 50% via `nearIndexes`) |
 | **Charge Report: Mastery Map + Weakest + Missed Verses + Retest** | 🟢 shipped (Phase 5: per-book mastery bars, weakest-chapter card, missed-verse list, `[Retest My Weakness]`) |
 | Named players + profile stats (streak / fails / best time) | 🟢 shipped (local profile) |
-| The Daily Office (seeded daily + share card) | 🟢 shipped |
+| The Daily Quest (seeded daily + share card) | 🟢 shipped |
 | Global real-time leaderboard (Supabase) | 🟡 spec'd — local board shipped; backend needs Supabase project |
 | AI pipeline (build-time only, D5) | 🟢 shipped (`scripts/ai-generate.mjs` + `scripts/merge-ai.mjs` + `docs/AI-PIPELINE.md`, 6-gate) |
 | Supabase auth + cloud sync | ⚪ planned (needs approval + project) |

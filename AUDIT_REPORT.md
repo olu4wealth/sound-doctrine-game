@@ -1,5 +1,11 @@
 # Sound Doctrine — Comprehensive Audit Report
 
+> **ℹ️ Historical snapshot.** This audit ran while the working bank was 203 (legacy
+> file merge) / 144 (merged snapshot). The bank has since been consolidated into the
+> canonical `data/questions-merged.json` (166 questions). Some "critical" items below
+> (regenerate merged file, metadata backfill) have been partially done since — see
+> `docs/AI-PIPELINE.md` for the current validator status.
+
 ## Executive Summary
 
 **Status:** Game is well-positioned but has critical gaps between current implementation and competition brief requirements.

@@ -11,7 +11,7 @@ Three books. One charge. Know the doctrine.
   *Grace* (half kept).
 - **The Candle** — a 7-day capped streak that keeps your lamp lit; oil vials are
   earned shields; misses gutter gently and never shame you.
-- **Daily Office** — one seeded 10-question charge per day, identical for everyone,
+- **Daily Quest** — one seeded 10-question quest per day, identical for everyone,
   ending in a shareable spoiler-safe card.
 - **Charge Report** — after every climb: a letter grade, strengths ("you held fast"),
   weaknesses ("strengthen your charge"), and concrete study prescriptions with
@@ -20,9 +20,9 @@ Three books. One charge. Know the doctrine.
   time / accuracy; a local leaderboard ranks everyone (Supabase-ready for a global,
   real-time board — see below).
 
-**Scriptural safety:** the game never calls a model while you play. All 95 questions
-are pre-authored and machine-verified character-for-character against the KJV lockbox
-(`data/kjv-*.json`, `verify/check.mjs`).
+**Scriptural safety:** the game never calls a model while you play. All 166 questions
+are pre-authored and pinned to the KJV lockbox (`data/kjv-*.json`); `verify/check.mjs`
+machine-checks them against it (current status: `docs/AI-PIPELINE.md`).
 
 ## Running locally
 
@@ -36,9 +36,9 @@ npx serve .
 
 ## Verifying
 
-```
-node verify/check.mjs            # content vs KJV lockbox (95 questions)
-node verify/game-core.test.mjs   # engine unit tests (35 checks)
+```text
+node verify/check.mjs            # content vs KJV lockbox (166 questions; see docs/AI-PIPELINE.md)
+node verify/game-core.test.mjs   # engine unit tests (37 checks, canonical bank)
 npm run test                     # both of the above
 ```
 
@@ -56,8 +56,8 @@ npm run test:e2e                   # runs tests/game.e2e.spec.js (auto-serves on
 > Note: this repo sets `omit` quirks aside — use `--include=dev` when installing,
 > because Playwright lives in `devDependencies`.
 
-The suite covers the full player journey: name entry → Candle home → climb →
-question + countdown ring ticks down → answer + verse correction → Daily Office
+The suite covers the full player journey: title screen + name entry → Candle home →
+climb → question + countdown ring ticks down → answer + verse correction → Daily Quest
 (seeded day, 10 questions) → Charge Report (grade + "how to do better") →
 leaderboard, plus localStorage persistence across reload.
 

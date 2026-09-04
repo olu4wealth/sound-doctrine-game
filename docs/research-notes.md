@@ -60,7 +60,7 @@ NYT Wordle/Connections succeed on *quiet pacing* (one a day), *identity* ("I sol
 it — here's proof"), and a *common ritual* shared socially. The share card is the
 social payoff.
 
-**Adopted:** the Daily Office (one seeded charge/day + spoiler-safe share card).
+**Adopted:** the Daily Quest (one seeded quest/day + spoiler-safe share card).
 
 - [Wordle, Connections and Strands: NYT Puzzle Psychology](https://mysterious.top/inside-the-nyt-puzzle-factory-how-connections-wordle-and-str)
 

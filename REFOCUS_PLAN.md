@@ -1,5 +1,10 @@
 # Sound Doctrine — Refocus Plan
 
+> **ℹ️ Historical planning document.** Written before the bank was consolidated to the
+> canonical `data/questions-merged.json` (166 questions) and before the daily mode was
+> renamed **Daily Quest** (formerly "Daily Office"). The living status matrix is in
+> `docs/GDD.md` / `docs/UI-UX.md`.
+
 ## Priority Order (per competition brief)
 
 1. **Scriptural accuracy** ← HIGHEST

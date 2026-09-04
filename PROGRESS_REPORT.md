@@ -1,5 +1,9 @@
 # Sound Doctrine - Refocus Progress Report
 
+> **ℹ️ Historical snapshot.** Numbers reflect the 144-question era. Current canonical
+> bank: 166 questions (`data/questions-merged.json`). The living status matrix is in
+> `docs/GDD.md` / `docs/UI-UX.md`.
+
 ## Executive Summary
 
 Transformed Sound Doctrine from a Bible quiz game into a Scripture mastery engine aligned with competition judging criteria.
