@@ -2716,5 +2716,310 @@
     ],
     "answer": "the first and second",
     "reference": "Titus 3:10"
+  },
+  {
+    "id": "t5-1ti-2-godliness",
+    "book": "1 Timothy",
+    "chapter": 2,
+    "subject": "godliness instructions",
+    "tier": 5,
+    "type": "crossref",
+    "prompt": "In 1 Timothy 2, Paul gives instructions about prayer and conduct. Which two qualities does he specifically link to women professing godliness in verses 9-10?",
+    "options": [
+      "Modest apparel and good works",
+      "Silence and subjection",
+      "Faith and charity",
+      "Prayer and intercession"
+    ],
+    "correctIndex": 0,
+    "answer": "Modest apparel and good works",
+    "reference": "1 Timothy 2:9-10",
+    "verseText": "In like manner also, that women adorn themselves in modest apparel, with shamefacedness and sobriety; ... But (which becometh women professing godliness) with good works."
+  },
+  {
+    "id": "t5-1ti-3-leaders",
+    "book": "1 Timothy",
+    "chapter": 3,
+    "subject": "church leadership",
+    "tier": 5,
+    "type": "synthesis",
+    "prompt": "Both bishops and deacons in 1 Timothy 3 must share which TWO qualifications?",
+    "options": [
+      "Husband of one wife, ruling children well",
+      "Apt to teach, not greedy of filthy lucre",
+      "Not given to wine, blameless",
+      "Patient, not a brawler"
+    ],
+    "correctIndex": 0,
+    "answer": "Husband of one wife, ruling children well",
+    "reference": "1 Timothy 3:2, 12",
+    "verseText": "A bishop then must be blameless, the husband of one wife...One that ruleth well his own house...Let the deacons be the husbands of one wife, ruling their children and their own houses well."
+  },
+  {
+    "id": "t6-sound-doctrine-synthesis",
+    "book": "1 Timothy",
+    "chapter": 1,
+    "subject": "sound doctrine",
+    "tier": 6,
+    "type": "synthesis",
+    "prompt": "The phrase 'sound doctrine' appears in 1 Timothy 1:10, 1 Timothy 6:3, and Titus 1:9. In Titus 2:1, what related exhortation does Paul give that connects to this theme?",
+    "options": [
+      "Speak thou the things which become sound doctrine",
+      "Hold fast the form of sound words",
+      "Continue in the doctrine which thou hast learned",
+      "Teach no other doctrine"
+    ],
+    "correctIndex": 0,
+    "answer": "Speak thou the things which become sound doctrine",
+    "reference": "Titus 2:1",
+    "passageB": "1 Timothy 1:10",
+    "verseTextB": "And if there be any other thing that is contrary to sound doctrine:"
+  },
+  {
+    "id": "t6-guard-faith",
+    "book": "1 Timothy",
+    "chapter": 6,
+    "subject": "guarding the faith",
+    "tier": 6,
+    "type": "crossref",
+    "prompt": "Paul charges both Timothy and Titus to guard what has been entrusted to them. What specific action does he command in BOTH 1 Timothy 6:20 AND Titus 1:9?",
+    "options": [
+      "Keep/hold fast",
+      "Preach boldly",
+      "Flee evil",
+      "Study diligently"
+    ],
+    "correctIndex": 0,
+    "answer": "Keep/hold fast",
+    "reference": "1 Timothy 6:20; Titus 1:9",
+    "verseText": "O Timothy, keep that which is committed to thy trust...Holding fast the faithful word as he hath been taught"
+  },
+  {
+    "id": "t7-three-books-synthesis",
+    "book": "1 Timothy",
+    "chapter": 4,
+    "subject": "exercise unto godliness",
+    "tier": 7,
+    "type": "synthesis",
+    "prompt": "Synthesis across all three books: 1 Timothy 4:7 commands 'exercise thyself rather unto godliness.' Which book contains NO direct command about exercising or training for godliness?",
+    "options": [
+      "2 Timothy",
+      "Titus",
+      "Both 2 Timothy and Titus",
+      "None - all three mention it"
+    ],
+    "correctIndex": 1,
+    "answer": "Titus",
+    "reference": "1 Timothy 4:7; 2 Timothy 3:10-17; Titus 1-3",
+    "verseText": "But refuse profane and old wives' fables, and exercise thyself rather unto godliness."
+  },
+  {
+    "id": "t5-2ti-1-gift",
+    "book": "2 Timothy",
+    "chapter": 1,
+    "subject": "spiritual gifts",
+    "tier": 5,
+    "type": "recall",
+    "prompt": "In 2 Timothy 1:6, Paul tells Timothy to stir up the gift of God. Through what means was this gift given?",
+    "options": [
+      "Laying on of hands",
+      "Prophecy",
+      "Prayer and fasting",
+      "Baptism"
+    ],
+    "correctIndex": 0,
+    "answer": "Laying on of hands",
+    "reference": "2 Timothy 1:6",
+    "verseText": "Wherefore I put thee in remembrance that thou stir up the gift of God, which is in thee by the putting on of my hands."
+  },
+  {
+    "id": "t6-not-ashamed",
+    "book": "2 Timothy",
+    "chapter": 1,
+    "subject": "not ashamed",
+    "tier": 6,
+    "type": "crossref",
+    "prompt": "In 2 Timothy 1:8 Paul says 'Be not thou therefore ashamed of the testimony of our Lord.' What reason does he give in the immediate context (verse 7) for not being ashamed?",
+    "options": [
+      "God gave us power, love, and sound mind",
+      "Christ died for all",
+      "The gospel is power unto salvation",
+      "We are more than conquerors"
+    ],
+    "correctIndex": 0,
+    "answer": "God gave us power, love, and sound mind",
+    "reference": "2 Timothy 1:7-8",
+    "verseText": "For God hath not given us the spirit of fear; but of power, and of love, and of a sound mind. Be not thou therefore ashamed of the testimony of our Lord"
+  },
+  {
+    "id": "t7-seven-synthesis",
+    "book": "2 Timothy",
+    "chapter": 3,
+    "subject": "last days",
+    "tier": 7,
+    "type": "synthesis",
+    "prompt": "2 Timothy 3:1-5 lists perilous times in the last days with many negative characteristics. How many distinct vices does Paul enumerate in these verses?",
+    "options": [
+      "17",
+      "15",
+      "19",
+      "21"
+    ],
+    "correctIndex": 0,
+    "answer": "17",
+    "reference": "2 Timothy 3:2-5",
+    "verseText": "For men shall be lovers of their own selves, covetous, boasters, proud, blasphemers, disobedient to parents, unthankful, unholy, Without natural affection, trucebreakers, false accusers, incontinent, fierce, despisers of those that are good, Traitors, heady, highminded, lovers of pleasures more than lovers of God;"
+  },
+  {
+    "id": "t1-1ti-2-prayer",
+    "book": "1 Timothy",
+    "chapter": 2,
+    "subject": "prayer",
+    "tier": 1,
+    "type": "recall",
+    "prompt": "In 1 Timothy 2:1, Paul exhorts that what FOUR things be made for all men?",
+    "options": [
+      "Supplications, prayers, intercessions, giving of thanks",
+      "Faith, hope, love, patience",
+      "Confession, repentance, belief, baptism",
+      "Wisdom, understanding, knowledge, fear of the Lord"
+    ],
+    "correctIndex": 0,
+    "answer": "Supplications, prayers, intercessions, giving of thanks",
+    "reference": "1 Timothy 2:1",
+    "verseText": "I exhort therefore, that, first of all, supplications, prayers, intercessions, and giving of thanks, be made for all men;"
+  },
+  {
+    "id": "t5-tit-1-elders",
+    "book": "Titus",
+    "chapter": 1,
+    "subject": "elder qualifications",
+    "tier": 5,
+    "type": "synthesis",
+    "prompt": "In Titus 1, an elder must be blameless. Which of these is NOT listed among the specific qualifications in verses 6-9?",
+    "options": [
+      "Husband of one wife",
+      "Children that believe and are not accused of riot",
+      "Apt to teach",
+      "Given to hospitality"
+    ],
+    "correctIndex": 2,
+    "answer": "Apt to teach",
+    "reference": "Titus 1:6-9",
+    "verseText": "If any be blameless, the husband of one wife, having faithful children not accused of riot or unruly...But a lover of hospitality, a lover of good men, sober, just, holy, temperate;"
+  },
+  {
+    "id": "t6-false-teachers",
+    "book": "1 Timothy",
+    "chapter": 4,
+    "subject": "false teaching",
+    "tier": 6,
+    "type": "crossref",
+    "prompt": "Both 1 Timothy 4 and 2 Timothy 3 describe false teachers in the last days. What specific practice does 1 Timothy 4:3 mention that 2 Timothy 3 does NOT explicitly address?",
+    "options": [
+      "Forbidding to marry and abstaining from meats",
+      "Loving pleasure more than God",
+      "Having a form of godliness but denying the power",
+      "Being heady and highminded"
+    ],
+    "correctIndex": 0,
+    "answer": "Forbidding to marry and abstaining from meats",
+    "reference": "1 Timothy 4:3; 2 Timothy 3:1-5",
+    "verseText": "Forbidding to marry, and commanding to abstain from meats, which God hath created to be received with thanksgiving of them which believe and know the truth."
+  },
+  {
+    "id": "t7-leadership-synthesis",
+    "book": "Titus",
+    "chapter": 1,
+    "subject": "church leadership",
+    "tier": 7,
+    "type": "synthesis",
+    "prompt": "Synthesis: The qualifications for bishops/elders appear in both 1 Timothy 3 and Titus 1. Which qualification appears in Titus 1:7 but NOT in 1 Timothy 3:2-7?",
+    "options": [
+      "Not selfwilled",
+      "Blameless",
+      "Husband of one wife",
+      "Patient"
+    ],
+    "correctIndex": 0,
+    "answer": "Not selfwilled",
+    "reference": "Titus 1:7; 1 Timothy 3:2-7",
+    "verseText": "For a bishop must be blameless, as the steward of God; not selfwilled, not soon angry, not given to wine, no striker, not given to filthy lucre;"
+  },
+  {
+    "id": "t2-tit-2-grace",
+    "book": "Titus",
+    "chapter": 2,
+    "subject": "grace",
+    "tier": 2,
+    "type": "completion",
+    "prompt": "Complete from Titus 2:11 (KJV): 'For the grace of God that bringeth salvation hath appeared ___'",
+    "options": [
+      "to all men",
+      "unto the Jews first",
+      "in these last days",
+      "through Jesus Christ"
+    ],
+    "correctIndex": 0,
+    "answer": "to all men",
+    "reference": "Titus 2:11",
+    "verseText": "For the grace of God that bringeth salvation hath appeared to all men,"
+  },
+  {
+    "id": "t5-2ti-3-inspiration",
+    "book": "2 Timothy",
+    "chapter": 3,
+    "subject": "scripture",
+    "tier": 5,
+    "type": "recall",
+    "prompt": "2 Timothy 3:16 states 'All scripture is given by inspiration of God.' What four purposes does Paul immediately list?",
+    "options": [
+      "Doctrine, reproof, correction, instruction in righteousness",
+      "Wisdom, understanding, knowledge, discretion",
+      "Faith, hope, love, perseverance",
+      "Teaching, preaching, healing, prophesying"
+    ],
+    "correctIndex": 0,
+    "answer": "Doctrine, reproof, correction, instruction in righteousness",
+    "reference": "2 Timothy 3:16",
+    "verseText": "All scripture is given by inspiration of God, and is profitable for doctrine, for reproof, for correction, for instruction in righteousness:"
+  },
+  {
+    "id": "t6-women-role",
+    "book": "1 Timothy",
+    "chapter": 2,
+    "subject": "women's conduct",
+    "tier": 6,
+    "type": "crossref",
+    "prompt": "In 1 Timothy 2:11-14, Paul gives reasons for women learning in silence. Which biblical figures does he reference?",
+    "options": [
+      "Adam and Eve",
+      "Sarah and Abraham",
+      "Mary and Joseph",
+      "Rebekah and Isaac"
+    ],
+    "correctIndex": 0,
+    "answer": "Adam and Eve",
+    "reference": "1 Timothy 2:13-14",
+    "verseText": "For Adam was first formed, then Eve. And Adam was not deceived, but the woman being deceived was in the transgression."
+  },
+  {
+    "id": "t7-numerical-synthesis",
+    "book": "1 Timothy",
+    "chapter": 3,
+    "subject": "numerical facts",
+    "tier": 7,
+    "type": "synthesis",
+    "prompt": "Across all three pastoral epistles, how many times does the exact phrase 'faithful saying' (KJV) appear?",
+    "options": [
+      "5",
+      "4",
+      "6",
+      "7"
+    ],
+    "correctIndex": 0,
+    "answer": "5",
+    "reference": "1 Timothy 1:15; 3:1; 4:9; 2 Timothy 2:11; Titus 3:8",
+    "verseText": "This is a faithful saying, and worthy of all acceptation..."
   }
 ]
