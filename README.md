@@ -13,6 +13,10 @@ Three books. One charge. Know the doctrine.
   earned shields; misses gutter gently and never shame you.
 - **Daily Quest** — one seeded 10-question quest per day, identical for everyone,
   ending in a shareable spoiler-safe card.
+- **Choose Your Hero** — pick **Timothy** (1 & 2 Timothy) or **Titus** (Titus) and get a
+  seeded 10-question run from *his own book only*, mixing three fresh question types:
+  **True or False**, **Word Order** (rebuild the verse by tapping its words), and
+  **Who Did This** (four names, one verse-backed answer).
 - **Charge Report** — after every climb: a letter grade, strengths ("you held fast"),
   weaknesses ("strengthen your charge"), and concrete study prescriptions with
   chapter:verse references ("how to do better").
@@ -20,9 +24,11 @@ Three books. One charge. Know the doctrine.
   time / accuracy; a local leaderboard ranks everyone (Supabase-ready for a global,
   real-time board — see below).
 
-**Scriptural safety:** the game never calls a model while you play. All 166 questions
-are pre-authored and pinned to the KJV lockbox (`data/kjv-*.json`); `verify/check.mjs`
-machine-checks them against it (current status: `docs/AI-PIPELINE.md`).
+**Scriptural safety:** the game never calls a model while you play. All 166 ladder/daily
+questions plus 36 Choose-Your-Hero questions are pre-authored and pinned to the KJV
+lockbox (`data/kjv-*.json`); `verify/check.mjs` machine-checks the main bank against it
+(current status: `docs/AI-PIPELINE.md`), and `verify/hero.test.mjs` machine-checks every
+hero verse, word-order segment, and true/false statement against the same lockbox.
 
 ## Running locally
 
@@ -39,7 +45,8 @@ npx serve .
 ```text
 node verify/check.mjs            # content vs KJV lockbox (166 questions; see docs/AI-PIPELINE.md)
 node verify/game-core.test.mjs   # engine unit tests (37 checks, canonical bank)
-npm run test                     # both of the above
+node verify/hero.test.mjs        # Choose Your Hero engine + data tests (32 checks, KJV-verified)
+npm run test                     # all of the above
 ```
 
 ## End-to-end testing (Playwright)

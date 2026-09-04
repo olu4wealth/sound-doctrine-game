@@ -166,6 +166,31 @@ export function dailyCharge(bank, date, rng = mulberry32(hashCode(dailySeed(date
   return ordered;
 }
 
+// ---------- Choose Your Hero ----------
+// Two heroes, each scoped to his own book(s): Timothy -> 1 & 2 Timothy, Titus -> Titus.
+// Typed questions (true/false, word-order, who-did-this) come from data/heroes.json
+// (built by scripts/build-heroes.mjs, verse-verbatim from the KJV lockbox).
+export const HEROES = {
+  timothy: { id: 'timothy', name: 'Timothy', books: ['1 Timothy', '2 Timothy'] },
+  titus: { id: 'titus', name: 'Titus', books: ['Titus'] },
+};
+export const HERO_LENGTH = 10;
+
+// Deterministic per-day hero run (same shape as dailyCharge): 3 true/false +
+// 3 word-order + 2 who-did-this from the hero's typed pool, filled to 10 with
+// book-filtered ladder questions (T5 and below). Same day + hero = same run.
+export function heroRun(mainBank, heroBank, heroId, dayStr, rng = mulberry32(hashCode(`hero:${dayStr}:${heroId}`))) {
+  const hero = HEROES[heroId];
+  if (!hero) return [];
+  const pool = heroBank.filter((q) => q.hero === heroId);
+  const typed = (t, n) => shuffle(rng, pool.filter((q) => q.type === t)).slice(0, n);
+  const chosen = [...typed('truefalse', 3), ...typed('wordorder', 3), ...typed('whodid', 2)];
+  const mcq = mainBank.filter((q) =>
+    hero.books.includes(q.book) && tierOf(q) <= 5 && !chosen.some((c) => c.id === q.id));
+  chosen.push(...shuffle(rng, mcq).slice(0, Math.max(0, HERO_LENGTH - chosen.length)));
+  return shuffle(rng, chosen).slice(0, HERO_LENGTH);
+}
+
 // ---------- Adaptive Ladder picker ----------
 // model: { entryTier, weakSubjects:Set, seen:Set (ids used), climbCount }
 export function pickNextLadder(bank, model) {

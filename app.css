@@ -886,3 +886,107 @@ button:disabled { cursor: default; opacity: .55; }
   .report-summary { grid-template-columns: repeat(2, 1fr); }
   .home-cta { flex-direction: column; }
 }
+
+/* ---------- Choose Your Hero ---------- */
+.hero-card-home {
+  background: linear-gradient(180deg, #fff5e0 0%, #ffffff 100%);
+  border: 2px solid #f3d9a4;
+  border-radius: var(--radius);
+  padding: 16px 14px;
+  margin: 0 0 12px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+.hero-card-home-title { font-size: .82rem; font-weight: 900; letter-spacing: 1px; color: var(--gold-deep); }
+.hero-card-home-meta { font-size: .84rem; font-weight: 700; color: var(--ink-soft); margin: 6px 0 12px; }
+.hero-card-home .primary { max-width: 260px; margin: 0 auto; }
+
+.hero-intro { text-align: center; color: var(--ink-soft); font-weight: 700; margin: -6px 0 14px; font-size: .92rem; }
+.hero-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.hero-card {
+  width: auto; margin: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 12px 16px;
+  box-shadow: var(--shadow);
+  text-align: center;
+  transition: transform .12s ease, border-color .12s ease;
+}
+.hero-card:hover { border-color: var(--gold-deep); transform: translateY(-2px); }
+.hero-art { display: block; }
+.hero-art img {
+  width: 104px; height: 104px; object-fit: contain;
+  border-radius: 50%; outline: 3px solid var(--gold); outline-offset: 3px;
+  background: #fff; filter: drop-shadow(0 6px 14px rgba(120, 90, 30, .25));
+}
+.hero-art.fullbody img { width: 132px; height: 170px; border-radius: 18px; outline: none; }
+.hero-name { font-size: 1.15rem; font-weight: 900; color: var(--ink); }
+.hero-books {
+  font-size: .7rem; font-weight: 900; letter-spacing: .8px; text-transform: uppercase;
+  color: var(--indigo); background: #eef3ff; padding: 3px 10px; border-radius: 999px;
+}
+.hero-blurb { font-size: .8rem; color: var(--ink-soft); font-weight: 600; min-height: 3.6em; }
+.hero-play {
+  margin-top: 4px; font-size: .88rem; font-weight: 900; color: #fff;
+  background: linear-gradient(180deg, var(--green), var(--green-dk));
+  padding: 9px 18px; border-radius: 999px; box-shadow: 0 3px 0 #2f7d00;
+}
+@media (max-width: 419px) {
+  .hero-cards { grid-template-columns: 1fr; }
+  .hero-blurb { min-height: 0; }
+  .hero-art.fullbody img { width: 118px; height: 152px; }
+}
+
+/* Word Order (Choose Your Hero) — tap the words into the line */
+.wordline {
+  min-height: 76px;
+  background: #f7f2e8;
+  border: 2px dashed #d9cdb2;
+  border-radius: 14px;
+  padding: 10px;
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start;
+  margin-bottom: 12px;
+}
+.wordline:empty::before { content: 'Tap the words in order…'; color: #b9ad91; font-weight: 700; font-size: .9rem; }
+.wordpool { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 10px; }
+.word-chip {
+  width: auto; margin: 0;
+  padding: 9px 14px;
+  background: #fff;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  font-weight: 800; font-size: .98rem; color: var(--ink);
+  box-shadow: 0 2px 0 #ece3d0;
+}
+.word-chip:hover:not(:disabled) { border-color: var(--sky-b); }
+.wordline .word-chip { background: #fff5e6; border-color: #e0a63a; }
+.word-chip.correct { background: #eafadd; border-color: var(--green-dk); color: var(--green-dk); }
+.word-chip.wrong { background: #ffeded; border-color: var(--red); color: var(--red); }
+.word-tools { display: flex; justify-content: center; }
+.word-tools .ghost.small { width: auto; padding: 8px 18px; }
+
+/* True/False questions get the wide centered 2-option look */
+.options.count-2 .option { text-align: center; font-size: 1.08rem; padding: 16px 16px; }
+
+/* Title screen — painted background composition (activates when assets/start-bg.png exists) */
+#screen-start { position: relative; }
+#screen-start.has-bg {
+  background:
+    linear-gradient(180deg, rgba(255, 251, 240, .84) 0%, rgba(255, 251, 240, .92) 100%),
+    url('assets/start-bg.png') center / cover no-repeat;
+  border-radius: 26px;
+  box-shadow: var(--shadow);
+  padding: 30px 18px;
+}
+/* Full-body hero art replaces the circle GIFs when generated PNGs are present */
+.mascot-duo-member.fullbody img {
+  width: 128px; height: 164px;
+  border-radius: 18px;
+  animation: mascotBob 2.6s ease-in-out infinite;
+}
+.mascot-duo-member.fullbody:nth-child(2) img { animation-delay: 1.3s; }
+@media (max-width: 420px) {
+  .mascot-duo-member.fullbody img { width: 104px; height: 134px; }
+}

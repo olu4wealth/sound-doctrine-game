@@ -7,6 +7,7 @@ import {
   dailyCharge, dailySeed, resolveAnswer, tierOf,
   pickNextLadder, applyDailyVisit, buildChargeReport, compositeScore,
   sortLeaderboard, shareGrid, shuffle, mulberry32, hashCode,
+  heroRun, HEROES,
 } from './game-core.js';
 import {
   loadPlayer, savePlayer, recordCharge, updateLeaderboard,
@@ -19,11 +20,13 @@ const el = (id) => document.getElementById(id);
 // ---------- State ----------
 let bank = [];
 let player = loadPlayer();
-let mode = 'ladder'; // 'ladder' | 'daily'
+let mode = 'ladder'; // 'ladder' | 'daily' | 'hero'
 let session = null;
 let timerInt = null;
 let currentQ = null;
 let dailyIdx = 0; // index into session._dailyList during a Daily Quest
+let heroIdx = 0; // index into session._heroList during a Choose Your Hero run
+let heroBank = []; // Choose Your Hero typed questions (data/heroes.json)
 
 // Countdown state (per question)
 let timeLeft = 0;
@@ -67,6 +70,12 @@ async function loadBank() {
     bank = [...a, ...b, ...c];
   }
   bank.forEach((q) => { q.tier = tierOf(q); });
+  // Choose Your Hero typed questions — optional extra; hide the mode if absent.
+  try {
+    const r = await fetch('data/heroes.json');
+    if (r.ok) heroBank = await r.json();
+  } catch { heroBank = []; }
+  el('hero-card')?.classList.toggle('hidden', !heroBank.length);
 }
 
 function showScreen(id) {
@@ -138,9 +147,12 @@ function resetSession() {
   setHearts(MAX_HEARTS);
   session = { questions: [], pot: 0, elapsedMs: 0, daily: false, oilVialsEarned: 0, bestTimeMs: 0, runTiers: [], maxRunTier: 0, streak: 0 };
   dailyIdx = 0;
-  bank.forEach((q) => {
+  heroIdx = 0;
+  const clearQ = (q) => {
     delete q._usedThisRun; delete q._outcome; delete q._correct; delete q._displayOrder;
-  });
+  };
+  bank.forEach(clearQ);
+  heroBank.forEach(clearQ);
   savePlayer(player);
 }
 
@@ -180,6 +192,50 @@ function beginDailyList() {
   renderDailyQuestion();
 }
 
+// ---------- Choose Your Hero ----------
+// Hero select -> deterministic 10-question run scoped to the hero's own book(s).
+const HERO_TYPE_LABELS = {
+  truefalse: '\u2696\uFE0F True or False',
+  wordorder: '\u270B Word Order',
+  whodid: '\uD83D\uDDE3\uFE0F Who Did This',
+};
+
+function heroTypeLabel(q) {
+  return HERO_TYPE_LABELS[q.type] || `${TIER_EMOJI[q.tier]} T${q.tier} \u00B7 From ${q.book}`;
+}
+
+function openHeroSelect() {
+  if (!heroBank.length) return;
+  showScreen('screen-hero');
+}
+
+function startHero(heroId) {
+  if (!HEROES[heroId] || !heroBank.length) return;
+  mode = 'hero';
+  const today = dailySeed(new Date());
+  const list = heroRun(bank, heroBank, heroId, today, mulberry32(hashCode(`hero:${today}:${heroId}`)));
+  resetSession();
+  session.hero = heroId;
+  session._heroList = list;
+  heroIdx = 0;
+  list.forEach((q) => { q._usedThisRun = true; });
+  renderHearts();
+  showScreen('screen-game');
+  renderHeroQuestion();
+}
+
+function renderHeroQuestion() {
+  const list = session._heroList;
+  if (heroIdx >= list.length) { finishHero(); return; }
+  const q = list[heroIdx];
+  q.tier = tierOf(q);
+  currentQ = q;
+  renderQuestion(q);
+  el('q-type').textContent = heroTypeLabel(q);
+}
+
+function finishHero() { finishCommon(); }
+
 // ---------- Countdown timer ----------
 function adaptiveTimeForTier(tier, questionIndexInTier) {
   // Base time from tier (harder tier = less base time)
@@ -190,9 +246,9 @@ function adaptiveTimeForTier(tier, questionIndexInTier) {
   return Math.max(10, Math.round(base * (1 - progressFactor * 0.3)));
 }
 
-function startCountdown(tier, idxInTier = 0) {
+function startCountdown(tier, idxInTier = 0, floorSeconds = 0) {
   stopTimer();
-  timeTotal = adaptiveTimeForTier(tier, idxInTier);
+  timeTotal = Math.max(floorSeconds || 0, adaptiveTimeForTier(tier, idxInTier));
   timeLeft = timeTotal;
   timeRunning = true;
   renderTimerBar();
@@ -343,10 +399,13 @@ function renderQuestion(q) {
   el('q-type').textContent = `${TIER_EMOJI[q.tier]} T${q.tier} · ${TIER_NAMES[q.tier]}`;
   el('q-prompt').textContent = q.prompt;
 
-  const order = shuffle(Math.random, [0, 1, 2, 3]);
-  q._displayOrder = order;
   const wrap = el('q-options');
+  // Word-order questions (Choose Your Hero) replace the option grid entirely.
+  if (q.type === 'wordorder') { renderWordOrder(q); return; }
+  const order = shuffle(Math.random, q.options.map((_, i) => i));
+  q._displayOrder = order;
   wrap.innerHTML = '';
+  wrap.classList.toggle('count-2', q.options.length === 2); // True/False gets the wide look
   const accent = ['a', 'b', 'c', 'd']; // color coding per position
   order.forEach((orig, displayIdx) => {
     const btn = document.createElement('button');
@@ -372,9 +431,11 @@ function renderQuestion(q) {
 
 function updateProgress() {
   let idx, total;
-  if (mode === 'daily') {
-    total = session._dailyList?.length || 10;
-    idx = dailyIdx + 1; // 1-based current question number
+  if (mode === 'daily' || mode === 'hero') {
+    const list = mode === 'daily' ? session._dailyList : session._heroList;
+    const i = mode === 'daily' ? dailyIdx : heroIdx;
+    total = list?.length || 10;
+    idx = i + 1; // 1-based current question number
     idx = Math.max(1, Math.min(idx, total));
     el('progress-bar').style.width = `${Math.round((idx / total) * 100)}%`;
     el('hud-progress').textContent = `${idx}/${total}`;
@@ -523,7 +584,9 @@ function spendOil() {
 function renderPowerups() {
   const n = oilCount();
   document.querySelectorAll('.powerup').forEach((b) => {
-    b.disabled = n < 1 || !timeRunning; // need oil and a live question to spend it
+    // 50/50 is meaningless on word-order questions (there are no options to hide).
+    const wordBlock = b.id === 'pu-5050' && currentQ?.type === 'wordorder';
+    b.disabled = n < 1 || !timeRunning || wordBlock; // need oil + a live question
   });
   const hud = el('hud-oil');
   if (hud) {
@@ -547,6 +610,7 @@ function usePowerup(type) {
     currentQ._outcome = 'skipped'; currentQ._correct = false;
     session.questions.push(currentQ);
     if (mode === 'daily') { dailyIdx++; renderDailyQuestion(); }
+    else if (mode === 'hero') { heroIdx++; renderHeroQuestion(); }
     else nextQuestion(); // endless climb — skip just advances
     renderPowerups();
     return;
@@ -570,6 +634,75 @@ function usePowerup(type) {
     renderPowerups();
     return;
   }
+}
+
+// ---------- Word Order (Choose Your Hero) ----------
+// The verse's words are shuffled into a pool; the player taps them in order.
+// Tapping a placed word returns it to the pool. Completing the line commits.
+function renderWordOrder(q) {
+  const wrap = el('q-options');
+  wrap.innerHTML = '';
+  wrap.classList.remove('count-2');
+  wrap.classList.remove('hidden');
+  el('feedback').classList.add('hidden');
+  el('feedback').classList.remove('correct', 'wrong', 'grace');
+
+  let order = shuffle(Math.random, q.words.map((_, i) => i));
+  if (order.every((v, i) => v === i)) order.reverse(); // never start already-solved
+  q._displayOrder = order;
+
+  const line = document.createElement('div');
+  line.className = 'wordline';
+  line.id = 'wordline';
+  const pool = document.createElement('div');
+  pool.className = 'wordpool';
+  pool.id = 'wordpool';
+  const tools = document.createElement('div');
+  tools.className = 'word-tools';
+  const clearBtn = document.createElement('button');
+  clearBtn.className = 'ghost small';
+  clearBtn.textContent = 'Clear';
+  clearBtn.addEventListener('click', () => {
+    if (!timeRunning) return;
+    [...line.querySelectorAll('.word-chip')].forEach((c) => pool.appendChild(c));
+  });
+  tools.appendChild(clearBtn);
+
+  order.forEach((origIdx) => {
+    const chip = document.createElement('button');
+    chip.className = 'word-chip';
+    chip.textContent = q.words[origIdx];
+    chip.dataset.orig = String(origIdx);
+    chip.addEventListener('click', () => {
+      if (!timeRunning) return;
+      if (chip.parentElement === line) pool.appendChild(chip); // tap placed word = take back
+      else line.appendChild(chip);
+      if (line.querySelectorAll('.word-chip').length === q.words.length) {
+        commitWordOrder(q, line, pool);
+      }
+    });
+    pool.appendChild(chip);
+  });
+
+  wrap.append(line, pool, tools);
+  updateProgress();
+  renderTimerBar();
+  // Word order needs time to read: ~2.2s per word, minimum 24s.
+  startCountdown(q.tier || 5, session?.questions?.length || 0, Math.max(24, Math.round(q.words.length * 2.2)));
+  renderPowerups();
+}
+
+function commitWordOrder(q, line, pool) {
+  stopTimer();
+  const guess = [...line.querySelectorAll('.word-chip')].map((c) => c.textContent).join(' ');
+  const isCorrect = guess === q.words.join(' ');
+  [...line.querySelectorAll('.word-chip'), ...pool.querySelectorAll('.word-chip')].forEach((c) => {
+    c.disabled = true;
+    if (line.contains(c)) c.classList.add(isCorrect ? 'correct' : 'wrong');
+  });
+  // chosenOrig 0 hits the correct answer (word-order items carry correctIndex 0);
+  // -1 is never a valid index, so resolveAnswer records a clean wrong.
+  commitAnswer(0, isCorrect ? 0 : -1, null);
 }
 
 // ---------- Answering (D3 two-step: answer → stake → commit) ----------
@@ -819,6 +952,7 @@ function onTimeout() {
 
 function isLastQuestion() {
   if (mode === 'daily') return dailyIdx >= session._dailyList.length - 1;
+  if (mode === 'hero') return heroIdx >= session._heroList.length - 1;
   return false; // endless climb — never "last"; it ends when the player fails
 }
 
@@ -859,6 +993,11 @@ function btnNextGo() {
   if (mode === 'daily') {
     dailyIdx++;
     renderDailyQuestion();
+    return;
+  }
+  if (mode === 'hero') {
+    heroIdx++;
+    renderHeroQuestion();
     return;
   }
   // Retest mode (Phase 5): consume the focused 10Q list before returning to endless
@@ -1128,6 +1267,13 @@ el('btn-daily-start').addEventListener('click', () => beginDailyList());
 el('btn-daily-back').addEventListener('click', () => showScreen('screen-home'));
 el('btn-next').addEventListener('click', btnNextGo);
 
+// Choose Your Hero
+el('btn-hero-card')?.addEventListener('click', openHeroSelect);
+el('btn-hero-back')?.addEventListener('click', () => showScreen('screen-home'));
+document.querySelectorAll('.hero-card[data-hero]').forEach((btn) => {
+  btn.addEventListener('click', () => startHero(btn.dataset.hero));
+});
+
 // Oil-vial power-ups
 el('pu-skip').addEventListener('click', () => usePowerup('skip'));
 el('pu-5050').addEventListener('click', () => usePowerup('5050'));
@@ -1199,6 +1345,26 @@ async function init() {
 }
 
 init();
+
+// ---------- Title-screen art upgrade ----------
+// When generated art exists (assets/hero-*.png full-body characters and
+// assets/start-bg.png painted background), the title screen and hero-select
+// upgrade to it automatically; otherwise the mascot GIFs and the gradient
+// fallback stay in place. A missing file simply never fires onload.
+function upgradeHeroArt() {
+  document.querySelectorAll('img[data-png]').forEach((img) => {
+    const probe = new Image();
+    probe.onload = () => {
+      img.src = img.dataset.png;
+      (img.closest('.hero-art') || img.closest('.mascot-duo-member'))?.classList.add('fullbody');
+    };
+    probe.src = img.dataset.png;
+  });
+  const bg = new Image();
+  bg.onload = () => el('screen-start')?.classList.add('has-bg');
+  bg.src = 'assets/start-bg.png';
+}
+upgradeHeroArt();
 
 // ---------- Tutorial for first-time players ----------
 // Interactive spotlight walkthrough shown over the real game screen on the first climb.

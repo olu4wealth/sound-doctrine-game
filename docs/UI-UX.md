@@ -51,6 +51,7 @@ Ladder (the core play screen)
  └─ Charge-complete → faithful report → share card
 Candle (retention screen — the "keep it lit" home)
 Daily Quest (one seeded 10-question quest per day)
+Choose Your Hero (Timothy or Titus — a seeded 10-question run from his own book only)
 Report (per-session + lifetime)
 Leaderboard (local; Supabase-ready)
 Profile (name, stats, edit)
@@ -63,6 +64,12 @@ the doctrine.* Below: name entry and the primary **"Begin the Charge"**, with "H
 play" and "Leaderboard" as secondary links. Returning players (already named) skip this
 screen straight to the Candle home. Mechanics are taught **in-context** by the
 first-climb spotlight tutorial — there is no separate lore page.
+
+When generated art is present (`assets/start-bg.png` painted background,
+`assets/hero-timothy.png` / `assets/hero-titus.png` full-body transparent characters),
+the screen upgrades automatically into a game-store-style composition: painted
+background under a warm parchment veil, full-body characters bobbing beside the panel.
+Missing files fall back gracefully to the gradient + circle GIFs — no broken images.
 
 ### 3.2 The Ladder (core loop)
 One question at a time, **full-bleed, no chrome** — focus is the point. The climb is
@@ -92,12 +99,27 @@ One timed 10-question Quest seeded per day (same seed → same questions for eve
 the leaderboard is fair). Ends in a **spoiler-safe share card** (emoji grid + % + time) —
 this is the social engine that makes the men's challenge competitive.
 
-### 3.5 Leaderboard
+### 3.5 Choose Your Hero (per-book runs)
+A home card under the Daily Quest opens the **hero-select screen**: two large character
+cards — **Timothy** (1 & 2 TIMOTHY) and **Titus** (TITUS) — with art slot, book badge,
+blurb, and a "Play as …" pill. Choosing a hero starts a seeded 10-question run made only
+of his own book's material, hosted by the book-matched mascot. Three new question types
+rotate inside the run:
+- **True or False** — a statement judged against the exact KJV verse (2-option layout).
+- **Word Order** — the verse's words sit in a shuffled pool; the player taps them into
+  the dashed line in order (tap a placed word to take it back; Clear resets). The line
+  auto-commits when complete; generous timer (~2.2s per word, min 24s).
+- **Who Did This** — "Who forsook Paul?" with four names as options.
+Type label sits in the usual `q-type` chip (⚖️ / ✋ / 🗣️). 50/50 is disabled on Word
+Order (nothing to hide); Skip and Freeze work everywhere. Runs end in the standard
+Charge Report and feed streak, oil, and leaderboard exactly like the other modes.
+
+### 3.6 Leaderboard
 Ranked, real-time, scrollable. Columns: rank · name · rank-title · streak · fails ·
 best time. **Tabs**: Today's Quest / This week / All time. Your own row is pinned and
 highlighted. (Supabase Realtime pushes updates, no refresh.)
 
-### 3.6 The Charge Report (post-game scoring + guidance)
+### 3.7 The Charge Report (post-game scoring + guidance)
 The finish-line screen — the *reward*, not an afterthought. Four stacked parts:
 
 1. **Grade banner** — letter + title (e.g. **A · "Workman Unashamed"**) with a subtle
@@ -189,13 +211,15 @@ when we run the design-system pass — this section is the intent, that pass is 
 
 | Item | Status |
 |---|---|
-| Deterministic 95-question quiz (current build) | 🟢 shipped |
+| Deterministic quiz — 166-question verified bank + 36 hero questions | 🟢 shipped |
 | Named players + profile stats (streak / fails / best time) | 🟢 shipped (local profile) |
 | Ladder: confidence bid + count-up timer + grace near-miss | 🟢 shipped |
 | **Progressive 7-rung ladder (easy → extremely hard)** | 🟢 shipped |
 | **Charge Report (grade + strengths/weaknesses + study Rx)** | 🟢 shipped |
 | Candle: capped streak + oil shields + gutter | 🟢 shipped |
 | Daily Quest: seeded daily + share card | 🟢 shipped |
+| Choose Your Hero: per-book runs (true/false, word order, who-did-this) | 🟢 shipped |
+| Title screen painted-background composition + full-body hero art (drop-in assets) | 🟢 shipped (fallbacks to GIFs/gradient) |
 | Global real-time leaderboard | 🟡 spec'd — local board shipped |
 | Formal design tokens (design.md / design.html) | ⚪ planned |
 | Supabase backend implementation | ⚪ planned (needs approval) |

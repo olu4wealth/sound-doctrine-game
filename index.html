@@ -23,11 +23,11 @@
       <p class="subtitle">Saints, Martyrs &amp; Heroes<br />1 &amp; 2 Timothy &middot; Titus</p>
       <div class="mascot-duo">
         <figure class="mascot-duo-member">
-          <img src="assets/mascot-timothy-idle.gif" alt="Timothy — your guide through 1 &amp; 2 Timothy" />
+          <img src="assets/mascot-timothy-idle.gif" data-png="assets/hero-timothy.png" alt="Timothy — your guide through 1 &amp; 2 Timothy" />
           <figcaption>Timothy</figcaption>
         </figure>
         <figure class="mascot-duo-member">
-          <img src="assets/mascot-titus-idle.gif" alt="Titus — your guide through Titus" />
+          <img src="assets/mascot-titus-idle.gif" data-png="assets/hero-titus.png" alt="Titus — your guide through Titus" />
           <figcaption>Titus</figcaption>
         </figure>
       </div>
@@ -51,6 +51,7 @@
         <li>Pick an answer, then stake how sure you are (1× Safe … 5× Preach It). A close distractor earns <em>Grace</em> — half the stake kept.</li>
         <li>Keep the <strong>Candle</strong> lit: a 7-day streak, with oil vials as shields. Misses never shame you.</li>
         <li>Wrong answers always show the verse and its reference.</li>
+        <li><strong>Choose Your Hero</strong>: a 10-question run from Timothy or Titus &mdash; true/false, word order, and &ldquo;who did this&rdquo;.</li>
         <li>Finish and get your <strong>Charge Report</strong>: grade, strengths, weaknesses, and how to do better.</li>
       </ul>
       <button class="primary" id="btn-how-back">Back</button>
@@ -88,6 +89,13 @@
         <div class="daily-card-title">DAILY QUEST</div>
         <div class="daily-card-meta">10 QUESTIONS · Same for everyone</div>
         <button class="primary" id="btn-daily-card">Begin Daily Quest</button>
+      </div>
+
+      <!-- Choose Your Hero (run scoped to Timothy or Titus — only his own book) -->
+      <div class="hero-card-home" id="hero-card">
+        <div class="hero-card-home-title">CHOOSE YOUR HERO</div>
+        <div class="hero-card-home-meta">Timothy or Titus · questions only from his book</div>
+        <button class="primary" id="btn-hero-card">Choose Your Hero</button>
       </div>
 
       <!-- Visual Ladder T7→T1 -->
@@ -181,6 +189,29 @@
       <button class="primary hidden" id="btn-daily-start">Begin Today's Quest</button>
       <button class="ghost hidden" id="btn-daily-share"></button>
       <button class="ghost" id="btn-daily-back">Back to the Candle</button>
+    </section>
+
+    <!-- CHOOSE YOUR HERO -->
+    <section id="screen-hero" class="screen hidden">
+      <h2>Choose Your Hero</h2>
+      <p class="hero-intro">Walk in his footsteps &mdash; every question comes from his own book (KJV): true or false, word order, and who did this.</p>
+      <div class="hero-cards">
+        <button class="hero-card" data-hero="timothy">
+          <span class="hero-art"><img src="assets/mascot-timothy-idle.gif" data-png="assets/hero-timothy.png" alt="Timothy" /></span>
+          <span class="hero-name">Timothy</span>
+          <span class="hero-books">1 &amp; 2 Timothy</span>
+          <span class="hero-blurb">&ldquo;Let no man despise thy youth&rdquo; &mdash; steadfast keeper of the deposit.</span>
+          <span class="hero-play">Play as Timothy</span>
+        </button>
+        <button class="hero-card" data-hero="titus">
+          <span class="hero-art"><img src="assets/mascot-titus-idle.gif" data-png="assets/hero-titus.png" alt="Titus" /></span>
+          <span class="hero-name">Titus</span>
+          <span class="hero-books">Titus</span>
+          <span class="hero-blurb">&ldquo;Mine own son after the common faith&rdquo; &mdash; sent to set Crete in order.</span>
+          <span class="hero-play">Play as Titus</span>
+        </button>
+      </div>
+      <button class="ghost" id="btn-hero-back">Back to the Candle</button>
     </section>
 
     <!-- LEADERBOARD -->

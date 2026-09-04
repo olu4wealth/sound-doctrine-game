@@ -181,3 +181,56 @@ test.describe('persistence', () => {
     await expect(page.locator('#home-name')).toHaveText('Persist Me');
   });
 });
+
+test.describe('choose your hero', () => {
+  async function toHome(page, name = 'Hero Tester') {
+    await dismissTutorial(page);
+    await page.goto('/');
+    await passIntro(page);
+    await page.getByPlaceholder(/your name/i).fill(name);
+    await page.getByRole('button', { name: /begin the charge/i }).click();
+    await expect(page.locator('#screen-home')).toBeVisible();
+  }
+
+  test('hero card opens the select screen with both heroes and a way back', async ({ page }) => {
+    await toHome(page);
+    await page.locator('#btn-hero-card').click();
+    await expect(page.locator('#screen-hero')).toBeVisible();
+    await expect(page.locator('.hero-card[data-hero="timothy"]')).toBeVisible();
+    await expect(page.locator('.hero-card[data-hero="titus"]')).toBeVisible();
+    await page.getByRole('button', { name: /back to the candle/i }).click();
+    await expect(page.locator('#screen-home')).toBeVisible();
+  });
+
+  test('a hero run handles all three question types and reaches the report', async ({ page }) => {
+    test.setTimeout(120_000);
+    await toHome(page);
+    await page.locator('#btn-hero-card').click();
+    await page.locator('.hero-card[data-hero="titus"]').click();
+    await expect(page.locator('#screen-game')).toBeVisible();
+
+    // Answer whatever the current question is: word order (tap every chip)
+    // or a classic option (click + confirm the 1× stake).
+    const answerCurrent = async () => {
+      const chips = page.locator('#wordpool .word-chip:not([disabled])');
+      if (await chips.count()) {
+        while (await chips.count()) await chips.first().click();
+        return;
+      }
+      await page.locator('.option:not([disabled])').first().click();
+      const stake = page.locator('#stake-modal-backdrop');
+      if (await stake.count()) await page.getByRole('button', { name: /confirm/i }).click();
+    };
+
+    for (let i = 0; i < 14; i++) {
+      await answerCurrent();
+      const cont = page.locator('#feedback-modal-continue');
+      await expect(cont).toBeVisible({ timeout: 20_000 });
+      await cont.click();
+      await page.waitForTimeout(400);
+      if (await page.locator('#screen-report').isVisible().catch(() => false)) break;
+    }
+    await expect(page.locator('#screen-report')).toBeVisible();
+    await expect(page.locator('#report-summary')).toBeVisible();
+  });
+});

@@ -111,6 +111,33 @@ a common seed.
 
 ---
 
+### 2.4 Choose Your Hero — per-book mastery runs 🟢 (shipped)
+
+**Adopts:** character selection + self-projection (pick your guide, play his story) +
+mastery scoping (narrow the field, own the book).
+
+- From the Candle home, the player chooses **Timothy** (1 & 2 Timothy — 124 bank
+  questions) or **Titus** (Titus — 42). The book-matched mascot hosts the run, so the
+  guide and the text always agree.
+- A run is **10 questions, seeded per day + hero** (deterministic — same day, same run):
+  3 **True or False**, 3 **Word Order**, 2 **Who Did This**, and 2 book-filtered
+  multiple-choice questions (T5 or below) from the verified bank.
+- **Word Order** (maps to the T5 Sequence rung): the verse's words are shuffled into a
+  pool; the player taps them into the line in order. Tapping a placed word takes it
+  back. Completing the line commits the answer; the full verse is the correction.
+- **True or False** (T2 Recall): a statement is checked against the exact KJV verse.
+  TRUE statements are verbatim scripture; FALSE statements alter a name, number, or
+  place and appear nowhere in the three books.
+- **Who Did This** (T3 Reference): "Who forsook Paul, having loved this present world?"
+  — four names, one verse-backed answer, correction shows the verse.
+- Typed questions live in `data/heroes.json`, **generated** by
+  `scripts/build-heroes.mjs` from the KJV lockbox (nothing hand-typed; the build fails
+  loudly if a reference, verbatim statement, or word segment drifts).
+- Runs feed the same Charge Report, candle streak, oil vials, and leaderboard as the
+  Ladder and the Daily Quest — one flame, many ways to feed it.
+
+---
+
 ## 3. Difficulty & progression (easy → extremely hard)
 
 The climb is **strictly progressive**: a player cannot reach a hard rung without
@@ -213,6 +240,7 @@ The game is "won" by *knowing the doctrine*, not by grinding:
 | Verified 166-question bank (7-tier, 6-gate KJV lockbox) | 🟢 shipped (`data/questions-merged.json` canonical, D2) |
 | The Ladder (progressive T1→T7 ramp, adaptive weak-subject picker, countdown) | 🟢 shipped |
 | The Candle (capped 7-day streak, oil shields, gutter) + Flame card + Ladder on Home | 🟢 shipped (Phase 4: visual Ladder T7→T1 with 🔥YOU, Flame card, Daily Quest card) |
+| Choose Your Hero (Timothy/Titus per-book runs: true/false, word order, who-did-this; `data/heroes.json` KJV-generated) | 🟢 shipped |
 | **7-tier progression (T1–T7)** | 🟢 shipped (all tiers authored & verified: T1 17 / T2 20 / T3 48 / T4 33 / T5 16 / T6 18 / T7 14) |
 | **Confidence stake — two-step (D3): answer → stake card 1×…5×, Grace half** | 🟢 shipped (Phase 6: `BIDS` 5-tier, `resolveAnswer(q, idx, bid)` → ± stake×100, Grace 50% via `nearIndexes`) |
 | **Charge Report: Mastery Map + Weakest + Missed Verses + Retest** | 🟢 shipped (Phase 5: per-book mastery bars, weakest-chapter card, missed-verse list, `[Retest My Weakness]`) |
