@@ -1,3 +1,15 @@
+```
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.ENV
+.ENV.local
 # Dependencies
 node_modules/
 
@@ -20,6 +32,26 @@ assets/clay-decorations-alpha.png
 .env.local
 .env.*
 
+# Testing
+.coverage
+coverage/
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editors
 # System
 .DS_Store
 Thumbs.db
@@ -35,6 +67,9 @@ build/
 *.swo
 *.tmp
 
+# Dependencies
+node_modules/
+```
 # Logs / coverage
 *.log
 coverage/
