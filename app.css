@@ -296,6 +296,12 @@ button:disabled { cursor: default; opacity: .55; }
 }
 .daily-card .primary { max-width: 260px; margin: 0 auto; }
 
+/* Daily Quest screen: centre the whole block (heading, intro, buttons) in the viewport. */
+#screen-daily {
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  min-height: 100dvh; text-align: center;
+}
+
 /* New-player gating: the Ladder comes first; these unlock after one finished climb */
 .lock-note { display: none; margin-top: 10px; font-size: .78rem; font-weight: 800; color: var(--ink-soft); }
 .daily-card.locked, .hero-card-home.locked { opacity: .8; }
