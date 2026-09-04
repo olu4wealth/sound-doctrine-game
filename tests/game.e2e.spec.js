@@ -26,9 +26,22 @@ async function beginClimb(page) {
   await page.getByRole('button', { name: /begin a climb/i }).click();
 }
 
+async function answerOne(page) {
+  const opt = page.locator('.option:not([disabled])').first();
+  if (await opt.count() === 0) return false;
+  await opt.click();
+  // D3 two-step: stake card appears — confirm at default 1× to proceed
+  const stake = page.locator('#stake-modal-backdrop');
+  if (await stake.count()) {
+    await page.getByRole('button', { name: /confirm/i }).click();
+  }
+  return true;
+}
+
 async function chooseBidAndAnswer(page, bidName, optionIndex) {
-  // Bids removed: options are always shown; just click an option.
-  return page.locator('.option').nth(optionIndex).click();
+  await page.locator('.option').nth(optionIndex).click();
+  const stake = page.locator('#stake-modal-backdrop');
+  if (await stake.count()) await page.getByRole('button', { name: /confirm/i }).click();
 }
 
 test.describe('core player journey', () => {
@@ -63,17 +76,17 @@ test.describe('core player journey', () => {
 
   test('answering a question shows the verse correction and advances', async ({ page }) => {
     await beginClimb(page);
-    // Bids removed: options are shown immediately.
     await expect(page.locator('#q-options')).toBeVisible();
     await expect(page.locator('.option')).toHaveCount(4);
 
-    // Click the first option regardless of correctness; feedback modal + verse must appear
+    // D3 two-step: pick an answer → stake card → confirm
     await page.locator('.option').nth(0).click();
+    await expect(page.locator('#stake-modal-backdrop')).toBeVisible();
+    await page.getByRole('button', { name: /confirm/i }).click();
     await expect(page.locator('#feedback-modal-backdrop')).toBeVisible();
     await expect(page.locator('.feedback-modal-verse')).not.toBeEmpty();
     await expect(page.locator('.feedback-modal-ref')).toContainText('(KJV)');
 
-    // Continue to the next question (button lives inside the modal)
     await page.locator('#feedback-modal-continue').click();
     await expect(page.locator('.option')).toHaveCount(4);
   });
@@ -109,6 +122,7 @@ test.describe('daily office + report + leaderboard', () => {
   });
 
   test('report renders a grade and how-to-do-better after a full office', async ({ page }) => {
+    test.setTimeout(60_000);
     await dismissTutorial(page);
     await page.goto('/');
     await passIntro(page);
@@ -117,21 +131,17 @@ test.describe('daily office + report + leaderboard', () => {
     await page.getByRole('button', { name: /daily office/i }).click();
     await page.getByRole('button', { name: /begin today's office/i }).click();
 
-    // Answer daily questions; the charge may end early if lives run out (kind-hearted).
-    // Either way we land on the report — keep answering while options are clickable.
     for (let i = 0; i < 10; i++) {
-      const opt = page.locator('.option:not([disabled])').first();
-      if (await opt.count() === 0) break; // charge already ended (report showing)
-      await opt.click();
+      const ok = await answerOne(page);
+      if (!ok) break;
       const cont = page.getByRole('button', { name: /continue|see the report/i });
       if (await cont.count()) await cont.click();
-      // Let the reaction beat + next question render (there's a short delay on Continue).
       await page.waitForTimeout(1100);
-      // If the report appeared early, stop the loop
       if (await page.locator('#screen-report').isVisible().catch(() => false)) break;
     }
     await expect(page.locator('#screen-report')).toBeVisible();
-    await expect(page.locator('#report-grade')).toBeVisible();
+    // Phase 5 Mastery Map renders (even if zero missed, headers are present)
+    await expect(page.locator('#report-summary')).toBeVisible();
     await expect(page.locator('#report-rx')).toBeVisible();
   });
 
@@ -144,12 +154,11 @@ test.describe('daily office + report + leaderboard', () => {
     await page.getByRole('button', { name: /daily office/i }).click();
     await page.getByRole('button', { name: /begin today's office/i }).click();
     for (let i = 0; i < 10; i++) {
-      const opt = page.locator('.option:not([disabled])').first();
-      if (await opt.count() === 0) break;
-      await opt.click();
+      const ok = await answerOne(page);
+      if (!ok) break;
       const cont = page.getByRole('button', { name: /continue|see the report/i });
       if (await cont.count()) await cont.click();
-      await page.waitForTimeout(1100); // reaction beat + next question render
+      await page.waitForTimeout(1100);
       if (await page.locator('#screen-report').isVisible().catch(() => false)) break;
     }
     // Go home then leaderboard

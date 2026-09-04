@@ -41,21 +41,22 @@ const books = new Set(d1.map((q) => q.book));
 check('daily covers all 3 books', books.size === 3);
 check('daily excludes T7', d1.every((q) => tierOf(q) <= 6));
 
-// 2. resolveAnswer
+// 2. resolveAnswer (D3 five-tier stake: ± stake×100, Grace = half)
 const q = bank.find((x) => x.id === '1ti-1-15');
-check('resolve: correct = base points (flat)', resolveAnswer(q, q.correctIndex, { id: 'confident', mult: 1 }).points === 100);
-check('resolve: correct with preach is still base (bids ignored)', resolveAnswer(q, q.correctIndex, { id: 'preach', mult: 3 }).points === 100);
+check('resolve: correct 1× = base points', resolveAnswer(q, q.correctIndex, { id: 'safe', mult: 1 }).points === 100);
+check('resolve: correct 5× Preach scales', resolveAnswer(q, q.correctIndex, { id: 'preach', mult: 5 }).points === 500);
 const wrongIdx = [0,1,2,3].find((i) => i !== q.correctIndex);
-check('resolve: clean wrong = 0 points', resolveAnswer(q, wrongIdx, { id: 'confident', mult: 1 }).points === 0);
-check('resolve: wrong outcome labeled', resolveAnswer(q, wrongIdx, { id: 'confident', mult: 1 }).outcome === 'wrong');
+check('resolve: clean wrong 1× = −100', resolveAnswer(q, wrongIdx, { id: 'safe', mult: 1 }).points === -100);
+check('resolve: clean wrong 3× = −300', resolveAnswer(q, wrongIdx, { id: 'confident', mult: 3 }).points === -300);
+check('resolve: wrong outcome labeled', resolveAnswer(q, wrongIdx, { id: 'safe', mult: 1 }).outcome === 'wrong');
 
-// near-miss detection: pick an option with strong overlap
+// near-miss detection: explicitly authored close distractor
 const q2 = bank.find((x) => x.id === '1ti-3-6');
 const optIdx = [0,1,2,3].find((i) => i !== q2.correctIndex && nearMiss(q2, i));
 check('near-miss found for 1ti-3-6 (close distractor)', optIdx !== undefined);
 if (optIdx !== undefined) {
-  const r = resolveAnswer(q2, optIdx, { id: 'certain', mult: 2 });
-  check('near-miss resolves to grace + half base (flat)', r.outcome === 'near-miss' && r.points === 50);
+  const r = resolveAnswer(q2, optIdx, { id: 'certain', mult: 4 });
+  check('near-miss 4× = grace +200 (half)', r.outcome === 'near-miss' && r.points === 200);
 }
 
 // 3. pickNextLadder

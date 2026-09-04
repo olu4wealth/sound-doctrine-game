@@ -210,14 +210,16 @@ The game is "won" by *knowing the doctrine*, not by grinding:
 
 | System | Status |
 |---|---|
-| Verified 95-question bank (69 legacy + 26 T3–T7) | 🟢 shipped |
-| The Ladder (bids, grace near-miss, adaptive, count-up timer) | 🟢 shipped |
-| The Candle (capped streak, oil shields, gutter) | 🟢 shipped |
-| **7-tier progression (T1–T7)** | 🟢 shipped (all tiers authored & verified) |
-| **Charge Report (grade + strengths/weaknesses + study Rx)** | 🟢 shipped |
+| Verified 150-question bank (7-tier, 6-gate KJV lockbox) | 🟢 shipped (`data/questions-merged.json` canonical, D2) |
+| The Ladder (progressive T1→T7 ramp, adaptive weak-subject picker, countdown) | 🟢 shipped |
+| The Candle (capped 7-day streak, oil shields, gutter) + Flame card + Ladder on Home | 🟢 shipped (Phase 4: visual Ladder T7→T1 with 🔥YOU, Flame card, Today's Office card) |
+| **7-tier progression (T1–T7)** | 🟢 shipped (all tiers authored & verified: T1 15 / T2 20 / T3 48 / T4 33 / T5 11 / T6 13 / T7 10) |
+| **Confidence stake — two-step (D3): answer → stake card 1×…5×, Grace half** | 🟢 shipped (Phase 6: `BIDS` 5-tier, `resolveAnswer(q, idx, bid)` → ± stake×100, Grace 50% via `nearIndexes`) |
+| **Charge Report: Mastery Map + Weakest + Missed Verses + Retest** | 🟢 shipped (Phase 5: per-book mastery bars, weakest-chapter card, missed-verse list, `[Retest My Weakness]`) |
 | Named players + profile stats (streak / fails / best time) | 🟢 shipped (local profile) |
 | The Daily Office (seeded daily + share card) | 🟢 shipped |
 | Global real-time leaderboard (Supabase) | 🟡 spec'd — local board shipped; backend needs Supabase project |
+| AI pipeline (build-time only, D5) | 🟢 shipped (`scripts/ai-generate.mjs` + `scripts/merge-ai.mjs` + `docs/AI-PIPELINE.md`, 6-gate) |
 | Supabase auth + cloud sync | ⚪ planned (needs approval + project) |
 
 *This document is living: update the status matrix and sections here as features ship.*

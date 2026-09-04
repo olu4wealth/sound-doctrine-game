@@ -318,3 +318,45 @@ Three mechanics support this:
 - **The Daily Office** — Compete against everyone (same 10 questions daily)
 
 Underneath: AI identifies what you don't know and tells you exactly what to study next.
+
+---
+
+## Decisions — Locked 2026-09-04 (Review Outcome)
+
+These resolve the open questions from the review session and are binding for Phases 1-8.
+
+### D1 — Categories (Phase 1.2)
+Use 8 canonical categories as starting taxonomy, extensible if subjects require it:
+`Sound Doctrine | Faith & Grace | Church Order | Christian Conduct | Endurance & Faithfulness | False Teaching & Discernment | Last Days | Stewardship & Contentment`
+- Implemented via `subject → category` mapping table (`scripts/category-map.json`).
+- If a `subject` cannot map cleanly, add a category (you explicitly allowed expansion) and document it in the mapping file.
+- Every question will carry `category` after backfill; missing `category` will fail `verify/check.mjs`.
+
+### D2 — Canonical Question File (Phase 1)
+`data/questions-merged.json` (currently 128) becomes the **single source of truth**.
+- `app.js: loadBank` will change to single `fetch('data/questions-merged.json')` with 3-file fallback during migration.
+- Source files `data/questions.json`, `questions-t47.json`, `questions-new.json` retained under `data/src/` as archive/provenance — no longer fetched at runtime.
+- Validation gate runs only against `questions-merged.json` (and future `questions-ai.json` candidates before merge).
+
+### D3 — Confidence Mechanic (Phase 6)
+Restore 5-tier staking **but not as pre-answer buttons** (your constraint: "mustn't be buttons the player clicks before choosing an answer — not self-explanatory").
+- **Approved pattern: two-step confirmation (answer → stake).**
+  1. Player taps an answer option (A/B/C/D) — normal knowledge decision.
+  2. Confirmation card appears: `You chose B — how sure are you?` with 5 stake choices: `1× Safe (+100/−100) | 2× Cautious (+200/−200) | 3× Confident (+300/−300) | 4× Certain (+400/−400) | 5× Preach It (+500/−500)` — live preview reads `Correct: +300 | Wrong: −300 | Grace (near-miss): +150 (50% retained)`.
+  3. Confirm commits; scoring is `± stake × 100` (Grace = 50% loss mitigation, only if `nearIndexes` marks the chosen distractor as a near-miss).
+- Rationale: separates knowledge from risk, makes consequence explicit before commit. Alternative behind this (horizontal slider after answer) was considered and rejected for this project — the card is clearer for judges.
+- Dependency: `nearIndexes` backfill must complete before Grace triggers; without it, Grace silently falls back to full loss (no invented near-miss).
+
+### D4 — Ranks (Phase 8)
+Keep the **10-rank shipped ladder**: `Recruit → Squire → Deacon → Elder in Training → Elder → Bishop → Good Soldier → Workman Unashamed → Shepherd → Crownbearer (0→6000)`.
+- Do not switch to the 7-rank proposal (2700+ cap). REFOCUS rank table remains reference only.
+
+### D5 — AI Scope (Phase 3)
+**Build-time only** — no runtime LLM calls in the shipped SPA.
+- Pipeline: `KJV lockbox (kjv-*.json) → prompt (gold 128) → LLM batch generate 30 candidates → verify/check.mjs 6-gate → human approve → merge into questions-merged.json`.
+- Add `data/questions.prompt.md` back to tracking (remove from .gitignore) as few-shot source; add `scripts/ai-generate.mjs` + `docs/AI-PIPELINE.md` diagram (`Scripture-only knowledge base → AI generates → Validation → Player`) for judges.
+- Runtime responsibilities (duplicate avoidance, adaptive selection, weakness analysis, personalized reports) stay in `game-core.js`/`storage.js` using static bank — demonstrably `AI generates, Scripture verifies`.
+
+### D6 — Repo Hygiene (Phase 0, completed)
+Fast-forwarded `75be1df..c7bdad5`, restored `REFOCUS_PLAN.md` + `questions-merged.json`, fixed `.gitignore` to project-tailored version, now tracking `package-lock.json`. `serve@14.2.6` in devDeps ensures `npx serve . -l 4173` reproducibility. `app.css` synced to `100px / 80px@420px, top:-80px` mascot-above-modal fix.
+- Verified: `verify/check.mjs PASSED (128)`, `game-core.test 36/36`, `playwright 18/18`.

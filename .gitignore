@@ -1,4 +1,3 @@
-```
 # Compiled and build artifacts
 *.pyc
 __pycache__/
@@ -14,9 +13,30 @@ __pycache__/
 node_modules/
 venv/
 .venv/
+.ENV
+.ENV.local
+
+# Environment files
 .env
 .env.local
 .env.*
+
+# Playwright / test artefacts
+test-results/
+playwright-report/
+verify/shots/
+
+# Tooling
+.dsh-vision-toolkit/
+
+# AI candidates / build-time files
+data/questions-ai.json
+
+# Unused / intermediate DALL·E assets (kept locally, not deployed)
+assets/candle-alpha.png
+assets/candle-states-alpha.png
+assets/rank-emblems-alpha.png
+assets/clay-decorations-alpha.png
 
 # Logs and temp files
 *.log
@@ -24,7 +44,7 @@ venv/
 *.swp
 *.swo
 
-# Editors
+# Editors / IDE
 .vscode/
 .idea/
 
@@ -68,4 +88,3 @@ Thumbs.db
 *.tar.bz2
 *.tar.xz
 *.tar.zst
-```

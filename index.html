@@ -53,7 +53,7 @@
       <ul class="how-list">
         <li>Every answer comes straight from 1 &amp; 2 Timothy or Titus (KJV).</li>
         <li><strong>The Ladder</strong> climbs from easy recall to extremely-hard synthesis.</li>
-        <li>Stake your confidence before answering (1× / 2× / 3×). A near-miss earns <em>Grace</em> — half kept.</li>
+        <li>Pick an answer, then stake how sure you are (1× Safe … 5× Preach It). A close distractor earns <em>Grace</em> — half the stake kept.</li>
         <li>Keep the <strong>Candle</strong> lit: a 7-day streak, with oil vials as shields. Misses never shame you.</li>
         <li>Wrong answers always show the verse and its reference.</li>
         <li>Finish and get your <strong>Charge Report</strong>: grade, strengths, weaknesses, and how to do better.</li>
@@ -61,7 +61,7 @@
       <button class="primary" id="btn-how-back">Back</button>
     </section>
 
-    <!-- HOME (Candle) -->
+    <!-- HOME (Candle + Ladder) -->
     <section id="screen-home" class="screen hidden">
       <header class="home-head">
         <div class="home-name" id="home-name">—</div>
@@ -70,18 +70,37 @@
           <button class="sound-toggle" id="btn-sound" aria-label="Toggle sound">🔊</button>
         </div>
       </header>
-      <div class="candle-stage" id="candle-stage" data-state="lit">
-        <div class="candle-glow" aria-hidden="true"></div>
-        <span class="candle-spark spark-a" aria-hidden="true">✦</span>
-        <span class="candle-spark spark-b" aria-hidden="true">✧</span>
-        <img class="candle-img" id="candle-img" src="assets/candle-lit.png" alt="Lit candle" />
+
+      <!-- Flame card -->
+      <div class="flame-card" id="flame-card">
+        <div class="flame-card-head">YOUR FLAME 🔥</div>
+        <div class="candle-stage" id="candle-stage" data-state="lit">
+          <div class="candle-glow" aria-hidden="true"></div>
+          <span class="candle-spark spark-a" aria-hidden="true">✦</span>
+          <span class="candle-spark spark-b" aria-hidden="true">✧</span>
+          <img class="candle-img" id="candle-img" src="assets/candle-lit.png" alt="Lit candle" />
+        </div>
+        <div class="candle-caption" id="candle-caption">Your lamp is lit</div>
+        <div class="streak-row">
+          <span class="streak-num" id="streak-num">0</span>
+          <span class="streak-label">day streak (of 7)</span>
+          <span class="oil" id="oil-count">🫗 0</span>
+        </div>
       </div>
-      <div class="candle-caption" id="candle-caption">Your lamp is lit</div>
-      <div class="streak-row">
-        <span class="streak-num" id="streak-num">0</span>
-        <span class="streak-label">day streak (of 7)</span>
-        <span class="oil" id="oil-count">🫗 0</span>
+
+      <!-- Today's Office -->
+      <div class="office-card" id="office-card">
+        <div class="office-card-title">TODAY'S OFFICE</div>
+        <div class="office-card-meta">10 QUESTIONS · 05:00 · Same for everyone</div>
+        <button class="primary" id="btn-office-start">Begin Office</button>
       </div>
+
+      <!-- Visual Ladder T7→T1 -->
+      <div class="ladder" id="ladder">
+        <div class="ladder-title">THE LADDER</div>
+        <div class="ladder-rungs" id="ladder-rungs"></div>
+      </div>
+
       <div class="home-cta">
         <button class="primary" id="btn-climb">Begin a Climb</button>
         <button class="ghost" id="btn-daily">Daily Charge</button>
@@ -150,8 +169,12 @@
       <h2>The Charge Complete</h2>
       <div class="report-grade" id="report-grade"></div>
       <div class="report-summary" id="report-summary"></div>
+      <div class="mastery-map" id="report-mastery"></div>
+      <div class="weakest-card" id="report-weakest"></div>
+      <div class="missed-verses" id="report-missed"></div>
       <div class="report-columns" id="report-columns"></div>
       <div class="report-rx" id="report-rx"></div>
+      <div class="retest-row" id="report-retest"></div>
       <button class="primary" id="btn-again">Climb Again</button>
       <button class="ghost" id="btn-home">Back to the Candle</button>
     </section>
