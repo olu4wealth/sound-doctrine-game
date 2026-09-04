@@ -1,4 +1,10 @@
-```
-# GitHub Actions
+# Dependencies (dev-only; the game is a static site — never ship node_modules to Pages)
+node_modules/
+
+# Playwright artifacts
+.playwright/
+playwright-report/
+test-results/
+
+# GitHub Actions (intentionally excluded)
 .github/workflows/
-```
