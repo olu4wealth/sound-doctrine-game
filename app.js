@@ -3,7 +3,7 @@
 // options, juicy micro-interactions. Content stays scripturally verified.
 import {
   TIER_NAMES, TIER_EMOJI, BIDS, BASE_POINTS, MAX_STREAK, MAX_HEARTS,
-  bonusTime, QUESTION_TIME, fiftyFiftyHide,
+  bonusTime, QUESTION_TIME, fiftyFiftyHide, climbTierFor,
   dailyCharge, dailySeed, resolveAnswer, tierOf,
   pickNextLadder, applyDailyVisit, buildChargeReport, compositeScore,
   sortLeaderboard, shareGrid, shuffle, mulberry32, hashCode,
@@ -229,12 +229,13 @@ function renderHeroQuestion() {
 function finishHero() { finishCommon(); }
 
 // ---------- Countdown timer ----------
-// Constant 30 seconds for every question, regardless of tier or progress.
+// Constant base time (QUESTION_TIME) for every question, plus two bonuses:
 // (Word-order "rebuild the verse" questions pass a larger floorSeconds so they
-// still get extra reading time — it never drops below 30s.)
+// keep extra reading time — it never drops below 30s.)
 function startCountdown(tier, idxInTier = 0, floorSeconds = 0) {
   stopTimer();
-  timeTotal = Math.max(floorSeconds || 0, QUESTION_TIME);
+  const carry = timeLeft > 0 ? timeLeft : 0; // leftover banked from the previous question
+  timeTotal = Math.max(floorSeconds || 0, QUESTION_TIME + carry);
   timeLeft = timeTotal;
   timeRunning = true;
   renderTimerBar();
@@ -457,18 +458,17 @@ function renderScore() {
 
 function nextQuestion() {
   // Progressive difficulty: ramp the effective tier up as the climb progresses.
-  // Start at entryTier, gain +1 tier every 4 questions (capped at 7), so the
+  // climbTierFor always starts at T1 and rises +1 tier every 4 questions (capped at 7), so the
   // further you climb the harder it gets — a real ladder.
   const qIndex = session.questions.length; // 0-based before this question
-  const ramp = Math.min(6, Math.floor(qIndex / 4)); // +1 tier each 4 questions, max +6
-  const effectiveTier = Math.min(7, (player.entryTier || 1) + ramp);
+  const effectiveTier = climbTierFor(qIndex);
   const q = pickNextLadder(bank, {
     entryTier: effectiveTier,
     weakSubjects: new Set(player.weakSubjects || []),
   });
   if (!q) { finishClimb(); return; }
   currentQ = q;
-  recordRunTier(qIndex, effectiveTier); // track for reward + timer scaling
+  recordRunTier(qIndex, effectiveTier); // track for reward + milestones
   renderQuestion(q);
 }
 
@@ -534,17 +534,15 @@ function showFeedbackModal(head, verse, ref, kind, isLast, correctText) {
   };
 }
 
-// Reward for climbing far: award a bonus at each tier-ramp milestone
-// (every 4 questions) and for reaching the hardest tiers.
+// Reward for climbing far: a bonus each time you break into a new tier band,
+// so the payout tracks the rung actually reached rather than raw question count.
 function checkMilestoneReward() {
-  const answered = session.questions.length;
-  const tier = currentQ?._runTier || currentQ?.tier || 1;
+  const rung = session.maxRunTier || 1;
   let label = '', points = 0;
-  if (answered === 4) { label = 'Tier climbed!'; points = 50; }
-  else if (answered === 8) { label = 'The ascent!'; points = 100; }
-  else if (answered === 12) { label = 'Summit reached!'; points = 200; }
-  else if (tier >= 6 && session.maxRunTier <= 6) { label = 'Deep waters!'; points = 150; }
-  else if (tier >= 7) { label = 'The hardest rungs!'; points = 250; }
+  if (rung >= 7) { label = 'The hardest rungs!'; points = 250; }
+  else if (rung >= 6) { label = 'Deep waters!'; points = 150; }
+  else if (rung >= 4) { label = 'The ascent!'; points = 100; }
+  else if (rung >= 2) { label = 'Tier climbed!'; points = 50; }
   if (points) return { label, points };
   return null;
 }
@@ -1512,3 +1510,9 @@ function showTutorial() {
   window.addEventListener('resize', layout);
   render();
 }
+
+
+
+
+
+

@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
   mulberry32, hashCode, dailySeed, dailyCharge, resolveAnswer, nearMiss,
-  fiftyFiftyHide, shuffle,
+  fiftyFiftyHide, shuffle, climbTierFor,
   pickNextLadder, applyDailyVisit, buildChargeReport, compositeScore,
   sortLeaderboard, shareGrid, tierOf, MAX_STREAK, DAILY_LENGTH,
   timeForTier, bonusTime, MAX_HEARTS, candleMeltFraction, CANDLE_MORNING_HOUR,
@@ -77,6 +77,13 @@ check('50/50 shuffled order never hides the correct slot',
   })());
 check('50/50 true/false hides only the single wrong option', JSON.stringify(fiftyFiftyHide([0,1], 0)) === JSON.stringify([1]));
 check('50/50 guards against a missing display order', JSON.stringify(fiftyFiftyHide(undefined, 0)) === JSON.stringify([]));
+
+// 2c. climbTierFor — every climb walks T1 -> T7, +1 tier every 4 questions
+check('climbTierFor starts at T1', climbTierFor(0) === 1 && climbTierFor(3) === 1);
+check('climbTierFor rises one tier per 4 questions', climbTierFor(4) === 2 && climbTierFor(8) === 3 && climbTierFor(12) === 4);
+check('climbTierFor caps at T7', climbTierFor(24) === 7 && climbTierFor(999) === 7);
+check('climbTierFor respects a custom step', climbTierFor(6, 3) === 3 && climbTierFor(0, 2) === 1);
+check('climbTierFor is never below T1', climbTierFor(-5) === 1);
 
 // 3. pickNextLadder
 const model = { entryTier: 2, weakSubjects: new Set(['money']), seen: new Set() };

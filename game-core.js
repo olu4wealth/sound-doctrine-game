@@ -206,7 +206,13 @@ export function heroRun(mainBank, heroBank, heroId, dayStr, rng = mulberry32(has
   return shuffle(rng, chosen).slice(0, HERO_LENGTH);
 }
 
-// ---------- Adaptive Ladder picker ----------
+// ---------- Climb rung ramp ----------
+// Walks T1 -> T7 as the player answers: every 4 questions, the rung rises by one
+// (T1 for Q1-4, T2 for Q5-8, ...), capped at T7. The run is endless, so a strong
+// player keeps climbing into the top rungs as long as they survive.
+export function climbTierFor(questionIndex, step = 4) {
+  return Math.min(7, 1 + Math.max(0, Math.floor((questionIndex || 0) / step)));
+}
 // model: { entryTier, weakSubjects:Set, seen:Set (ids used), climbCount }
 export function pickNextLadder(bank, model) {
   const tier = Math.min(7, Math.max(1, model.entryTier || 1));
@@ -482,3 +488,4 @@ export function shareGrid(answers, size = 10) {
   for (let i = 0; i < cells.length; i += 5) lines.push(cells.slice(i, i + 5).join(''));
   return lines.join('\n');
 }
+
