@@ -34,13 +34,6 @@ html, body {
   min-height: 100%;
   -webkit-text-size-adjust: 100%;
 }
-/* Optional generated parchment texture, layered over the gradient */
-body.textured {
-  background-image: url('assets/background-texture.png');
-  background-size: cover;
-  background-position: center;
-  background-blend-mode: multiply;
-}
 body { min-height: 100dvh; line-height: 1.5; }
 
 .app {
@@ -1086,3 +1079,132 @@ button:disabled { cursor: default; opacity: .55; }
   }
 }
 
+
+/* ============================================================
+   Retention pass — new surfaces
+   ============================================================ */
+
+/* Focus is visible again. The only focus rule in the file used to be
+   `input:focus { outline: none }`, which removed the browser default and gave
+   nothing back, so every control in the app was invisible to keyboard users. */
+:focus-visible {
+  outline: 3px solid var(--sky-b);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+input:focus-visible { outline: 3px solid var(--sky-b); outline-offset: 1px; }
+
+/* ---------- Inline stake row (replaces the full-screen stake modal) ---------- */
+.stake-row {
+  margin: 4px 0 14px;
+  padding: 10px 12px;
+  background: #fffaf0;
+  border: 2px solid #f3e2bd;
+  border-radius: 14px;
+}
+.stake-row-label {
+  display: block;
+  font-size: .74rem; font-weight: 900; letter-spacing: .6px;
+  text-transform: uppercase; color: var(--gold-deep); margin-bottom: 8px;
+}
+.stake-row-opts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.stake-pill {
+  width: auto; margin: 0; padding: 8px 4px;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  background: #fff; color: var(--ink-soft);
+  border: 2px solid var(--line); border-radius: 12px;
+  font-size: .72rem; font-weight: 800; line-height: 1.1;
+}
+.stake-pill-mult { font-size: .95rem; font-weight: 900; color: var(--ink); }
+.stake-pill-label { font-size: .62rem; opacity: .8; }
+.stake-pill.active {
+  background: linear-gradient(180deg, #fff3d6, #ffe8b8);
+  border-color: var(--gold); color: var(--gold-deep);
+  box-shadow: 0 2px 0 var(--gold-deep);
+}
+.stake-pill.active .stake-pill-mult { color: var(--gold-deep); }
+.stake-pill:disabled { opacity: .45; }
+.stake-row-hint {
+  margin-top: 8px; text-align: center;
+  font-size: .76rem; font-weight: 800; color: var(--ink-soft);
+}
+@media (max-width: 360px) {
+  .stake-pill-label { display: none; }
+  .stake-row-opts { gap: 4px; }
+}
+
+/* ---------- Rank progress (home) ---------- */
+.rank-progress {
+  background: var(--card); border: 2px solid var(--line);
+  border-radius: 14px; padding: 10px 12px; margin-bottom: 12px;
+}
+.rank-progress-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: .78rem; font-weight: 800; color: var(--ink-soft); margin-bottom: 7px;
+}
+.rank-progress-head #rank-pts { color: var(--gold-deep); font-weight: 900; font-size: .92rem; }
+.rank-bar { height: 8px; background: #f1e8d6; border-radius: 999px; overflow: hidden; }
+.rank-bar-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--gold), var(--gold-deep));
+  border-radius: 999px; transition: width .5s ease;
+}
+
+/* ---------- Daily reset countdown ---------- */
+.daily-countdown {
+  font-size: .76rem; font-weight: 800; color: var(--ink-soft);
+  margin: 2px 0 10px; letter-spacing: .2px;
+}
+.daily-countdown.done { color: var(--green-dk); }
+
+/* ---------- Install prompt ---------- */
+.home-install { margin-top: 8px; }
+.home-install .ghost { border-color: var(--gold); color: var(--gold-deep); }
+
+/* ---------- Lifetime mastery screen ---------- */
+.mastery-summary {
+  background: var(--card); border: 2px solid var(--line);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 14px; text-align: center;
+}
+.mastery-headline { font-size: 1.15rem; font-weight: 800; color: var(--ink); }
+.mastery-headline strong { font-size: 1.9rem; font-weight: 900; color: var(--gold-deep); }
+.mastery-sub { font-size: .8rem; font-weight: 700; color: var(--ink-soft); margin-top: 4px; }
+.mastery-track {
+  height: 10px; background: #f1e8d6; border-radius: 999px;
+  overflow: hidden; margin-top: 12px;
+}
+.mastery-track-fill {
+  height: 100%; background: linear-gradient(90deg, var(--green), var(--green-dk));
+  border-radius: 999px; transition: width .5s ease;
+}
+.mastery-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
+.mastery-cell {
+  background: var(--card); border: 2px solid var(--line);
+  border-radius: 14px; padding: 10px;
+}
+.mastery-cell.mastered { border-color: var(--green); background: #f4ffe9; }
+.mastery-cell.untouched { opacity: .6; }
+.mastery-cell-head { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
+.mastery-cell-name { font-size: .8rem; font-weight: 900; color: var(--ink); }
+.mastery-badge { color: var(--green-dk); font-size: .9rem; }
+.mastery-cell-bar { height: 6px; background: #f1e8d6; border-radius: 999px; overflow: hidden; margin: 7px 0 5px; }
+.mastery-cell-bar span { display: block; height: 100%; background: var(--gold); border-radius: 999px; }
+.mastery-cell.mastered .mastery-cell-bar span { background: var(--green); }
+.mastery-cell-meta { display: flex; justify-content: space-between; font-size: .7rem; font-weight: 700; color: var(--ink-soft); }
+@media (min-width: 600px) { .mastery-grid { grid-template-columns: repeat(3, 1fr); } }
+
+/* ---------- Leaderboard: provisional players ---------- */
+.lb-prov {
+  display: inline-block; margin-left: 6px; padding: 1px 7px;
+  font-size: .62rem; font-weight: 800; text-transform: uppercase; letter-spacing: .4px;
+  color: var(--ink-soft); background: #f4efe3; border-radius: 999px;
+}
+
+/* ---------- Respect reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}

@@ -3,11 +3,14 @@
 // options, juicy micro-interactions. Content stays scripturally verified.
 import {
   TIER_NAMES, TIER_EMOJI, BIDS, BASE_POINTS, MAX_STREAK, MAX_HEARTS,
-  timeForTier, bonusTime,
+  STREAK_MILESTONE, LADDER_LENGTH, DAILY_LENGTH,
+  timeForTier, timeForQuestion, bonusTime,
   dailyCharge, dailySeed, resolveAnswer, tierOf,
-  pickNextLadder, applyDailyVisit, buildChargeReport, compositeScore,
+  pickNextLadder, applyDailyVisit, buildChargeReport, leaderboardScore,
   sortLeaderboard, shareGrid, shuffle, mulberry32, hashCode,
   heroRun, HEROES, candleMeltFraction,
+  rankOf, rankProgress, retestRun, masterySummary,
+  msUntilDailyReset, formatCountdown,
 } from './game-core.js';
 import {
   loadPlayer, savePlayer, recordCharge, updateLeaderboard,
@@ -16,6 +19,13 @@ import {
 import { sfx } from './sound.js';
 
 const el = (id) => document.getElementById(id);
+
+// Escape anything player-controlled before it reaches innerHTML. Local-only today,
+// but the leaderboard is Supabase-bound, where an unescaped name is stored XSS.
+function esc(v) {
+  return String(v ?? '').replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
 
 // ---------- State ----------
 let bank = [];
@@ -27,6 +37,8 @@ let currentQ = null;
 let dailyIdx = 0; // index into session._dailyList during a Daily Quest
 let heroIdx = 0; // index into session._heroList during a Choose Your Hero run
 let heroBank = []; // Choose Your Hero typed questions (data/heroes.json)
+let lastReport = null; // most recent Charge Report — powers "Take the retest"
+let lastRunMode = 'ladder'; // mode the last finished run was played in (for sharing)
 
 // Countdown state (per question)
 let timeLeft = 0;
@@ -35,24 +47,9 @@ let timeRunning = false;
 let frozenUntil = 0; // timestamp (ms) until which the timer is frozen (power-up)
 let tutorialPaused = false; // while true, the countdown doesn't tick (during tutorial)
 
-const RANKS = [
-  { req: 0, name: 'Recruit' },
-  { req: 300, name: 'Squire' },
-  { req: 600, name: 'Deacon' },
-  { req: 1000, name: 'Elder in Training' },
-  { req: 1500, name: 'Elder' },
-  { req: 2000, name: 'Bishop' },
-  { req: 2700, name: 'Good Soldier' },
-  { req: 3500, name: 'Workman Unashamed' },
-  { req: 4500, name: 'Shepherd' },
-  { req: 6000, name: 'Crownbearer' },
-];
-
-function rankOf(pts) {
-  let r = RANKS[0];
-  for (const cand of RANKS) if (pts >= cand.req) r = cand;
-  return r.name;
-}
+// Points that drive rank: the banked lifetime pot, not `totalCorrect × 100`
+// (which used to max the whole title ladder out at 60 correct answers).
+function rankPoints() { return player.lifetimePot || 0; }
 
 // ---------- Load ----------
 async function loadBank() {
@@ -129,8 +126,10 @@ function applyCandleMelt(stage) {
 
 function renderCandle() {
   el('home-name').textContent = player.name || '—';
-  el('home-rank').textContent = rankOf(player.totalCorrect * BASE_POINTS || 0);
+  el('home-rank').textContent = rankOf(rankPoints());
   el('streak-num').textContent = player.streak || 0;
+  renderRankProgress();
+  renderDailyCountdown();
 
   // New-player gating: Daily Quest + Choose Your Hero unlock after a Ladder climb.
   const ladderDone = !!player.ladderPlayed;
@@ -147,6 +146,32 @@ function renderCandle() {
   renderLadder();
 }
 
+// Rank progress: shows the banked lifetime pot and the distance to the next title.
+function renderRankProgress() {
+  const pts = rankPoints();
+  const rp = rankProgress(pts);
+  const ptsEl = el('rank-pts'), nextEl = el('rank-next'), fill = el('rank-bar-fill');
+  if (ptsEl) ptsEl.textContent = `⚜ ${pts.toLocaleString()}`;
+  if (nextEl) {
+    nextEl.textContent = rp.next
+      ? `Next: ${rp.next} (${Math.max(0, rp.span - rp.into).toLocaleString()} to go)`
+      : 'Highest rank reached';
+  }
+  if (fill) fill.style.width = `${Math.round(rp.pct * 100)}%`;
+}
+
+// Daily Quest rolls over at 00:00 UTC (dailySeed keys off UTC). Showing the
+// countdown gives the home screen a reason to be opened again tomorrow.
+function renderDailyCountdown() {
+  const node = el('daily-countdown');
+  if (!node) return;
+  const today = dailySeed(new Date());
+  const doneToday = player.lastDailyDay === today;
+  const left = formatCountdown(msUntilDailyReset(new Date()));
+  node.textContent = doneToday ? `✓ Done today · new quest in ${left}` : `New quest in ${left}`;
+  node.classList.toggle('done', doneToday);
+}
+
 // Keep the candle's melt in sync with the wall clock while the page stays open
 // (a long-lived home screen shouldn't freeze at morning forever). Light touch:
 // refresh every 5 minutes — the burn is imperceptible in between.
@@ -156,6 +181,10 @@ function setupCandleClock() {
     if (!stage) return;
     applyCandleMelt(stage);
   }, 5 * 60 * 1000);
+  // The reset countdown ticks once a minute while the home screen is visible.
+  setInterval(() => {
+    if (!el('screen-home')?.classList.contains('hidden')) renderDailyCountdown();
+  }, 60 * 1000);
 }
 
 function renderLadder() {
@@ -199,6 +228,22 @@ function startClimb() {
   }
 }
 
+// ---------- Item 6: retest ----------
+// The report already names every miss and the passages to read. This turns that
+// into a playable run so study → test → restudy closes without leaving the app.
+function startRetest() {
+  if (!lastReport) { startClimb(); return; }
+  const list = retestRun(bank, lastReport, LADDER_LENGTH);
+  if (!list.length) { startClimb(); return; }
+  mode = 'ladder';
+  resetSession();
+  session._retestList = list;
+  list.forEach((q) => { q._usedThisRun = true; });
+  renderHearts();
+  showScreen('screen-game');
+  nextQuestion();
+}
+
 function startDaily() {
   if (!player.ladderPlayed) return; // locked until the player finishes a Ladder climb
   mode = 'daily';
@@ -239,7 +284,18 @@ function heroTypeLabel(q) {
 function openHeroSelect() {
   if (!heroBank.length) return;
   if (!player.ladderPlayed) return; // locked until the player finishes a Ladder climb
+  hydrateLazyImages(el('screen-hero'));
   showScreen('screen-hero');
+}
+
+// Swap data-lazy -> src the first time a screen is shown. Images inside a
+// display:none subtree are still fetched by the browser, so hidden screens were
+// pulling ~1 MB of mascot GIFs on first paint.
+function hydrateLazyImages(root) {
+  root?.querySelectorAll('img[data-lazy]').forEach((img) => {
+    img.src = img.dataset.lazy;
+    delete img.dataset.lazy;
+  });
 }
 
 function startHero(heroId) {
@@ -270,18 +326,13 @@ function renderHeroQuestion() {
 function finishHero() { finishCommon(); }
 
 // ---------- Countdown timer ----------
-function adaptiveTimeForTier(tier, questionIndexInTier) {
-  // Base time from tier (harder tier = less base time)
-  let base = timeForTier(tier);
-  // Speed up by 10% per answered question within the same tier band
-  // (so T2 starts at 26s, gets tighter as you progress)
-  const progressFactor = Math.min(1, (questionIndexInTier || 0) / 5);
-  return Math.max(10, Math.round(base * (1 - progressFactor * 0.3)));
-}
-
-function startCountdown(tier, idxInTier = 0, floorSeconds = 0) {
+// The clock is budgeted per QUESTION now (reading time + tier-scaled thinking
+// time), not per tier. A 41-word T7 item used to get a hard 10s floor — less
+// than its bare reading time — so the hardest content always timed out.
+function startCountdown(q, idxInRun = 0, floorSeconds = 0) {
   stopTimer();
-  timeTotal = Math.max(floorSeconds || 0, adaptiveTimeForTier(tier, idxInTier));
+  const ramp = Math.min(1, (idxInRun || 0) / 5);
+  timeTotal = Math.max(floorSeconds || 0, timeForQuestion(q, ramp));
   timeLeft = timeTotal;
   timeRunning = true;
   renderTimerBar();
@@ -458,7 +509,7 @@ function renderQuestion(q) {
     wrap.appendChild(btn);
   });
 
-  // Confidence bids removed: options are always shown immediately.
+  renderStakeRow(q);
   el('q-options').classList.remove('hidden');
   el('feedback').classList.add('hidden');
   el('feedback').classList.remove('correct', 'wrong', 'grace');
@@ -466,9 +517,8 @@ function renderQuestion(q) {
   renderScore();
   renderTimerBar();
 
-  // Timer scales with the effective (ramped) run tier, so harder progress = less time.
-  const runTier = q._runTier || q.tier;
-  startCountdown(runTier, (session?.questions?.length || 0));
+  // Budget follows this question's own reading load and effective tier.
+  startCountdown({ ...q, tier: q._runTier || q.tier }, (session?.questions?.length || 0));
   renderPowerups();
 }
 
@@ -483,12 +533,11 @@ function updateProgress() {
     el('progress-bar').style.width = `${Math.round((idx / total) * 100)}%`;
     el('hud-progress').textContent = `${idx}/${total}`;
   } else {
-    // Endless climb: no fixed cap; show the count climbed and a creeping bar.
-    idx = session.questions.length + 1;
-    el('hud-progress').textContent = `Q${idx}`;
-    // Creep toward full as the climb goes on (never exceeds 100%).
-    const pct = Math.min(100, Math.round((idx / 20) * 100));
-    el('progress-bar').style.width = `${pct}%`;
+    // Fixed-length climb: a real, honest progress bar.
+    total = runLength();
+    idx = Math.max(1, Math.min(session.questions.length + 1, total));
+    el('hud-progress').textContent = `${idx}/${total}`;
+    el('progress-bar').style.width = `${Math.round((idx / total) * 100)}%`;
   }
 }
 
@@ -503,6 +552,18 @@ function nextQuestion() {
   // Start at entryTier, gain +1 tier every 4 questions (capped at 7), so the
   // further you climb the harder it gets — a real ladder.
   const qIndex = session.questions.length; // 0-based before this question
+  if (qIndex >= runLength()) { finishClimb(); return; }
+  // A queued retest run plays a fixed list instead of the adaptive picker.
+  if (session._retestList) {
+    const rq = session._retestList[qIndex];
+    if (!rq) { finishClimb(); return; }
+    rq.tier = tierOf(rq);
+    currentQ = rq;
+    recordRunTier(qIndex, rq.tier);
+    renderQuestion(rq);
+    el('q-type').textContent = `${TIER_EMOJI[rq.tier]} T${rq.tier} · Retest`;
+    return;
+  }
   const ramp = Math.min(6, Math.floor(qIndex / 4)); // +1 tier each 4 questions, max +6
   const effectiveTier = Math.min(7, (player.entryTier || 1) + ramp);
   const q = pickNextLadder(bank, {
@@ -689,6 +750,7 @@ function usePowerup(type) {
 // The verse's words are shuffled into a pool; the player taps them in order.
 // Tapping a placed word returns it to the pool. Completing the line commits.
 function renderWordOrder(q) {
+  renderStakeRow(q); // hides itself for word-order
   const wrap = el('q-options');
   wrap.innerHTML = '';
   wrap.classList.remove('count-2');
@@ -737,8 +799,8 @@ function renderWordOrder(q) {
   updateProgress();
   renderScore();
   renderTimerBar();
-  // Word order needs time to read: ~2.2s per word, minimum 24s.
-  startCountdown(q.tier || 5, session?.questions?.length || 0, Math.max(24, Math.round(q.words.length * 2.2)));
+  // Word order also needs handling time per chip on top of the reading budget.
+  startCountdown(q, session?.questions?.length || 0, Math.max(24, Math.round(q.words.length * 2.2)));
   renderPowerups();
 }
 
@@ -755,97 +817,65 @@ function commitWordOrder(q, line, pool) {
   commitAnswer(0, isCorrect ? 0 : -1, null);
 }
 
-// ---------- Answering (D3 two-step: answer → stake → commit) ----------
-let _pending = null; // { displayIdx, chosenOrig }
+// ---------- Answering (single-step: pick a stake inline, then answer) ----------
+// The stake used to open a full-screen blurred modal on EVERY question — two
+// modal transitions per question, and the stake fed only `session.pot`, which was
+// then discarded. The stake row is now inline and sticky across questions, so a
+// question costs one tap to answer instead of a tap, a modal and a confirm.
+let _pending = null;   // re-entrancy guard so a double-tap can't answer twice
+let selectedBid = BIDS[0]; // remembered across questions (default 1× Safe)
+
+function renderStakeRow(q) {
+  const wrap = el('stake-row');
+  if (!wrap) return;
+  // Word order has no options to stake against — it's all-or-nothing.
+  if (q.type === 'wordorder') { wrap.classList.add('hidden'); return; }
+  wrap.classList.remove('hidden');
+  wrap.innerHTML = '<span class="stake-row-label">How sure?</span>';
+  const opts = document.createElement('div');
+  opts.className = 'stake-row-opts';
+  BIDS.forEach((bid) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'stake-pill' + (bid.mult === selectedBid.mult ? ' active' : '');
+    btn.dataset.mult = String(bid.mult);
+    btn.setAttribute('aria-pressed', bid.mult === selectedBid.mult ? 'true' : 'false');
+    btn.innerHTML = `<span class="stake-pill-mult">${bid.mult}×</span><span class="stake-pill-label">${bid.label}</span>`;
+    btn.addEventListener('click', () => {
+      selectedBid = bid;
+      opts.querySelectorAll('.stake-pill').forEach((b) => {
+        const on = Number(b.dataset.mult) === bid.mult;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      updateStakeHint();
+    });
+    opts.appendChild(btn);
+  });
+  wrap.appendChild(opts);
+  const hint = document.createElement('div');
+  hint.className = 'stake-row-hint';
+  hint.id = 'stake-row-hint';
+  wrap.appendChild(hint);
+  updateStakeHint();
+}
+
+function updateStakeHint() {
+  const hint = el('stake-row-hint');
+  if (!hint) return;
+  const p = BASE_POINTS * selectedBid.mult;
+  hint.textContent = `Correct +${p} · Wrong −${p}`;
+}
 
 function onAnswer(displayIdx) {
   if (!timeRunning) return;
-  if (_pending) return; // already pending a stake
+  if (_pending) return; // already committing
+  _pending = true;
   const q = currentQ;
   const chosenOrig = q._displayOrder[displayIdx];
-  _pending = { displayIdx, chosenOrig };
-  // Pause the clock while the stake card is up (player has already chosen knowledge)
   stopTimer();
-  // Dim the chosen option to show selection, but keep all enabled until stake commits
-  const qWrap = el('q-options');
-  qWrap.querySelectorAll('.option').forEach((btn) => {
-    btn.classList.toggle('pending', Number(btn.dataset.display) === displayIdx);
-  });
-  showStakeCard(q, displayIdx, chosenOrig);
-}
-
-function showStakeCard(q, displayIdx, chosenOrig) {
-  const old = document.getElementById('stake-modal-backdrop');
-  if (old) old.remove();
-  const chosenText = q.options[chosenOrig] || '';
-  const letter = ['A', 'B', 'C', 'D'][displayIdx] || '?';
-  let selectedBid = BIDS[0]; // default 1× Safe
-
-  const backdrop = document.createElement('div');
-  backdrop.id = 'stake-modal-backdrop';
-  backdrop.className = 'feedback-modal-backdrop stake-backdrop';
-  backdrop.innerHTML = `
-    <div class="stake-card">
-      <div class="stake-head">You chose ${letter} — how sure are you?</div>
-      <div class="stake-chosen">&ldquo;${chosenText}&rdquo;</div>
-      <div class="stake-options" id="stake-options"></div>
-      <div class="stake-preview" id="stake-preview"></div>
-      <div class="stake-actions">
-        <button class="ghost" id="stake-cancel">Change answer</button>
-        <button class="primary" id="stake-confirm">Confirm</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(backdrop);
-
-  const optsWrap = backdrop.querySelector('#stake-options');
-  const prevEl = backdrop.querySelector('#stake-preview');
-
-  function renderPreview() {
-    const p = BASE_POINTS * selectedBid.mult;
-    const grace = Math.round(p * 0.5);
-    const near = Array.isArray(q.nearIndexes) && q.nearIndexes.includes(chosenOrig);
-    const graceLine = near ? ` · Grace (near-miss): +${grace}` : ' · Grace: — (only close distractors)';
-    prevEl.textContent = `Correct: +${p}  ·  Wrong: −${p}${graceLine}`;
-  }
-
-  BIDS.forEach((bid) => {
-    const btn = document.createElement('button');
-    btn.className = 'stake-opt' + (bid.mult === selectedBid.mult ? ' active' : '');
-    btn.dataset.mult = String(bid.mult);
-    btn.innerHTML = `<span class="stake-mult">${bid.mult}×</span> ${bid.label} <span class="stake-pts">+${BASE_POINTS * bid.mult}/−${BASE_POINTS * bid.mult}</span>`;
-    btn.addEventListener('click', () => {
-      selectedBid = bid;
-      optsWrap.querySelectorAll('.stake-opt').forEach((b) => b.classList.toggle('active', Number(b.dataset.mult) === bid.mult));
-      renderPreview();
-    });
-    optsWrap.appendChild(btn);
-  });
-  renderPreview();
-
-  backdrop.querySelector('#stake-cancel').onclick = () => {
-    backdrop.remove();
-    _pending = null;
-    el('q-options')?.querySelectorAll('.option').forEach((b) => b.classList.remove('pending'));
-    // resume the clock from where it was (give at least 5s so stake time doesn't punish)
-    timeLeft = Math.max(5, timeLeft);
-    timeRunning = true;
-    renderTimerBar();
-    timerInt = setInterval(() => {
-      if (tutorialPaused) { renderTimerBar(); return; }
-      if (Date.now() < frozenUntil) { renderTimerBar(); return; }
-      timeLeft -= 0.1;
-      if (timeLeft <= 0) { timeLeft = 0; stopTimer(); onTimeout(); return; }
-      renderTimerBar();
-    }, 100);
-  };
-  backdrop.querySelector('#stake-confirm').onclick = () => {
-    backdrop.remove();
-    const pending = _pending;
-    _pending = null;
-    el('q-options')?.querySelectorAll('.option').forEach((b) => b.classList.remove('pending'));
-    commitAnswer(pending.displayIdx, pending.chosenOrig, selectedBid);
-  };
+  commitAnswer(displayIdx, chosenOrig, selectedBid);
+  _pending = null;
 }
 
 function commitAnswer(displayIdx, chosenOrig, bid) {
@@ -853,6 +883,7 @@ function commitAnswer(displayIdx, chosenOrig, bid) {
   const qWrap = el('q-options');
   const buttons = qWrap.querySelectorAll('.option');
 
+  el('stake-row')?.querySelectorAll('.stake-pill').forEach((b) => { b.disabled = true; });
   const res = resolveAnswer(q, chosenOrig, bid);
   const isCorrect = res.outcome === 'correct';
   const isGrace = res.outcome === 'near-miss';
@@ -1004,7 +1035,17 @@ function onTimeout() {
 function isLastQuestion() {
   if (mode === 'daily') return dailyIdx >= session._dailyList.length - 1;
   if (mode === 'hero') return heroIdx >= session._heroList.length - 1;
-  return false; // endless climb — never "last"; it ends when the player fails
+  // A Ladder climb is a fixed 10-question run. It used to be endless and could
+  // only end at 0 hearts, which meant a new player had to LOSE five times before
+  // Daily Quest and Choose Your Hero unlocked.
+  return session.questions.length >= runLength() - 1;
+}
+
+// How many questions this run holds.
+function runLength() {
+  if (mode === 'daily') return session._dailyList?.length || DAILY_LENGTH;
+  if (mode === 'hero') return session._heroList?.length || DAILY_LENGTH;
+  return session._retestList ? session._retestList.length : LADDER_LENGTH;
 }
 
 function popFeedback(kind) {
@@ -1061,10 +1102,18 @@ function finishCommon() {
   const report = buildChargeReport(session, bank);
 
   if (mode === 'ladder') player.ladderPlayed = true; // a finished climb unlocks the other modes
-  const earlier = player.streak || 0;
+  if (mode === 'daily') player.lastDailyDay = dailySeed(new Date()); // powers the "done today" state
+  const streakBefore = player.streak || 0;
+  // Apply the day's visit and KEEP its verdict. The previous `Math.max(next, earlier)`
+  // meant a decayed streak was immediately restored to its old value, so the candle
+  // could never gutter and the streak could never be lost — which is the entire
+  // psychological engine of a streak.
   player = applyDailyVisit(player, dailySeed(new Date()));
-  player = { ...player, streak: Math.max(player.streak || 0, earlier) };
+  delete player.alreadyDone; // transient caller flag; never persist it
   player.bestStreak = Math.max(player.bestStreak || 0, player.streak || 0);
+  session.streakBefore = streakBefore;
+  session.streakAfter = player.streak || 0;
+  session.hitMilestone = streakBefore < STREAK_MILESTONE && (player.streak || 0) >= STREAK_MILESTONE;
   player = recordCharge(player, session);
   if (!session.daily && session.questions.length >= 8) {
     player.oilVials = (player.oilVials || 0) + 1;
@@ -1075,6 +1124,8 @@ function finishCommon() {
   const rows = updateLeaderboard(player, session);
   syncLeaderboardToSupabase(rows.find((r) => r.name === player.name) || {});
 
+  lastReport = report;
+  lastRunMode = mode;
   renderReport(report, session);
   showScreen('screen-report');
 }
@@ -1133,6 +1184,74 @@ function renderReport(report, session) {
     ? `<h3>How to do better</h3><ul>${report.prescriptions.map((p) => `<li>${p.instruction}</li>`).join('')}</ul>`
     : '<h3>How to do better</h3><p>Keep climbing — seek the harder rungs.</p>';
   el('report-rx').innerHTML = rx;
+
+  // Share is available on every finished run, not just the (previously
+  // unreachable) Daily Quest path.
+  const share = el('btn-report-share');
+  if (share) {
+    share.classList.remove('hidden');
+    share.textContent = lastRunMode === 'daily' ? 'Share your Daily Quest' : 'Share your result';
+  }
+  // Retest only makes sense when there was something to get wrong.
+  const retest = el('btn-retest');
+  if (retest) {
+    const missed = report.missedVerses?.length || 0;
+    retest.classList.toggle('hidden', missed === 0);
+    retest.textContent = missed ? `Take the retest (${missed} missed)` : 'Take the retest';
+  }
+}
+
+// ---------- Item 3: share card ----------
+// `shareGrid` was fully implemented and unit-tested but `#btn-daily-share` was
+// hidden on entry and never un-hidden, so no player could ever reach it.
+function shareText() {
+  const out = (session?.questions || []).map((q) => q._outcome);
+  const total = out.length || 1;
+  const right = (session?.questions || []).filter((q) => q._correct).length;
+  const pct = Math.round((right / total) * 100);
+  const grid = shareGrid(out, total);
+  const title = lastRunMode === 'daily'
+    ? `Sound Doctrine — Daily Quest ${dailySeed(new Date())}`
+    : lastRunMode === 'hero'
+      ? `Sound Doctrine — ${HEROES[session?.hero]?.name || 'Hero'} run`
+      : 'Sound Doctrine — Ladder climb';
+  const streak = player.streak ? `\n🔥 ${player.streak}-day streak` : '';
+  return `${title}\n${grid}\n${right}/${total} · ${pct}%${streak}`;
+}
+
+async function doShare(btn) {
+  const text = shareText();
+  try {
+    if (navigator.share) { await navigator.share({ text }); return; }
+    await navigator.clipboard.writeText(text);
+    const old = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = old; }, 1600);
+  } catch { /* user dismissed the sheet — nothing to do */ }
+}
+
+// ---------- Mastery (lifetime, across every run) ----------
+// storage.js has recorded `lifetimeChapters` since the first commit and nothing
+// ever read it. The report's Mastery Map is session-scoped (it says "100% on
+// 1 Timothy" after two questions and resets each run); this is the cumulative one.
+function renderMastery() {
+  const sum = masterySummary(player.lifetimeChapters || {});
+  el('mastery-summary').innerHTML = `
+    <div class="mastery-headline"><strong>${sum.mastered}</strong> of ${sum.total} chapters mastered</div>
+    <div class="mastery-sub">${sum.started} of ${sum.total} begun · ${(player.totalAnswered || 0).toLocaleString()} questions answered all-time</div>
+    <div class="mastery-track"><div class="mastery-track-fill" style="width:${Math.round((sum.mastered / sum.total) * 100)}%"></div></div>`;
+
+  el('mastery-grid').innerHTML = sum.rows.map((r) => {
+    const pct = Math.round(r.acc * 100);
+    const cls = r.mastered ? 'mastered' : r.started ? 'started' : 'untouched';
+    const label = r.started ? `${pct}%` : '—';
+    const meta = r.started ? `${r.correct}/${r.asked}` : 'not yet begun';
+    return `<div class="mastery-cell ${cls}">
+      <div class="mastery-cell-head"><span class="mastery-cell-name">${esc(r.name)}</span>${r.mastered ? '<span class="mastery-badge">✦</span>' : ''}</div>
+      <div class="mastery-cell-bar"><span style="width:${pct}%"></span></div>
+      <div class="mastery-cell-meta"><b>${label}</b> <span>${meta}</span></div>
+    </div>`;
+  }).join('');
 }
 
 // ---------- Leaderboard ----------
@@ -1141,11 +1260,15 @@ function renderLeaderboard() {
   el('lb-list').innerHTML = rows.length
     ? rows.map((r, i) => {
         const isMe = r.name === player.name;
+        // Display the SAME score the sort used — these used to be two different
+        // formulas, so row #1 could show a lower number than row #2.
+        const s = leaderboardScore(r);
+        const acc = Math.round((s.acc || 0) * 100);
         return `<div class="lb-row ${isMe ? 'me' : ''}">
-          <span class="lb-rank">${i + 1}</span>
-          <span class="lb-name">${r.name}</span>
-          <span class="lb-stats">🔥 ${r.streak || 0} · ✗ ${r.fails || 0} · ⏱ ${fmtTime(Math.round((r.bestTimeMs || 0) / 1000))}</span>
-          <span class="lb-score">${Math.round(r.score)}</span>
+          <span class="lb-rank">${s.provisional ? '–' : i + 1}</span>
+          <span class="lb-name">${esc(r.name)}${s.provisional ? '<span class="lb-prov">provisional</span>' : ''}</span>
+          <span class="lb-stats">🔥 ${r.streak || 0} · ${acc}% · ${(r.totalAnswered || 0)} answered</span>
+          <span class="lb-score">⚜ ${s.score.toLocaleString()}</span>
         </div>`;
       }).join('')
     : '<p class="empty">No charges yet. Be the first onto the board.</p>';
@@ -1153,21 +1276,22 @@ function renderLeaderboard() {
 
 // ---------- Profile ----------
 function renderProfile() {
+  const sum = masterySummary(player.lifetimeChapters || {});
   el('profile-stats').innerHTML = `
     <div class="profile-card">
-      <div class="p-name">${player.name}</div>
-      <div class="p-rank">${rankOf(player.totalCorrect * BASE_POINTS || 0)}</div>
+      <div class="p-name">${esc(player.name)}</div>
+      <div class="p-rank">${rankOf(rankPoints())}</div>
       <div class="p-grid">
+        <div><b>⚜ ${rankPoints().toLocaleString()}</b> lifetime pot</div>
         <div><b>${player.streak || 0}</b> day streak</div>
+        <div><b>${player.bestStreak || 0}</b> best streak</div>
+        <div><b>${sum.mastered}/${sum.total}</b> chapters mastered</div>
         <div><b>${player.oilVials || 0}</b> oil vials</div>
-        <div><b>${player.hearts ?? MAX_HEARTS}</b> hearts</div>
         <div><b>${player.totalAnswered || 0}</b> answered</div>
         <div><b>${player.totalCorrect || 0}</b> correct</div>
-        <div><b>${player.fails || 0}</b> fails</div>
-        <div><b>${fmtTime(Math.round((player.bestTimeMs || 0) / 1000))}</b> best time</div>
         <div><b>T${player.entryTier || 1}</b> entry tier</div>
       </div>
-      ${player.weakSubjects?.length ? `<div class="p-weak"><b>Weak spots:</b> ${player.weakSubjects.join(', ')}</div>` : ''}
+      ${player.weakSubjects?.length ? `<div class="p-weak"><b>Weak spots:</b> ${esc(player.weakSubjects.join(', '))}</div>` : ''}
     </div>`;
 }
 
@@ -1250,25 +1374,55 @@ el('btn-profile-delete').addEventListener('click', () => {
 // Exit a climb mid-run (abandons, returns home — no penalty beyond the exit)
 el('btn-exit').addEventListener('click', () => {
   stopTimer();
+  // Clear any modal/pending state so quitting mid-question can't leave a stale
+  // backdrop over the home screen or a stuck _pending lock.
+  document.getElementById('feedback-modal-backdrop')?.remove();
+  _pending = null;
+  // Half a climb still counts as having climbed — the unlock gate should never
+  // be able to strand a player who tried.
+  if (mode === 'ladder' && session?.questions?.length >= 5 && !player.ladderPlayed) {
+    player.ladderPlayed = true;
+    savePlayer(player);
+  }
   renderCandle();
   showScreen('screen-home');
 });
 
-// Daily share card
-document.addEventListener('click', (e) => {
-  if (e.target && e.target.id === 'btn-daily-share') {
-    const out = session.questions.map((q) => q._outcome);
-    const grid = shareGrid(out);
-    const pct = Math.round((session.questions.filter((q) => q._correct).length / session.questions.length) * 100);
-    const text = `Sound Doctrine — Daily Quest ${dailySeed(new Date())}\n${grid}\n${pct}%`;
-    if (navigator.share) {
-      navigator.share({ text }).catch(() => {});
-    } else {
-      navigator.clipboard?.writeText(text).then(() => {
-        el('btn-daily-share').textContent = 'Copied!';
-      });
-    }
-  }
+// Share (report + the Daily screen's own button)
+el('btn-report-share')?.addEventListener('click', (e) => doShare(e.currentTarget));
+el('btn-daily-share')?.addEventListener('click', (e) => doShare(e.currentTarget));
+
+// Retest — replays exactly what you just missed
+el('btn-retest')?.addEventListener('click', startRetest);
+
+// Lifetime mastery
+el('btn-mastery')?.addEventListener('click', () => { renderMastery(); showScreen('screen-mastery'); });
+el('btn-mastery-back')?.addEventListener('click', () => { renderCandle(); showScreen('screen-home'); });
+
+// ---------- Item 1: installable PWA ----------
+// A web game with no install path and no offline shell relies on players
+// remembering the URL. Registering the worker enables both.
+let deferredInstall = null;
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => { /* offline shell is optional */ });
+  });
+}
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstall = e;
+  el('home-install')?.classList.remove('hidden');
+});
+el('btn-install')?.addEventListener('click', async () => {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  await deferredInstall.userChoice.catch(() => {});
+  deferredInstall = null;
+  el('home-install')?.classList.add('hidden');
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstall = null;
+  el('home-install')?.classList.add('hidden');
 });
 
 async function init() {
@@ -1313,15 +1467,16 @@ function upgradeHeroArt() {
     probe.src = img.dataset.png;
   });
   const start = el('screen-start');
-  const bgPortrait = new Image();
-  bgPortrait.onload = () => start?.classList.add('has-bg', 'bg-portrait');
-  bgPortrait.src = 'assets/start-bg-portrait.jpg';
-  const bgLandscape = new Image();
-  bgLandscape.onload = () => {
+  // Only fetch the background this orientation will actually use — the old code
+  // downloaded both (824 KB) on every load regardless.
+  const landscape = window.matchMedia('(orientation: landscape)').matches;
+  const bg = new Image();
+  bg.onload = () => {
     start?.classList.add('has-bg');
-    document.body.classList.add('art-landscape');
+    if (landscape) document.body.classList.add('art-landscape');
+    else start?.classList.add('bg-portrait');
   };
-  bgLandscape.src = 'assets/start-bg-landscape.jpg';
+  bg.src = landscape ? 'assets/start-bg-landscape.jpg' : 'assets/start-bg-portrait.jpg';
 }
 upgradeHeroArt();
 

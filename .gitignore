@@ -8,3 +8,4 @@ test-results/
 
 # GitHub Actions (intentionally excluded)
 .github/workflows/
+assets/background-texture.png

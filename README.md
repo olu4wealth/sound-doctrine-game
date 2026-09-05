@@ -6,11 +6,13 @@ Three books. One charge. Know the doctrine.
 
 ## What it does
 
-- **The Ladder** — a progressive climb from easy recall to extremely-hard synthesis
-  (T1–T7). Stake your confidence (1× / 2× / 3×) before answering; near-misses earn
-  *Grace* (half kept).
-- **The Candle** — a 7-day capped streak that keeps your lamp lit; every new player
+- **The Ladder** — a fixed 10-question climb from easy recall to extremely-hard
+  synthesis (T1–T7). Pick your confidence (1×–5×) from the inline stake row before
+  answering; near-misses earn *Grace* (half kept). Points bank into a **lifetime
+  pot** that drives your rank and your place on the board.
+- **The Candle** — an uncapped daily streak that keeps your lamp lit; every new player
   starts with 10 oil vials (earned shields); misses gutter gently and never shame you.
+  Day 7 is the *lamp is trimmed* milestone, not the ceiling.
 - **Daily Quest** — one seeded 10-question quest per day, identical for everyone,
   ending in a shareable spoiler-safe card.
 - **Choose Your Hero** — pick **Timothy** (1 Timothy · 2 Timothy) or **Titus** (Titus) for a
@@ -20,9 +22,15 @@ Three books. One charge. Know the doctrine.
 - **Charge Report** — after every climb: a letter grade, strengths ("you held fast"),
   weaknesses ("strengthen your charge"), and concrete study prescriptions with
   chapter:verse references ("how to do better").
-- **Profile + Leaderboard** — named players with persistent streak / fails / best
-  time / accuracy; a local leaderboard ranks everyone (Supabase-ready for a global,
-  real-time board — see below).
+- **Your Mastery** — lifetime, per-chapter progress across all 13 chapters of the
+  three books ("4 of 13 chapters mastered"), accumulated across every run.
+- **Retest** — the Charge Report turns straight into a run built from exactly what
+  you just missed, so study → test → restudy closes without leaving the app.
+- **Profile + Leaderboard** — named players with persistent streak / lifetime pot /
+  accuracy; a local leaderboard ranks everyone (Supabase-ready for a global,
+  real-time board — see below). Playing more can never lower your score.
+- **Installable** — a service worker caches the shell, so the game installs to a
+  home screen and plays offline.
 
 **Scriptural safety:** the game never calls a model while you play. All 166 ladder/daily
 questions plus 36 Choose-Your-Hero questions are pre-authored and pinned to the KJV
@@ -43,10 +51,19 @@ npx serve .
 ## Verifying
 
 ```text
-node verify/check.mjs            # content vs KJV lockbox (166 questions; see docs/AI-PIPELINE.md)
-node verify/game-core.test.mjs   # engine unit tests (37 checks, canonical bank)
+node verify/game-core.test.mjs   # engine unit tests (71 checks, canonical bank)
 node verify/hero.test.mjs        # Choose Your Hero engine + data tests (32 checks, KJV-verified)
-npm run test                     # all of the above
+node verify/check.mjs            # content vs KJV lockbox — ⚠ currently FAILS (84 errors)
+npm run test                     # all of the above (fails until check.mjs is repaired)
+```
+
+> **Known-failing:** `verify/check.mjs` reports 84 content errors — 62 missing
+> `category`/`skill` metadata, 7 Gate-A verse-text mismatches (six are legitimate
+> ellipsis abridgements the gate can't recognise; one, `t6-guard-faith`, cites
+> 1 Timothy 6:20 over text that ends with Titus 1:9 and is a real misattribution),
+> plus a few unparsed passage ranges. Tracked in `docs/AI-PIPELINE.md`.
+
+```text
 ```
 
 ## End-to-end testing (Playwright)
@@ -63,15 +80,20 @@ npm run test:e2e                   # runs tests/game.e2e.spec.js (auto-serves on
 > Note: this repo sets `omit` quirks aside — use `--include=dev` when installing,
 > because Playwright lives in `devDependencies`.
 
-The suite covers the full player journey: title screen + name entry → Candle home →
-climb → question + countdown ring ticks down → answer + verse correction → Daily Quest
-(seeded day, 10 questions) → Charge Report (grade + "how to do better") →
-leaderboard, plus localStorage persistence across reload.
+The suite (36 tests) covers the full player journey: title screen + name entry →
+Candle home → climb → question + countdown ring ticks down → answer + verse
+correction → Daily Quest (seeded day, 10 questions) → Charge Report (grade +
+"how to do better") → leaderboard, plus localStorage persistence across reload —
+and the retention surfaces: the inline stake row, the fixed-length climb, rank
+progress, the daily reset countdown, the Mastery screen, share/retest, and
+service-worker registration.
 
 ## Deploying
 
 Any static host works (GitHub Pages, Cloudflare Pages, Netlify). No build step, no
-backend for the game itself.
+backend for the game itself. `sw.js` must be served from the site root so its scope
+covers the whole app, and the site must be on HTTPS (or localhost) for the service
+worker and the install prompt to activate.
 
 **Global leaderboard** (multiple players around the world) needs a Supabase project:
 `storage.js` is written against that API surface — set `window.__SD_SUPABASE__` and

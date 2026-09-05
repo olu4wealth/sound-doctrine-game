@@ -38,19 +38,17 @@ async function beginClimb(page) {
 async function answerOne(page) {
   const opt = page.locator('.option:not([disabled])').first();
   if (await opt.count() === 0) return false;
+  // Stake is now an inline row chosen BEFORE answering (default 1× Safe), so a
+  // question costs a single tap — no modal, no confirm step.
   await opt.click();
-  // D3 two-step: stake card appears — confirm at default 1× to proceed
-  const stake = page.locator('#stake-modal-backdrop');
-  if (await stake.count()) {
-    await page.getByRole('button', { name: /confirm/i }).click();
-  }
   return true;
 }
 
-async function chooseBidAndAnswer(page, bidName, optionIndex) {
+// Pick a stake from the inline row, then answer.
+async function chooseBidAndAnswer(page, bidMult, optionIndex) {
+  const pill = page.locator(`.stake-pill[data-mult="${bidMult}"]`);
+  if (await pill.count()) await pill.click();
   await page.locator('.option').nth(optionIndex).click();
-  const stake = page.locator('#stake-modal-backdrop');
-  if (await stake.count()) await page.getByRole('button', { name: /confirm/i }).click();
 }
 
 test.describe('core player journey', () => {
@@ -103,10 +101,9 @@ test.describe('core player journey', () => {
     await expect(page.locator('#q-options')).toBeVisible();
     await expect(page.locator('.option')).toHaveCount(4);
 
-    // D3 two-step: pick an answer → stake card → confirm
+    // Single-step: the stake row is already on screen; one tap answers.
+    await expect(page.locator('#stake-row')).toBeVisible();
     await page.locator('.option').nth(0).click();
-    await expect(page.locator('#stake-modal-backdrop')).toBeVisible();
-    await page.getByRole('button', { name: /confirm/i }).click();
     await expect(page.locator('#feedback-modal-backdrop')).toBeVisible();
     await expect(page.locator('.feedback-modal-verse')).not.toBeEmpty();
     await expect(page.locator('.feedback-modal-ref')).toContainText('(KJV)');
@@ -255,7 +252,7 @@ test.describe('choose your hero', () => {
     await expect(page.locator('#screen-game')).toBeVisible();
 
     // Answer whatever the current question is: word order (tap every chip)
-    // or a classic option (click + confirm the 1× stake).
+    // or a classic option (a single click, stake already selected inline).
     const answerCurrent = async () => {
       const chips = page.locator('#wordpool .word-chip:not([disabled])');
       if (await chips.count()) {
@@ -263,8 +260,6 @@ test.describe('choose your hero', () => {
         return;
       }
       await page.locator('.option:not([disabled])').first().click();
-      const stake = page.locator('#stake-modal-backdrop');
-      if (await stake.count()) await page.getByRole('button', { name: /confirm/i }).click();
     };
 
     for (let i = 0; i < 14; i++) {
@@ -277,5 +272,72 @@ test.describe('choose your hero', () => {
     }
     await expect(page.locator('#screen-report')).toBeVisible();
     await expect(page.locator('#report-summary')).toBeVisible();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Retention pass: the surfaces added in feat/retention-loop
+// ---------------------------------------------------------------------------
+test.describe('retention surfaces', () => {
+  test('stake row is inline — no modal between answering and feedback', async ({ page }) => {
+    await beginClimb(page);
+    await expect(page.locator('#stake-row')).toBeVisible();
+    await expect(page.locator('.stake-pill')).toHaveCount(5);
+    // Choosing 3× then answering must go straight to feedback.
+    await page.locator('.stake-pill[data-mult="3"]').click();
+    await expect(page.locator('.stake-pill[data-mult="3"]')).toHaveClass(/active/);
+    await page.locator('.option').first().click();
+    await expect(page.locator('#feedback-modal-backdrop')).toBeVisible();
+    await expect(page.locator('#stake-modal-backdrop')).toHaveCount(0);
+  });
+
+  test('a climb is a finishable 10-question run (unlocking never needs a loss)', async ({ page }) => {
+    await beginClimb(page);
+    await expect(page.locator('#hud-progress')).toContainText('/10');
+  });
+
+  test('home shows rank progress and the daily reset countdown', async ({ page }) => {
+    await seedPlayer(page);
+    await dismissTutorial(page);
+    await page.goto('/');
+    await expect(page.locator('#rank-progress')).toBeVisible();
+    await expect(page.locator('#rank-pts')).toContainText('⚜');
+    await expect(page.locator('#daily-countdown')).toContainText(/new quest in/i);
+  });
+
+  test('mastery screen lists all 13 canonical chapters', async ({ page }) => {
+    await seedPlayer(page);
+    await dismissTutorial(page);
+    await page.goto('/');
+    await page.locator('#btn-mastery').click();
+    await expect(page.locator('#screen-mastery')).toBeVisible();
+    await expect(page.locator('.mastery-cell')).toHaveCount(13);
+    await expect(page.locator('#mastery-summary')).toContainText(/of 13 chapters mastered/i);
+  });
+
+  test('report offers share and retest', async ({ page }) => {
+    await beginClimb(page);
+    for (let i = 0; i < 10; i++) {
+      const opt = page.locator('.option:not([disabled])').first();
+      const chips = page.locator('#wordpool .word-chip:not([disabled])');
+      if (await chips.count()) { while (await chips.count()) await chips.first().click(); }
+      else if (await opt.count()) { await opt.click(); }
+      const cont = page.locator('#feedback-modal-continue');
+      if (await cont.count()) { await cont.click(); await page.waitForTimeout(300); }
+      if (await page.locator('#screen-report').isVisible()) break;
+    }
+    await expect(page.locator('#screen-report')).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('#btn-report-share')).toBeVisible();
+  });
+
+  test('service worker registers', async ({ page }) => {
+    await dismissTutorial(page);
+    await page.goto('/');
+    const ok = await page.evaluate(async () => {
+      if (!('serviceWorker' in navigator)) return false;
+      const reg = await navigator.serviceWorker.getRegistration();
+      return !!reg || !!(await navigator.serviceWorker.ready.catch(() => null));
+    });
+    expect(ok).toBeTruthy();
   });
 });

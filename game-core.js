@@ -25,8 +25,15 @@ export const BIDS = [
 ];
 
 export const BASE_POINTS = 100; // per correct question at 1× bid
-export const MAX_STREAK = 7;    // candle cap
+// The candle streak now climbs without a ceiling — a streak you cannot lose (or
+// cannot grow) exerts no pull. MAX_STREAK is a sanity bound, not a design cap;
+// STREAK_MILESTONE is the named "lamp is trimmed" moment that used to be the cap.
+export const MAX_STREAK = 3650;
+export const STREAK_MILESTONE = 7;
+// Streak's influence on scoring still saturates, so a long streak can't dwarf skill.
+export const STREAK_WEIGHT_CAP = 7;
 export const DAILY_LENGTH = 10; // Daily Quest questions per day
+export const LADDER_LENGTH = 10; // a Ladder climb is a fixed, finishable run
 export const MAX_HEARTS = 5;    // lives (kind hearts) — refilled gently, never a paywall
 
 // Per-question countdown (seconds) — tighter on harder rungs (Duolingo-style pressure).
@@ -35,6 +42,30 @@ export const TIME_BONUS = { correct: 5, 'near-miss': 2, wrong: 0, timeout: 0 };
 
 export function timeForTier(tier) {
   return TIER_TIME[Math.min(7, Math.max(1, tier))] ?? TIER_TIME[1];
+}
+
+// A tier-only clock punished long questions: the average T7 item is ~41 words
+// (~16s of pure reading) and used to get a 10s floor, making the hardest content
+// an automatic timeout. Budget = time to READ the item + a tier-scaled time to
+// THINK about it. Only the thinking half compresses as a run ramps up.
+export const THINK_TIME = [null, 15, 14, 13, 12, 11, 10, 10];
+export const READ_WORDS_PER_SEC = 2.6; // KJV English at a comprehension pace
+export const MIN_QUESTION_TIME = 14;
+
+export function readingSeconds(q) {
+  const parts = [q?.prompt || ''];
+  if (Array.isArray(q?.options)) parts.push(q.options.join(' '));
+  if (Array.isArray(q?.words)) parts.push(q.words.join(' '));
+  const text = parts.join(' ').trim();
+  if (!text) return 0;
+  return text.split(/\s+/).length / READ_WORDS_PER_SEC;
+}
+
+// ramp: 0 (start of a run) .. 1 (deep into it) — compresses thinking time by up to 30%.
+export function timeForQuestion(q, ramp = 0) {
+  const tier = Math.min(7, Math.max(1, q?.tier || tierOf(q || {})));
+  const think = (THINK_TIME[tier] ?? THINK_TIME[1]) * (1 - 0.3 * Math.min(1, Math.max(0, ramp)));
+  return Math.max(MIN_QUESTION_TIME, Math.round(readingSeconds(q) + think));
 }
 export function bonusTime(outcome) {
   return TIME_BONUS[outcome] ?? 0;
@@ -231,7 +262,9 @@ export function applyDailyVisit(model, todayStr) {
   const next = { ...model };
   const today = todayStr || dailySeed(new Date());
   if (next.lastChargeDay === today) {
-    return { ...next, alreadyDone: true }; // don't double-count
+    // Don't double-count. `alreadyDone` is a transient flag for the caller and must
+    // never be persisted, so callers should strip it (see stripTransient).
+    return { ...next, alreadyDone: true };
   }
 
   if (!next.lastChargeDay) {
@@ -437,24 +470,94 @@ export function referencesOf(q) {
   return refs;
 }
 
-// ---------- Composite leaderboard score ----------
-// Blend: accuracy × streak-weight × (1 − normalized best-time), fails as tiebreak.
-export function compositeScore(p) {
-  const acc = p.totalAnswered ? p.totalCorrect / p.totalAnswered : 0;
-  const streakW = 1 + 0.1 * Math.min(MAX_STREAK, p.streak || 0);
-  const bestMs = p.bestTimeMs || 0;
-  const normTime = Math.min(1, bestMs / 600000); // 10 min = full
-  const score = Math.round(1000 * acc * streakW * (1 - normTime) * 100) / 100;
-  return { score, fails: p.fails || 0 };
+// ---------- Leaderboard score ----------
+// The old composite (accuracy × streak × (1 − normalised best-time), fails as a
+// flat subtraction) had two fatal properties: a lifetime `fails` term meant every
+// extra session LOWERED your score, and rewarding a low best-time meant answering
+// two questions and quitting beat 200 questions at 90%. Both told players to stop
+// playing.
+//
+// The model now ranks on `lifetimePot` — points actually banked, floored at zero
+// per run — so effort is strictly monotonic: playing more can never lower your
+// score, and a two-question run banks two questions' worth. Skill still governs
+// the rate (stakes, combos and accuracy all feed the pot), and accuracy breaks
+// ties. Streak is applied when points are banked, not as a retroactive multiplier.
+
+// Points a finished run contributes to the lifetime pot. Never negative: a bad
+// run is worth nothing, but it can't claw back what earlier runs earned.
+export function runBankedPoints(session, streak = 0) {
+  const raw = Math.max(0, Math.round(session?.pot || 0));
+  const streakBonus = 1 + 0.05 * Math.min(STREAK_WEIGHT_CAP, streak || 0);
+  return Math.round(raw * streakBonus);
 }
 
-// Sort leaderboard entries by score desc, fails asc.
+// A player needs a little volume before they're ranked, so a single lucky run
+// can't sit at the top of the board.
+export const RANK_MIN_ANSWERED = 20;
+
+export function leaderboardScore(p) {
+  const answered = p.totalAnswered || 0;
+  const acc = answered ? p.totalCorrect / answered : 0;
+  return {
+    score: Math.max(0, Math.round(p.lifetimePot || 0)),
+    acc,
+    answered,
+    provisional: answered < RANK_MIN_ANSWERED,
+  };
+}
+
+// Sort by score desc, accuracy desc as tiebreak. Provisional players rank below
+// established ones at equal score so the board reflects sustained play.
 export function sortLeaderboard(entries) {
   return [...entries].sort((a, b) => {
-    const sa = compositeScore(a), sb = compositeScore(b);
+    const sa = leaderboardScore(a), sb = leaderboardScore(b);
+    if (sa.provisional !== sb.provisional) return sa.provisional ? 1 : -1;
     if (sb.score !== sa.score) return sb.score - sa.score;
-    return sa.fails - sb.fails;
+    return sb.acc - sa.acc;
   });
+}
+
+// ---------- Ranks ----------
+// Driven by the lifetime pot, so stakes and combos finally mean something beyond
+// a single run. The old table topped out at 6,000 against `totalCorrect × 100` —
+// i.e. max rank after 60 correct answers, out of a 166-question bank. This ladder
+// is paced against a typical banked run (~2,500–4,000) so the top is a long haul.
+export const RANKS = [
+  { req: 0,      name: 'Recruit' },
+  { req: 2000,   name: 'Squire' },
+  { req: 6000,   name: 'Deacon' },
+  { req: 12000,  name: 'Elder in Training' },
+  { req: 22000,  name: 'Elder' },
+  { req: 36000,  name: 'Bishop' },
+  { req: 55000,  name: 'Good Soldier' },
+  { req: 80000,  name: 'Workman Unashamed' },
+  { req: 115000, name: 'Shepherd' },
+  { req: 160000, name: 'Steward of the Mysteries' },
+  { req: 220000, name: 'Pillar of the Church' },
+  { req: 300000, name: 'Keeper of the Deposit' },
+  { req: 400000, name: 'Crownbearer' },
+  { req: 550000, name: 'Teacher of Sound Doctrine' },
+];
+
+export function rankOf(points) {
+  let r = RANKS[0];
+  for (const cand of RANKS) if ((points || 0) >= cand.req) r = cand;
+  return r.name;
+}
+
+// Progress toward the next rank — powers the home-screen progress bar.
+export function rankProgress(points) {
+  const pts = Math.max(0, points || 0);
+  let i = 0;
+  for (let k = 0; k < RANKS.length; k++) if (pts >= RANKS[k].req) i = k;
+  const cur = RANKS[i], next = RANKS[i + 1] || null;
+  if (!next) return { name: cur.name, next: null, pct: 1, into: 0, span: 0 };
+  const span = next.req - cur.req;
+  return {
+    name: cur.name, next: next.name,
+    into: pts - cur.req, span,
+    pct: span ? Math.min(1, (pts - cur.req) / span) : 1,
+  };
 }
 
 // ---------- Share card (Daily Quest) ----------
@@ -466,4 +569,76 @@ export function shareGrid(answers, size = 10) {
   const lines = [];
   for (let i = 0; i < cells.length; i += 5) lines.push(cells.slice(i, i + 5).join(''));
   return lines.join('\n');
+}
+// ---------- Retest (Charge Report → "Take the retest") ----------
+// The report already names exactly what you missed and which passages to read.
+// This turns that into a run: every question you just got wrong, then more from
+// the same weak subjects, so study → test → restudy closes in one sitting.
+export function retestRun(bank, report, n = LADDER_LENGTH, rng = Math.random) {
+  const missedIds = new Set((report?.missedVerses || []).map((m) => m.id));
+  const weak = new Set((report?.weaknesses || []).map((w) => w.name));
+  const missed = bank.filter((q) => missedIds.has(q.id));
+  // Same doctrinal ground, questions they haven't just seen.
+  const sameGround = bank.filter((q) =>
+    !missedIds.has(q.id) &&
+    (weak.has(q.subject) || (report?.chapters || []).some((c) => c.name === `${q.book} ${q.chapter}`)));
+  const out = [...missed, ...shuffle(rng, sameGround)].slice(0, n);
+  // If the player missed almost nothing, pad from the wider bank rather than
+  // handing back a two-question run.
+  if (out.length < n) {
+    const rest = bank.filter((q) => !out.some((o) => o.id === q.id));
+    out.push(...shuffle(rng, rest).slice(0, n - out.length));
+  }
+  return out;
+}
+
+// ---------- Lifetime mastery ----------
+// storage.js has been recording per-chapter lifetime accuracy since day one and
+// nothing ever read it. These shape it for the Mastery screen.
+export const CANON_CHAPTERS = [
+  ...[1, 2, 3, 4, 5, 6].map((c) => `1 Timothy ${c}`),
+  ...[1, 2, 3, 4].map((c) => `2 Timothy ${c}`),
+  ...[1, 2, 3].map((c) => `Titus ${c}`),
+];
+export const MASTERY_THRESHOLD = 0.8; // accuracy needed to count a chapter mastered
+export const MASTERY_MIN_ASKED = 3;   // ...over at least this many questions
+
+export function chapterMastery(lifetimeChapters = {}) {
+  return CANON_CHAPTERS.map((name) => {
+    const row = lifetimeChapters[name] || { asked: 0, correct: 0 };
+    const asked = row.asked || 0;
+    const acc = asked ? (row.correct || 0) / asked : 0;
+    return {
+      name, asked, correct: row.correct || 0, acc,
+      started: asked > 0,
+      mastered: asked >= MASTERY_MIN_ASKED && acc >= MASTERY_THRESHOLD,
+    };
+  });
+}
+
+export function masterySummary(lifetimeChapters = {}) {
+  const rows = chapterMastery(lifetimeChapters);
+  return {
+    rows,
+    total: rows.length,
+    mastered: rows.filter((r) => r.mastered).length,
+    started: rows.filter((r) => r.started).length,
+  };
+}
+
+// ---------- Daily reset countdown ----------
+// dailySeed() keys off UTC, so the quest rolls over at 00:00 UTC. Surfacing the
+// countdown gives the home screen a reason to be looked at again tomorrow.
+export function msUntilDailyReset(now = new Date()) {
+  const next = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0);
+  return Math.max(0, next - now.getTime());
+}
+
+export function formatCountdown(ms) {
+  const total = Math.floor(ms / 1000);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`;
+  const sec = total % 60;
+  return `${m}m ${String(sec).padStart(2, '0')}s`;
 }

@@ -72,6 +72,15 @@
         </div>
       </header>
 
+      <!-- Rank progress: the lifetime pot finally has somewhere to go -->
+      <div class="rank-progress" id="rank-progress">
+        <div class="rank-progress-head">
+          <span id="rank-pts">⚜ 0</span>
+          <span id="rank-next">Next: Squire</span>
+        </div>
+        <div class="rank-bar"><div class="rank-bar-fill" id="rank-bar-fill"></div></div>
+      </div>
+
       <!-- Flame card -->
       <div class="flame-card" id="flame-card">
         <div class="flame-card-head">YOUR FLAME 🔥</div>
@@ -79,7 +88,7 @@
           <div class="candle-glow" aria-hidden="true"></div>
           <span class="candle-spark spark-a" aria-hidden="true">✦</span>
           <span class="candle-spark spark-b" aria-hidden="true">✧</span>
-          <div class="candle-wrap"><img class="candle-img" id="candle-img" src="assets/candle-lit.png" alt="Lit candle" /></div>
+          <div class="candle-wrap"><img class="candle-img" id="candle-img" src="assets/candle-lit.png" alt="Lit candle" decoding="async" /></div>
           <div class="candle-flame" aria-hidden="true"></div>
         </div>
         <div class="candle-caption" id="candle-caption">Your lamp is lit</div>
@@ -111,12 +120,17 @@
       <div class="daily-card" id="daily-card">
         <div class="daily-card-title">DAILY QUEST</div>
         <div class="daily-card-meta">10 QUESTIONS</div>
+        <div class="daily-countdown" id="daily-countdown"></div>
         <button class="primary" id="btn-daily-card">Daily Quest</button>
         <div class="lock-note">🔒 Finish a Ladder climb to unlock</div>
       </div>
 
       <div class="home-second">
+        <button class="ghost small" id="btn-mastery">My Mastery</button>
         <button class="ghost small" id="btn-lb2">Leaderboard</button>
+      </div>
+      <div class="home-install hidden" id="home-install">
+        <button class="ghost small" id="btn-install">📲 Install Sound Doctrine</button>
       </div>
       </div><!-- /.home-inner -->
     </section>
@@ -164,6 +178,7 @@
           <span class="q-type" id="q-type"></span>
         </div>
         <p class="q-prompt" id="q-prompt"></p>
+        <div class="stake-row" id="stake-row"></div>
         <div class="options" id="q-options"></div>
       </div>
 
@@ -183,7 +198,9 @@
       <div class="mastery-map" id="report-mastery"></div>
       <div class="weakest-card" id="report-weakest"></div>
       <div class="report-rx" id="report-rx"></div>
-      <button class="primary" id="btn-again">Climb Again</button>
+      <button class="primary" id="btn-retest">Take the retest</button>
+      <button class="ghost hidden" id="btn-report-share">Share your result</button>
+      <button class="ghost" id="btn-again">Climb Again</button>
       <button class="ghost" id="btn-home">Back to the Candle</button>
     </section>
 
@@ -203,14 +220,14 @@
       <p class="hero-intro">Walk in his footsteps &mdash; every question comes from his own book (KJV): true or false, word order, and who did this.</p>
       <div class="hero-cards">
         <button class="hero-card" data-hero="timothy">
-          <span class="hero-art"><img src="assets/mascot-timothy-idle.gif" data-png="assets/hero-timothy.png" alt="Timothy" /></span>
+          <span class="hero-art"><img data-lazy="assets/mascot-timothy-idle.gif" data-png="assets/hero-timothy.png" alt="Timothy" loading="lazy" decoding="async" /></span>
           <span class="hero-name">Timothy</span>
           <span class="hero-books">1 Timothy &middot; 2 Timothy</span>
           <span class="hero-blurb">&ldquo;Let no man despise thy youth&rdquo; &mdash; steadfast keeper of the deposit.</span>
           <span class="hero-play">Play as Timothy</span>
         </button>
         <button class="hero-card" data-hero="titus">
-          <span class="hero-art"><img src="assets/mascot-titus-idle.gif" data-png="assets/hero-titus.png" alt="Titus" /></span>
+          <span class="hero-art"><img data-lazy="assets/mascot-titus-idle.gif" data-png="assets/hero-titus.png" alt="Titus" loading="lazy" decoding="async" /></span>
           <span class="hero-name">Titus</span>
           <span class="hero-books">Titus</span>
           <span class="hero-blurb">&ldquo;Mine own son after the common faith&rdquo; &mdash; sent to set Crete in order.</span>
@@ -218,6 +235,14 @@
         </button>
       </div>
       <button class="ghost" id="btn-hero-back">Back to the Candle</button>
+    </section>
+
+    <!-- MASTERY (lifetime, across every run) -->
+    <section id="screen-mastery" class="screen hidden">
+      <h2>Your Mastery</h2>
+      <div class="mastery-summary" id="mastery-summary"></div>
+      <div class="mastery-grid" id="mastery-grid"></div>
+      <button class="ghost" id="btn-mastery-back">Back to the Candle</button>
     </section>
 
     <!-- LEADERBOARD -->
