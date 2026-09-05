@@ -281,43 +281,37 @@ button:disabled { cursor: default; opacity: .55; }
 }
 .candle-stage[data-state="smouldering"] .wax-pool { opacity: .52; }
 
-/* Subtle live flame on the wick — rides the melt line (--melt-top)
-   so it sinks as the candle shortens. Kept deliberately gentle;
-   the melt itself is the hero, not the flicker. */
+/* Flame-only GIF on the wick — rides the melt line (--melt-top) so it sinks
+   as the candle shortens. CSS no longer draws the flame shape; the GIF does.
+   Opacity/brightness still react to --melt and to candle state. */
 .candle-flame {
   position: absolute;
-  left: 50%; margin-left: -7px;
+  left: 50%;
   z-index: 3;
-  top: calc(var(--melt-top) - 20px);
-  width: 14px; height: 20px;
-  background:
-    radial-gradient(circle at 50% 74%, #fff7d6 0%, #ffd54f 36%, #ff9d2e 64%, rgba(255, 120, 20, .52) 88%, transparent 100%);
-  border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
-  box-shadow: 0 0 14px 5px rgba(255, 180, 60, .42);
+  top: calc(var(--melt-top) - 38px);
+  width: 64px; height: 80px;
+  margin-left: -32px;
   transform-origin: 50% 100%;
-  animation: candleFlame 2.2s ease-in-out infinite alternate;
-  transition: top 1.2s ease, opacity .6s ease, filter .6s ease, width .6s ease, height .6s ease;
+  transition: top 1.2s ease, opacity .6s ease, filter .6s ease;
   pointer-events: none;
-  opacity: calc(.92 - var(--melt) * .18);
+  opacity: calc(.96 - var(--melt) * .12);
+  filter: drop-shadow(0 0 12px rgba(255, 180, 60, .45));
+}
+.candle-flame img {
+  display: block;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  image-rendering: auto;
 }
 .candle-stage[data-state="guttering"] .candle-flame {
-  opacity: .62;
-  width: 11px; height: 16px;
-  margin-left: -5.5px;
-  filter: brightness(.86);
-  animation-duration: 1.4s;
+  opacity: .66;
+  filter: brightness(.88) drop-shadow(0 0 8px rgba(255, 180, 60, .38));
 }
 .candle-stage[data-state="smouldering"] .candle-flame {
-  opacity: .14;
-  width: 9px; height: 11px;
-  margin-left: -4.5px;
-  filter: grayscale(.7) brightness(.55);
-  animation-duration: 2.8s;
+  opacity: .16;
+  filter: grayscale(.7) brightness(.55) drop-shadow(0 0 4px rgba(120,90,30,.2));
 }
-@keyframes candleFlame {
-  0%   { transform: skewX(-1.6deg) scale(1) translateY(0); }
-  100% { transform: skewX(1.4deg) scale(1.04) translateY(-1px); }
-}
+.reduce-motion .candle-flame img { animation: none !important; }
 
 /* Soft halo + sparkles behind the candle (CSS-only, crisp at every resolution) */
 .candle-glow {
