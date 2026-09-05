@@ -245,7 +245,7 @@ function main() {
         for (const bk of outsideBooks) {
           if (opt.includes(bk)) warnings.push(`${label}: distractor ${idx} mentions outside book "${bk}" — verify plausibility (Gate D)`);
         }
-        if (opt.length < 3) warnings.push(`${label}: distractor ${idx} unusually short (Gate D)`);
+        if (opt.length < 3 && !/^\d+$/.test(opt.trim())) warnings.push(`${label}: distractor ${idx} unusually short (Gate D)`);
       }
     }
   });

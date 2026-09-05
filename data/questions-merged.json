@@ -395,7 +395,7 @@
     "prompt": "\"But if any provide not for his own, and specially for those of his own house, he hath denied the faith, and is ______ an infidel.\"",
     "options": [
       "worse than",
-      "as",
+      "even as",
       "like unto",
       "the same as"
     ],
@@ -1558,7 +1558,7 @@
     "answer": "stir up the gift of God",
     "reference": "2 Timothy 1:6",
     "category": "Endurance & Faithfulness",
-    "skill": "reasoning",
+    "skill": "recall",
     "nearIndexes": []
   },
   {
@@ -2226,6 +2226,84 @@
     "reference": "Titus 3:5"
   },
   {
+    "id": "new-t1-007",
+    "book": "1 Timothy",
+    "chapter": 1,
+    "subject": "teachers of the law",
+    "difficulty": 1,
+    "type": "completion",
+    "prompt": "Complete 1 Timothy 1:7: “Desiring to be teachers of the law; understanding neither what they say, nor ——.”",
+    "options": [
+      "whereof they affirm",
+      "what they teach",
+      "whereof they speak",
+      "what they affirm"
+    ],
+    "correctIndex": 0,
+    "passage": "1 Timothy 1:7",
+    "verseText": "Desiring to be teachers of the law; understanding neither what they say, nor whereof they affirm.",
+    "tier": 1,
+    "skill": "recall",
+    "category": "False Teaching & Discernment",
+    "nearIndexes": [
+      2
+    ],
+    "answer": "whereof they affirm",
+    "reference": "1 Timothy 1:7"
+  },
+  {
+    "id": "new-t1-008",
+    "book": "Titus",
+    "chapter": 3,
+    "subject": "obedience to powers",
+    "difficulty": 1,
+    "type": "completion",
+    "prompt": "Complete Titus 3:1: “Put them in mind to be subject to principalities and powers, to obey magistrates, to be ——:”",
+    "options": [
+      "ready to every good work",
+      "subject to every ordinance",
+      "obedient in all things",
+      "faithful in every duty"
+    ],
+    "correctIndex": 0,
+    "passage": "Titus 3:1",
+    "verseText": "Put them in mind to be subject to principalities and powers, to obey magistrates, to be ready to every good work,",
+    "tier": 1,
+    "skill": "recall",
+    "category": "Christian Conduct",
+    "nearIndexes": [
+      1
+    ],
+    "answer": "ready to every good work",
+    "reference": "Titus 3:1"
+  },
+  {
+    "id": "new-t1-009",
+    "book": "2 Timothy",
+    "chapter": 4,
+    "subject": "departure",
+    "difficulty": 1,
+    "type": "completion",
+    "prompt": "Complete 2 Timothy 4:6: “For I am now ready to be offered, and the time of my —— is at hand.”",
+    "options": [
+      "departure",
+      "reward",
+      "rest",
+      "deliverance"
+    ],
+    "correctIndex": 0,
+    "passage": "2 Timothy 4:6",
+    "verseText": "For I am now ready to be offered, and the time of my departure is at hand.",
+    "tier": 1,
+    "skill": "recall",
+    "category": "Endurance & Faithfulness",
+    "nearIndexes": [
+      3
+    ],
+    "answer": "departure",
+    "reference": "2 Timothy 4:6"
+  },
+  {
     "id": "new-t5-001",
     "book": "1 Timothy",
     "chapter": 6,
@@ -2434,6 +2512,110 @@
     "reference": "2 Timothy 4:2"
   },
   {
+    "id": "new-t5-009",
+    "book": "1 Timothy",
+    "chapter": 4,
+    "subject": "exercise unto godliness",
+    "difficulty": 5,
+    "type": "discern",
+    "prompt": "1 Timothy 4:7–8 contrasts two exercises: “bodily exercise profiteth little,” but what is godliness profitable unto, with what promise?",
+    "options": [
+      "the life that now is, and of that which is to come",
+      "honour in this world and glory in the world to come",
+      "riches now and eternal glory hereafter",
+      "health now and reward hereafter"
+    ],
+    "correctIndex": 0,
+    "passage": "1 Timothy 4:7-8",
+    "verseText": "But refuse profane and old wives' fables, and exercise thyself rather unto godliness. For bodily exercise profiteth little: but godliness is profitable unto all things, having promise of the life that now is, and of that which is to come.",
+    "tier": 5,
+    "skill": "reasoning",
+    "category": "Christian Conduct",
+    "nearIndexes": [
+      1
+    ],
+    "answer": "the life that now is, and of that which is to come",
+    "reference": "1 Timothy 4:8"
+  },
+  {
+    "id": "new-t5-010",
+    "book": "Titus",
+    "chapter": 1,
+    "subject": "vain talkers",
+    "difficulty": 5,
+    "type": "recall",
+    "prompt": "Titus 1:10–11 says there are “many unruly and vain talkers and deceivers, specially they of the circumcision” — what must be done, and why?",
+    "options": [
+      "Whose mouths must be stopped, who subvert whole houses, teaching things which they ought not, for filthy lucre’s sake",
+      "Who must be rejected after the first and second admonition",
+      "Who must be shunned because they increase unto more ungodliness",
+      "Who must be delivered unto Satan that they may learn not to blaspheme"
+    ],
+    "correctIndex": 0,
+    "passage": "Titus 1:10-11",
+    "verseText": "For there are many unruly and vain talkers and deceivers, specially they of the circumcision: Whose mouths must be stopped, who subvert whole houses, teaching things which they ought not, for filthy lucre's sake.",
+    "tier": 5,
+    "skill": "reasoning",
+    "category": "False Teaching & Discernment",
+    "nearIndexes": [
+      2
+    ],
+    "answer": "Whose mouths must be stopped, who subvert whole houses, teaching things which they ought not, for filthy lucre’s sake",
+    "reference": "Titus 1:11"
+  },
+  {
+    "id": "new-t5-011",
+    "book": "2 Timothy",
+    "chapter": 2,
+    "subject": "vessels unto honour",
+    "difficulty": 5,
+    "type": "crossref",
+    "prompt": "2 Timothy 2:20–21 says a great house has vessels “some to honour, and some to dishonour.” What must a man do to become “a vessel unto honour, sanctified, and meet for the master’s use”?",
+    "options": [
+      "If a man therefore purge himself from these",
+      "If a man therefore endure hardness as a good soldier",
+      "If a man therefore keep that which is committed to his trust",
+      "If a man therefore follow righteousness, faith, charity, peace"
+    ],
+    "correctIndex": 0,
+    "passage": "2 Timothy 2:20-21",
+    "verseText": "But in a great house there are not only vessels of gold and of silver, but also of wood and of earth; and some to honour, and some to dishonour. If a man therefore purge himself from these, he shall be a vessel unto honour, sanctified, and meet for the master's use, and prepared unto every good work.",
+    "tier": 5,
+    "skill": "reasoning",
+    "category": "Christian Conduct",
+    "nearIndexes": [
+      3
+    ],
+    "answer": "If a man therefore purge himself from these",
+    "reference": "2 Timothy 2:21"
+  },
+  {
+    "id": "new-t5-012",
+    "book": "1 Timothy",
+    "chapter": 5,
+    "subject": "double honour",
+    "difficulty": 5,
+    "type": "crossref",
+    "prompt": "1 Timothy 5:17–18 links “double honour” for elders who rule well with which quoted Scripture?",
+    "options": [
+      "Thou shalt not muzzle the ox that treadeth out the corn. And, The labourer is worthy of his reward",
+      "Thou shalt love the Lord thy God with all thy heart",
+      "Honour thy father and thy mother",
+      "The Lord knoweth them that are his"
+    ],
+    "correctIndex": 0,
+    "passage": "1 Timothy 5:17-18",
+    "verseText": "Let the elders that rule well be counted worthy of double honour, especially they who labour in the word and doctrine. For the scripture saith, Thou shalt not muzzle the ox that treadeth out the corn. And, The labourer is worthy of his reward.",
+    "tier": 5,
+    "skill": "reasoning",
+    "category": "Church Order",
+    "nearIndexes": [
+      3
+    ],
+    "answer": "Thou shalt not muzzle the ox that treadeth out the corn. And, The labourer is worthy of his reward",
+    "reference": "1 Timothy 5:18"
+  },
+  {
     "id": "new-t6-001",
     "book": "1 Timothy",
     "chapter": 3,
@@ -2572,6 +2754,58 @@
     ],
     "answer": "reject",
     "reference": "2 Timothy 3:5"
+  },
+  {
+    "id": "new-t6-006",
+    "book": "Titus",
+    "chapter": 2,
+    "subject": "aged women",
+    "difficulty": 6,
+    "type": "synthesis",
+    "prompt": "Titus 2:3 commands “The aged women likewise, that they be in behaviour as becometh holiness” — which exact triple follows?",
+    "options": [
+      "not false accusers, not given to much wine, teachers of good things",
+      "grave, not slanderers, sober, faithful in all things",
+      "sober, just, holy, temperate",
+      "in word, in conversation, in charity, in faith"
+    ],
+    "correctIndex": 0,
+    "passage": "Titus 2:3",
+    "verseText": "The aged women likewise, that they be in behaviour as becometh holiness, not false accusers, not given to much wine, teachers of good things;",
+    "tier": 6,
+    "skill": "reasoning",
+    "category": "Christian Conduct",
+    "nearIndexes": [
+      1
+    ],
+    "answer": "not false accusers, not given to much wine, teachers of good things",
+    "reference": "Titus 2:3"
+  },
+  {
+    "id": "new-t6-007",
+    "book": "2 Timothy",
+    "chapter": 2,
+    "subject": "the seal",
+    "difficulty": 6,
+    "type": "discern",
+    "prompt": "2 Timothy 2:19 says “the foundation of God standeth sure, having this seal” — what are the two inscriptions of that seal?",
+    "options": [
+      "The Lord knoweth them that are his. And, Let every one that nameth the name of Christ depart from iniquity",
+      "The Lord is my shepherd; I shall not want. And, Surely goodness and mercy shall follow me",
+      "Hold fast the form of sound words, and keep that which is committed to thy trust",
+      "Be strong in the grace that is in Christ Jesus, and endure hardness as a good soldier"
+    ],
+    "correctIndex": 0,
+    "passage": "2 Timothy 2:19",
+    "verseText": "Nevertheless the foundation of God standeth sure, having this seal, The Lord knoweth them that are his. And, Let every one that nameth the name of Christ depart from iniquity.",
+    "tier": 6,
+    "skill": "reasoning",
+    "category": "Sound Doctrine",
+    "nearIndexes": [
+      2
+    ],
+    "answer": "The Lord knoweth them that are his. And, Let every one that nameth the name of Christ depart from iniquity",
+    "reference": "2 Timothy 2:19"
   },
   {
     "id": "new-t7-001",
