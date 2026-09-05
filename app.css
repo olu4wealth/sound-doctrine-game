@@ -244,110 +244,19 @@ button:disabled { cursor: default; opacity: .55; }
 }
 .sound-toggle:hover { border-color: var(--sky-b); background: #f6faff; }
 
-.candle-stage { position: relative; width: 200px; height: 200px; margin: 8px auto 0; --melt-top: 6%; --melt: 0; }
-.candle-img {
+/* Home candle — static animated WebP (no melt, no CSS flame). */
+.candle-stage {
+  position: relative; width: 200px; height: 200px;
+  margin: 8px auto 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.candle-webp {
   display: block;
   width: 200px; height: 200px;
   object-fit: contain;
   filter: drop-shadow(0 8px 16px rgba(243, 167, 36, .28));
-  transition: opacity .4s ease, filter .4s ease;
-}
-/* Melt: the candle body is clipped from the wick as the day burns
-   (12:01 AM → 11:59 PM). --melt-top and --melt are set by app.js
-   from candleMeltFraction(); at midnight the clip resets for a fresh candle. */
-.candle-wrap {
-  position: absolute; inset: 0;
-  z-index: 2;
-  clip-path: inset(var(--melt-top) 0 0 0);
-  transition: clip-path 1.2s ease;
-  will-change: clip-path;
-}
-.candle-stage[data-state="guttering"] .candle-img {
-  filter: drop-shadow(0 4px 10px rgba(243, 167, 36, .22));
-}
-.candle-stage[data-state="smouldering"] .candle-img {
-  opacity: .55;
-  filter: grayscale(.5) drop-shadow(0 3px 6px rgba(120, 90, 30, .3));
 }
 .candle-caption { text-align: center; color: var(--ink-soft); font-weight: 700; margin-top: 8px; }
-
-/* Slow-melt wax pool at the foot of the stage — grows and softens
-   as --melt (0..1) climbs through the day. */
-.wax-pool {
-  position: absolute;
-  left: 50%; bottom: 10px;
-  transform: translateX(-50%);
-  z-index: 1;
-  width: calc(70px + var(--melt) * 44px);
-  height: calc(12px + var(--melt) * 18px);
-  background: radial-gradient(ellipse at 50% 35%, #fff8dc 0%, #ffeab8 42%, #ffd9a0 68%, rgba(255,210,140,0) 100%);
-  border-radius: 50%;
-  opacity: calc(.28 + var(--melt) * .42);
-  filter: blur(.3px);
-  transition: width 1.2s ease, height 1.2s ease, opacity 1.2s ease;
-  pointer-events: none;
-}
-.candle-stage[data-state="smouldering"] .wax-pool { opacity: .52; }
-
-/* Flame-only GIF on the wick — rides the melt line (--melt-top) so it sinks
-   as the candle shortens. CSS no longer draws the flame shape; the GIF does.
-   Opacity/brightness still react to --melt and to candle state. */
-.candle-flame {
-  position: absolute;
-  left: 50%;
-  z-index: 3;
-  top: calc(var(--melt-top) - 38px);
-  width: 64px; height: 80px;
-  margin-left: -32px;
-  transform-origin: 50% 100%;
-  transition: top 1.2s ease, opacity .6s ease, filter .6s ease;
-  pointer-events: none;
-  opacity: calc(.96 - var(--melt) * .12);
-  filter: drop-shadow(0 0 12px rgba(255, 180, 60, .45));
-}
-.candle-flame img {
-  display: block;
-  width: 100%; height: 100%;
-  object-fit: contain;
-  image-rendering: auto;
-}
-.candle-stage[data-state="guttering"] .candle-flame {
-  opacity: .66;
-  filter: brightness(.88) drop-shadow(0 0 8px rgba(255, 180, 60, .38));
-}
-.candle-stage[data-state="smouldering"] .candle-flame {
-  opacity: .16;
-  filter: grayscale(.7) brightness(.55) drop-shadow(0 0 4px rgba(120,90,30,.2));
-}
-.reduce-motion .candle-flame img { display: none !important; }
-.reduce-motion .candle-flame::after {
-  content: '';
-  position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
-  width: 18px; height: 28px;
-  background: radial-gradient(ellipse at 50% 65%, #fff7d6 0%, #ffd54f 38%, #ff9d2e 72%, rgba(255,120,20,.5) 100%);
-  border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
-  box-shadow: 0 0 10px 3px rgba(255,180,60,.35);
-}
-
-/* Soft halo + sparkles behind the candle (CSS-only, crisp at every resolution) */
-.candle-glow {
-  position: absolute; inset: 0;
-  background: radial-gradient(circle at 50% 38%, rgba(255, 209, 102, .55) 0%, rgba(255, 209, 102, 0) 62%);
-  border-radius: 50%;
-  pointer-events: none;
-}
-.candle-spark {
-  position: absolute; color: var(--gold); opacity: .6;
-  font-size: 1.6rem; line-height: 1;
-  pointer-events: none; user-select: none;
-  animation: floaty 5s ease-in-out infinite;
-}
-.spark-a { top: -10px; left: 42%; animation-delay: .4s; }
-.spark-b { bottom: 22px; right: 2px; font-size: 1.15rem; opacity: .45; animation-delay: 1.8s; }
-@keyframes floaty {
-  0%, 100% { translate: 0 0; }
-  50% { translate: 0 -8px; }
-}
 
 .streak-row {
   display: flex; justify-content: center; align-items: center; gap: 10px;
@@ -651,29 +560,12 @@ button:disabled { cursor: default; opacity: .55; }
   color: var(--ink);
   border: 2px solid var(--line);
   border-radius: 14px;
-  padding: 14px 16px 14px 46px;
+  padding: 14px 16px;
   font-size: 1rem;
   font-weight: 700;
   margin-top: 0;
   box-shadow: 0 2px 0 #ece3d0;
-  position: relative;
 }
-.option::before {
-  content: attr(data-badge);
-  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
-  width: 26px; height: 26px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: .78rem; font-weight: 900; color: #fff;
-  line-height: 1; text-align: center; padding-top: 1px;
-}
-.option.opt-a::before { background: #ff4b4b; }
-.option.opt-b::before { background: #38b6ff; }
-.option.opt-c::before { background: #c08a00; }
-.option.opt-d::before { background: #58cc02; }
-.option.opt-a { border-bottom-color: #ff4b4b; }
-.option.opt-b { border-bottom-color: #38b6ff; }
-.option.opt-c { border-bottom-color: #f3b431; }
-.option.opt-d { border-bottom-color: #58cc02; }
 .option:hover:not(:disabled) { background: #f6faff; transform: translateY(-1px); }
 .option.correct { background: #d7ffb8; border-color: var(--green); color: #2c7a00; }
 .option.wrong { background: #ffdfdf; border-color: var(--red); color: #a61e1e; }
@@ -733,14 +625,10 @@ button:disabled { cursor: default; opacity: .55; }
 }
 
 /* ---------- Reduced motion (accessibility) ---------- */
-.reduce-motion .candle-flame,
 .reduce-motion .flame,
-.reduce-motion .candle-spark,
 .reduce-motion .sparkle-p,
 .reduce-motion .mascot-reaction { animation: none !important; }
 .reduce-motion .sparkle-host { display: none !important; }
-.reduce-motion .candle-wrap,
-.reduce-motion .wax-pool { transition: none !important; }
 .feedback-modal-card.correct { border-top: 5px solid var(--green); }
 .feedback-modal-card.grace { border-top: 5px solid var(--amber); }
 .feedback-modal-card.wrong { border-top: 5px solid var(--red); }
@@ -999,8 +887,7 @@ button:disabled { cursor: default; opacity: .55; }
   .question-card { padding: 14px; }
   .q-prompt { font-size: 1rem; }
   .bid { font-size: .72rem; padding: 8px 4px; }
-  .option { padding: 12px 12px 12px 44px; font-size: .94rem; }
-  .option::before { width: 22px; height: 22px; font-size: .72rem; left: 8px; }
+  .option { padding: 12px; font-size: .94rem; }
   .hud { gap: 8px; flex-wrap: wrap; row-gap: 6px; }
   .hud-hearts { order: 3; flex-basis: 100%; font-size: .9rem; letter-spacing: 0; }
   .hud-exit { width: 38px; height: 38px; font-size: .95rem; }
@@ -1174,16 +1061,7 @@ button:disabled { cursor: default; opacity: .55; }
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .candle-flame img, .flame, .candle-spark, .sparkle-p, .mascot-reaction { animation: none !important; }
+  .flame, .sparkle-p, .mascot-reaction { animation: none !important; }
   .sparkle-host { display: none !important; }
-  .candle-wrap, .wax-pool { transition: none !important; }
-  .candle-flame img { display: none !important; }
-  .candle-flame::after {
-    content: ''; position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
-    width: 18px; height: 28px;
-    background: radial-gradient(ellipse at 50% 65%, #fff7d6 0%, #ffd54f 38%, #ff9d2e 72%, rgba(255,120,20,.5) 100%);
-    border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
-    box-shadow: 0 0 10px 3px rgba(255,180,60,.35);
-  }
 }
 

@@ -7,7 +7,7 @@ import {
   dailyCharge, dailySeed, resolveAnswer, tierOf,
   pickNextLadder, applyDailyVisit, buildChargeReport, compositeScore,
   sortLeaderboard, shareGrid, shuffle, mulberry32, hashCode,
-  heroRun, HEROES, candleMeltFraction,
+  heroRun, HEROES,
 } from './game-core.js';
 import {
   loadPlayer, savePlayer, recordCharge, updateLeaderboard,
@@ -101,36 +101,9 @@ function renderHearts() {
 }
 
 // ---------- Candle ----------
-const CANDLE_IMGS = {
-  lit: 'assets/candle-lit.png',
-  guttering: 'assets/candle-guttering.png',
-  smouldering: 'assets/candle-smouldering.png',
-};
-const CANDLE_CAPTIONS = {
-  lit: 'Your lamp is lit',
-  guttering: 'The flame gutters — climb to feed it',
-  smouldering: 'The wick smoulders — climb to relight it',
-};
-
-function candleState() {
-  const streak = player.streak || 0;
-  const oil = player.oilVials || 0;
-  if (streak >= 1 && oil > 0) return 'lit';
-  if (streak >= 1 || oil > 0) return 'guttering';
-  return 'smouldering';
-}
-
-// Apply the day's melt to the home candle: --melt (0..1) for the pool/flame
-// and --melt-top (%) = how much of the candle body is clipped from the wick.
-// 6% floor masks the tiny flame baked into the PNG so the CSS flame is the
-// only one shown; at 11:59 PM the melt reaches ~72%, leaving a stub that
-// midnight resets with a fresh candle.
-function applyCandleMelt(stage) {
-  const melt = candleMeltFraction(new Date());
-  stage.style.setProperty('--melt', melt.toFixed(3));
-  stage.style.setProperty('--melt-top', `${(6 + melt * 66).toFixed(1)}%`);
-}
-
+// The home menu now shows a single static, self-contained candle.webp (no CSS
+// flame, no melt system, no sprite states). renderCandle only fills the personal
+// header data — the flame card itself is static markup in index.html.
 function renderCandle() {
   el('home-name').textContent = player.name || '—';
   el('home-rank').textContent = rankOf(player.totalCorrect * BASE_POINTS || 0);
@@ -141,25 +114,7 @@ function renderCandle() {
   el('daily-card')?.classList.toggle('locked', !ladderDone);
   el('hero-card')?.classList.toggle('locked', !ladderDone);
 
-  // The candle melts through the day (browser clock), fresh again at midnight.
-  applyCandleMelt(el('candle-stage'));
-
-  const state = candleState();
-  el('candle-stage').dataset.state = state;
-  el('candle-img').src = CANDLE_IMGS[state];
-  el('candle-caption').textContent = CANDLE_CAPTIONS[state];
   renderLadder();
-}
-
-// Keep the candle's melt in sync with the wall clock while the page stays open
-// (a long-lived home screen shouldn't freeze at midnight forever). Light touch:
-// refresh every 60s so the slow burn is visible without burning CPU.
-function setupCandleClock() {
-  setInterval(() => {
-    const stage = el('candle-stage');
-    if (!stage) return;
-    applyCandleMelt(stage);
-  }, 60 * 1000);
 }
 
 function renderLadder() {
@@ -267,7 +222,7 @@ function renderHeroQuestion() {
   const q = list[heroIdx];
   q.tier = tierOf(q);
   currentQ = q;
-  renderQuestion(q);
+  renderQuestion(q, { hideSubject: true });
   el('q-type').textContent = heroTypeLabel(q);
 }
 
@@ -437,11 +392,15 @@ function fmtTime(s) {
 }
 
 // ---------- Question rendering ----------
-function renderQuestion(q) {
+function renderQuestion(q, opts = {}) {
   frozenUntil = 0; // reset any freeze power-up for the next question
   setMascot(q.book);
   el('q-book').textContent = q.book;
-  el('q-subject').textContent = q.subject;
+  // The subject/area chip can hint at the correct answer (e.g. a hero-mode
+  // question labeled "faithfulness of God"), so it is hidden for modes where
+  // the prompt alone must carry the clue.
+  el('q-subject').textContent = opts.hideSubject ? '' : q.subject;
+  el('q-subject').classList.toggle('hidden', !!opts.hideSubject);
   el('q-type').textContent = `${TIER_EMOJI[q.tier]} T${q.tier} · ${TIER_NAMES[q.tier]}`;
   el('q-prompt').textContent = q.prompt;
 
@@ -452,14 +411,12 @@ function renderQuestion(q) {
   q._displayOrder = order;
   wrap.innerHTML = '';
   wrap.classList.toggle('count-2', q.options.length === 2); // True/False gets the wide look
-  const accent = ['a', 'b', 'c', 'd']; // color coding per position
   order.forEach((orig, displayIdx) => {
     const btn = document.createElement('button');
-    btn.className = `option opt-${accent[displayIdx]}`;
+    btn.className = 'option';
     btn.textContent = q.options[orig];
     btn.dataset.display = String(displayIdx);
-    btn.dataset.badge = ['A', 'B', 'C', 'D'][displayIdx] || '?';
-    btn.setAttribute('aria-label', `${['A', 'B', 'C', 'D'][displayIdx]}: ${q.options[orig]}`);
+    btn.setAttribute('aria-label', q.options[orig]);
     btn.addEventListener('click', () => onAnswer(displayIdx));
     wrap.appendChild(btn);
   });
@@ -1410,7 +1367,6 @@ document.addEventListener('visibilitychange', () => {
 });
 
 init();
-setupCandleClock(); // keep the home candle melting with the wall clock
 applyReducedMotion(localStorage.getItem(LS_REDUCED) === '1');
 bindSettings();
 
