@@ -19,8 +19,8 @@
     <!-- START (title screen — the game's single opening page; returning players skip straight home) -->
     <section id="screen-start" class="screen">
       <!-- Key art: huge transparent mascots anchored half off each screen edge -->
-      <picture><source srcset="assets/hero-timothy.webp" type="image/webp" /><img class="title-hero title-hero-left" src="assets/hero-timothy.png" alt="" decoding="async" onerror="this.style.display='none'" /></picture>
-      <picture><source srcset="assets/hero-titus.webp" type="image/webp" /><img class="title-hero title-hero-right" src="assets/hero-titus.png" alt="" decoding="async" onerror="this.style.display='none'" /></picture>
+      <picture><source srcset="assets/hero-timothy.webp" type="image/webp" /><img class="title-hero title-hero-left" src="assets/hero-timothy.png" alt="" aria-hidden="true" decoding="async" onerror="this.style.display='none'" /></picture>
+      <picture><source srcset="assets/hero-titus.webp" type="image/webp" /><img class="title-hero title-hero-right" src="assets/hero-titus.png" alt="" aria-hidden="true" decoding="async" onerror="this.style.display='none'" /></picture>
       <div class="start-inner">
       <img class="crest" src="assets/icon-crest.png" alt="Sound Doctrine crest" />
       <h1 class="title">Sound Doctrine</h1>
@@ -56,8 +56,8 @@
     <!-- HOME (Candle + Ladder) -->
     <section id="screen-home" class="screen hidden">
       <!-- Same mascots as the title screen, flanking the game menu -->
-      <picture><source srcset="assets/hero-timothy.webp" type="image/webp" /><img class="home-hero home-hero-left" src="assets/hero-timothy.png" alt="" decoding="async" onerror="this.style.display='none'" /></picture>
-      <picture><source srcset="assets/hero-titus.webp" type="image/webp" /><img class="home-hero home-hero-right" src="assets/hero-titus.png" alt="" decoding="async" onerror="this.style.display='none'" /></picture>
+      <picture aria-hidden="true"><source srcset="assets/hero-timothy.webp" type="image/webp" /><img class="home-hero home-hero-left" src="assets/hero-timothy.png" alt="" aria-hidden="true" decoding="async" onerror="this.style.display='none'" /></picture>
+      <picture aria-hidden="true"><source srcset="assets/hero-titus.webp" type="image/webp" /><img class="home-hero home-hero-right" src="assets/hero-titus.png" alt="" aria-hidden="true" decoding="async" onerror="this.style.display='none'" /></picture>
       <div class="home-inner">
       <header class="home-head">
         <button class="profile-chip" id="btn-profile-head" aria-label="Open my profile">
@@ -69,8 +69,8 @@
         </button>
         <div class="home-head-right">
           <div class="home-rank" id="home-rank">Recruit</div>
-          <button class="sound-toggle" id="btn-settings" aria-label="Open settings">⚙️</button>
-          <button class="sound-toggle hidden" id="btn-sound" aria-label="Toggle sound" style="display:none">🔊</button>
+          <button class="sound-toggle" id="btn-settings" aria-label="Open settings"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
+          <button class="sound-toggle hidden" id="btn-sound" aria-label="Toggle sound" style="display:none"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.08"/></svg></button>
         </div>
       </header>
 
@@ -127,7 +127,7 @@
     <!-- LADDER GAME -->
     <section id="screen-game" class="screen hidden">
       <header class="hud">
-        <button class="hud-exit" id="btn-exit" aria-label="Quit">✕</button>
+        <button class="hud-exit" id="btn-exit" aria-label="Quit"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         <div class="hud-hearts" id="hud-hearts">❤️❤️❤️❤️❤️</div>
         <div class="hud-progress" id="hud-progress">0/10</div>
         <div class="hud-score" id="hud-score" title="Your score this run">⚜ 0</div>
@@ -196,7 +196,7 @@
       <p class="daily-charge-intro" id="daily-charge-intro"></p>
       <div class="daily-grid hidden" id="daily-answered"></div>
       <button class="primary hidden" id="btn-daily-start">Begin Today's Quest</button>
-      <button class="ghost hidden" id="btn-daily-share"></button>
+      <button class="ghost hidden" id="btn-daily-share" aria-label="Share Daily Quest result"></button>
       <button class="ghost" id="btn-daily-back">Back to the Candle</button>
     </section>
 
