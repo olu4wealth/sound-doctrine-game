@@ -578,6 +578,12 @@ button:disabled { cursor: default; opacity: .55; }
   padding: 22px 18px 16px; max-width: 92%; width: 420px;
   box-shadow: 0 20px 50px rgba(120,90,30,.30); animation: pop .28s ease;
 }
+.stake-hint {
+  background: #fff8e6; border: 1px solid #ffe3ae; border-radius: 12px;
+  padding: 10px 12px; margin-bottom: 12px;
+  font-size: .8rem; line-height: 1.45; color: #7a5200; font-weight: 700;
+}
+.stake-hint strong { color: var(--gold-deep); }
 .stake-head { font-size: 1.05rem; font-weight: 900; color: var(--ink); margin-bottom: 6px; text-align: center; }
 .stake-chosen { font-size: .92rem; color: var(--ink-soft); text-align: center; margin-bottom: 12px; font-style: italic; }
 .stake-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }

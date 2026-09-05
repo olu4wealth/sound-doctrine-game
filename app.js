@@ -749,6 +749,7 @@ function showStakeCard(q, displayIdx, chosenOrig) {
   backdrop.className = 'feedback-modal-backdrop stake-backdrop';
   backdrop.innerHTML = `
     <div class="stake-card">
+      ${!localStorage.getItem('sd_tutorial_done') ? '<div class="stake-hint">💡 Set your <strong>Confidence</strong> — correct answers earn the multiplier, wrong ones cost it, near-misses keep half.</div>' : ''}
       <div class="stake-head">You chose ${letter} — how sure are you?</div>
       <div class="stake-chosen">&ldquo;${chosenText}&rdquo;</div>
       <div class="stake-options" id="stake-options"></div>
@@ -1436,6 +1437,12 @@ function showTutorial() {
       place: 'below',
       h3: 'Power-ups',
       p: 'Spend an <strong>oil vial (🫗)</strong> to <strong>Skip</strong> a question, cut it to <strong>50/50</strong>, or <strong>Freeze</strong> the clock for 5 seconds.',
+    },
+    {
+      target: '#hud-score',
+      place: 'below',
+      h3: 'Confidence × Multiplier',
+      p: 'After you answer, set your <strong>Confidence</strong> from 1× Safe up to 5× Certain. A <strong>correct</strong> answer multiplies your points, but a <strong>wrong</strong> one costs that same amount — press on in faith, and near-misses keep half (Grace).',
     },
   ];
 
