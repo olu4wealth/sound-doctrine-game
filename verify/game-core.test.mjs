@@ -7,8 +7,11 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
   mulberry32, hashCode, dailySeed, dailyCharge, resolveAnswer, nearMiss,
-  fiftyFiftyHide, shuffle, climbTierFor,
-  pickNextLadder, applyDailyVisit, buildChargeReport, compositeScore,
+  fiftyFiftyHide, shuffle, climbTierFor, LADDER_TIER_STEP,
+  pickNextLadder, applyDailyVisit, buildChargeReport, leaderboardScore,
+  runBankedPoints, rankOf, rankProgress, retestRun, masterySummary,
+  chapterMastery, msUntilDailyReset, formatCountdown, timeForQuestion,
+  readingSeconds, STREAK_MILESTONE, LADDER_LENGTH, RANK_MIN_ANSWERED, MAX_QUESTION_TIME,
   sortLeaderboard, shareGrid, tierOf, MAX_STREAK, DAILY_LENGTH,
   timeForTier, bonusTime, MAX_HEARTS, candleMeltFraction, CANDLE_MORNING_HOUR,
   QUESTION_TIME,
@@ -113,7 +116,11 @@ check('streak ramps DOWN on long gap (never cliff: -1)', v2.streak === 2);
 const v3 = applyDailyVisit({ ...start, streak: 3, oilVials: 1 }, '2026-01-20');
 check('oil vial spent preserves streak', v3.streak === 3 && v3.oilVials === 0);
 const v4 = applyDailyVisit({ ...start, streak: MAX_STREAK }, '2026-01-11');
-check('streak capped at 7', v4.streak === MAX_STREAK);
+check('streak respects the sanity bound', v4.streak === MAX_STREAK);
+const v4b = applyDailyVisit({ ...start, streak: STREAK_MILESTONE }, '2026-01-11');
+check('streak grows PAST the old 7-day ceiling', v4b.streak === STREAK_MILESTONE + 1);
+const v4c = applyDailyVisit({ ...start, streak: 3, lastChargeDay: '2026-01-11' }, '2026-01-11');
+check('same-day visit flags alreadyDone for the caller', v4c.alreadyDone === true);
 const v5 = applyDailyVisit({ streak: 0, lastChargeDay: '2026-01-10', oilVials: 0, totalDays: 0 }, '2026-01-15');
 check('streak never below 0', v5.streak === 0);
 
@@ -136,13 +143,76 @@ check('report writes prescriptions with refs', rep.prescriptions.some((p) => p.r
 // Chapters to revisit should NOT include chapters the player got 100% on.
 check('report omits perfected chapters from revisit', !rep.chapters.some((c) => c.acc === 1));
 
-// 6. Composite + leaderboard sort
-const a = { totalCorrect: 8, totalAnswered: 10, streak: 2, bestTimeMs: 120000, fails: 2 };
-const b = { totalCorrect: 9, totalAnswered: 10, streak: 1, bestTimeMs: 300000, fails: 1 };
-const ca = compositeScore(a), cb = compositeScore(b);
-check('composite score computed for both', ca.score > 0 && cb.score > 0);
-const sorted = sortLeaderboard([b, a]);
-check('leaderboard sorts by composite score desc', compositeScore(sorted[0]).score >= compositeScore(sorted[1]).score);
+// 6. Leaderboard score — must never punish playing more
+const a = { totalCorrect: 80, totalAnswered: 100, streak: 2, lifetimePot: 24000, fails: 20 };
+const b = { totalCorrect: 90, totalAnswered: 100, streak: 1, lifetimePot: 31000, fails: 10 };
+check('leaderboard score computed for both', leaderboardScore(a).score > 0 && leaderboardScore(b).score > 0);
+const sorted = sortLeaderboard([a, b]);
+check('leaderboard sorts by banked pot desc', leaderboardScore(sorted[0]).score >= leaderboardScore(sorted[1]).score);
+
+// The old model subtracted lifetime `fails`, so a steady player's score fell every
+// session. Banked points can only ever go up.
+let grinding = { totalCorrect: 0, totalAnswered: 0, lifetimePot: 0, streak: 3 };
+let prevScore = -1, everFell = false;
+for (let run = 0; run < 40; run++) {
+  grinding.totalAnswered += 10;
+  grinding.totalCorrect += 7;                       // a steady, unspectacular 70%
+  grinding.lifetimePot += runBankedPoints({ pot: 900 }, grinding.streak);
+  const sc = leaderboardScore(grinding).score;
+  if (sc < prevScore) everFell = true;
+  prevScore = sc;
+}
+check('playing more NEVER lowers your score', !everFell);
+check('a bad run banks zero, not a negative', runBankedPoints({ pot: -800 }, 3) === 0);
+
+// The old composite rewarded a low best-time, so 2 questions then quit beat 200 at 90%.
+const quitter = { totalCorrect: 2, totalAnswered: 2, lifetimePot: 600, streak: 1 };
+const scholar = { totalCorrect: 180, totalAnswered: 200, lifetimePot: 48000, streak: 7 };
+check('a 2-question quitter cannot outrank a real player',
+  sortLeaderboard([quitter, scholar])[0] === scholar);
+check('low-volume players are flagged provisional',
+  leaderboardScore(quitter).provisional === true && leaderboardScore(scholar).provisional === false);
+
+// 6b. Rank ladder is paced off the banked pot, not `totalCorrect × 100`
+check('rank starts at Recruit', rankOf(0) === 'Recruit');
+check('rank is NOT maxed by 60 correct answers', rankOf(60 * 100) !== rankOf(600000));
+check('rank ladder has a long tail', rankOf(600000) === 'Teacher of Sound Doctrine');
+const rp = rankProgress(3000);
+check('rank progress reports the next title', rp.next && rp.pct > 0 && rp.pct < 1);
+check('rank progress saturates at the top', rankProgress(9e9).pct === 1 && rankProgress(9e9).next === null);
+
+// 6c. Retest — replays what the player actually missed
+const fakeReport = {
+  missedVerses: [{ id: 'tit-1-5' }, { id: 'tit-1-9' }],
+  weaknesses: [{ name: 'elders' }],
+  chapters: [{ name: 'Titus 1' }],
+};
+const rt = retestRun(bank, fakeReport, LADDER_LENGTH);
+check('retest is a full-length run', rt.length === LADDER_LENGTH);
+check('retest leads with the missed questions',
+  rt.slice(0, 2).every((q) => ['tit-1-5', 'tit-1-9'].includes(q.id)));
+check('retest never repeats a question', new Set(rt.map((q) => q.id)).size === rt.length);
+check('retest still fills when nothing was missed',
+  retestRun(bank, { missedVerses: [], weaknesses: [], chapters: [] }, LADDER_LENGTH).length === LADDER_LENGTH);
+
+// 6d. Lifetime mastery — reads data storage.js already kept but nothing displayed
+const ms = masterySummary({ '1 Timothy 1': { asked: 5, correct: 5 }, 'Titus 2': { asked: 4, correct: 1 } });
+check('mastery covers all 13 canonical chapters', ms.total === 13);
+check('mastery counts a strong chapter as mastered', ms.mastered === 1);
+check('mastery counts started chapters', ms.started === 2);
+check('mastery ignores a thin sample',
+  masterySummary({ '1 Timothy 1': { asked: 1, correct: 1 } }).mastered === 0);
+check('mastery lists untouched chapters as not started',
+  chapterMastery({}).every((r) => !r.started && !r.mastered));
+
+// 6e. Daily reset countdown
+const beforeMidnightUTC = new Date(Date.UTC(2026, 0, 10, 23, 0, 0));
+check('daily reset is under an hour at 23:00 UTC',
+  msUntilDailyReset(beforeMidnightUTC) === 60 * 60 * 1000);
+check('daily reset is a full day just after rollover',
+  msUntilDailyReset(new Date(Date.UTC(2026, 0, 10, 0, 0, 0))) === 24 * 60 * 60 * 1000);
+check('countdown formats hours', formatCountdown(2 * 3600 * 1000 + 5 * 60000) === '2h 05m');
+check('countdown formats minutes near the end', formatCountdown(90 * 1000) === '1m 30s');
 
 // 7. Share grid
 const grid = shareGrid(['correct','correct','near-miss','wrong','correct','correct','correct','correct','correct','correct']);
@@ -160,6 +230,39 @@ check('bonusTime: near-miss=0 after -2s reduction', bonusTime('near-miss') === 0
 check('bonusTime: correct still > wrong', bonusTime('correct') > bonusTime('wrong'));
 check('bonusTime: timeout = 0', bonusTime('timeout') === 0);
 check('bonusTime: wrong = 0', bonusTime('wrong') === 0);
+
+// 9b. Per-question clock — master's flat 30s, lifted only where reading won't fit
+const longT7 = bank.filter((q) => tierOf(q) === 7)
+  .sort((x, y) => readingSeconds(y) - readingSeconds(x))[0];
+const shortQ = bank.slice().sort((x, y) => readingSeconds(x) - readingSeconds(y))[0];
+check('short questions keep the flat 30s exactly',
+  timeForQuestion(shortQ) === QUESTION_TIME);
+check('no question is ever given less than the flat 30s',
+  bank.every((q) => timeForQuestion(q) >= QUESTION_TIME));
+check('a long question always gets more than its bare reading time',
+  timeForQuestion(longT7) > readingSeconds(longT7));
+check('the clock is capped so one item cannot stall a run',
+  bank.every((q) => timeForQuestion(q) <= MAX_QUESTION_TIME));
+check('most of the bank is untouched by the reading floor',
+  bank.filter((q) => timeForQuestion(q) === QUESTION_TIME).length / bank.length > 0.7);
+
+// 9c. Ladder ramp must still reach T7 inside a fixed-length climb
+check('default step 4 would strand a 10-question climb below T7',
+  climbTierFor(LADDER_LENGTH - 1, 4) < 7);
+check('LADDER_TIER_STEP lands the last question on T7',
+  climbTierFor(LADDER_LENGTH - 1, LADDER_TIER_STEP) === 7);
+check('the ramp starts at T1 and never goes backwards', (() => {
+  let prev = 0;
+  for (let i = 0; i < LADDER_LENGTH; i++) {
+    const t = climbTierFor(i, LADDER_TIER_STEP);
+    if (t < prev) return false;
+    prev = t;
+  }
+  return climbTierFor(0, LADDER_TIER_STEP) === 1;
+})());
+check('every tier T1-T7 is represented across a full climb',
+  new Set([...Array(LADDER_LENGTH).keys()].map((i) => climbTierFor(i, LADDER_TIER_STEP))).size >= 6);
+
 check('MAX_HEARTS defined (kind hearts)', Number.isInteger(MAX_HEARTS) && MAX_HEARTS >= 3);
 
 // 10. Candle melt — driven by the browser clock, fresh at midnight, spent by 23:59.

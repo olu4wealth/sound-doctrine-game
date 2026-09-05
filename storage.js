@@ -4,6 +4,8 @@
 // Supabase client + config is present, leaderboard writes are mirrored there.
 // (Global real-time leaderboard needs the Supabase project — see docs/UI-UX.md §4.)
 
+import { runBankedPoints, leaderboardScore } from './game-core.js';
+
 const KEYS = {
   player: 'sd.player.v1',
   leaderboard: 'sd.leaderboard.v1',
@@ -31,6 +33,7 @@ const PLAYER_DEFAULTS = {
   totalDays: 0,
   totalAnswered: 0,
   totalCorrect: 0,
+  lifetimePot: 0, // banked points across every run — drives rank + leaderboard
   fails: 0,
   bestTimeMs: null,
   bestStreak: 0,
@@ -64,6 +67,9 @@ function saveLeaderboard(rows) { write(KEYS.leaderboard, rows); }
 export function recordCharge(player, session) {
   const p = { ...player };
   const correct = session.questions.filter((q) => q._correct).length;
+  // Bank this run's pot (floored at zero) into the lifetime total. This is what
+  // rank and the leaderboard now read, so effort always accumulates.
+  p.lifetimePot = (p.lifetimePot || 0) + runBankedPoints(session, p.streak || 0);
   p.totalAnswered = (p.totalAnswered || 0) + session.questions.length;
   p.totalCorrect = (p.totalCorrect || 0) + correct;
   p.fails = (p.fails || 0) + (session.questions.length - correct);
@@ -103,23 +109,25 @@ export function recordCharge(player, session) {
 // Add/update the current player's row on the leaderboard, then sort.
 export function updateLeaderboard(player, session) {
   const rows = loadLeaderboard().filter((r) => r.name !== player.name);
-  const acc = player.totalAnswered ? player.totalCorrect / player.totalAnswered : 0;
-  rows.push({
+  const entry = {
     name: player.name,
     streak: player.streak,
     fails: player.fails,
-    acc,
     totalCorrect: player.totalCorrect,
     totalAnswered: player.totalAnswered,
+    lifetimePot: player.lifetimePot || 0,
     bestTimeMs: player.bestTimeMs,
-    score: acc * 1000 + (player.streak || 0) * 50 - (player.fails || 0) * 5,
     updatedAt: Date.now(),
-  });
-  const sorted = rows
-    .sort((a, b) => (b.score - a.score) || (a.fails - b.fails))
-    .slice(0, 50);
-  saveLeaderboard(sorted);
-  return sorted;
+  };
+  // Single source of truth: the row stores the same number the board sorts by,
+  // so the displayed score and the ranking can no longer disagree.
+  const s = leaderboardScore(entry);
+  entry.acc = s.acc;
+  entry.score = s.score;
+  entry.provisional = s.provisional;
+  rows.push(entry);
+  saveLeaderboard(rows.slice(0, 50));
+  return rows;
 }
 
 // Supabase-ready mirror. Import `@supabase/supabase-js` and set config to enable.
