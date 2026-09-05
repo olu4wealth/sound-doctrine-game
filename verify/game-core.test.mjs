@@ -135,13 +135,14 @@ check('bonusTime: timeout = 0', bonusTime('timeout') === 0);
 check('bonusTime: wrong = 0', bonusTime('wrong') === 0);
 check('MAX_HEARTS defined (kind hearts)', Number.isInteger(MAX_HEARTS) && MAX_HEARTS >= 3);
 
-// 10. Candle melt — driven by the browser clock, fresh at dawn, spent by next dawn.
+// 10. Candle melt — driven by the browser clock, fresh at midnight, spent by 23:59.
 const at = (h, m = 0) => { const d = new Date(); d.setHours(h, m, 0, 0); return d; };
-check('CANDLE_MORNING_HOUR is 6 (fresh candle at dawn)', CANDLE_MORNING_HOUR === 6);
-check('melt is 0 exactly at dawn (new candle)', candleMeltFraction(at(6)) === 0);
-check('melt is nearly spent right before the next dawn', candleMeltFraction(at(5, 59)) > 0.99);
-check('melt is monotonic from dawn to next dawn',
-  candleMeltFraction(at(7)) <= candleMeltFraction(at(12)) &&
+check('CANDLE_MORNING_HOUR is 0 (fresh candle at midnight)', CANDLE_MORNING_HOUR === 0);
+check('melt is 0 exactly at midnight (new candle)', candleMeltFraction(at(0)) === 0);
+check('melt is nearly spent right before midnight', candleMeltFraction(at(23, 59)) > 0.99);
+check('melt is monotonic from midnight to next midnight',
+  candleMeltFraction(at(0)) <= candleMeltFraction(at(6)) &&
+  candleMeltFraction(at(6)) <= candleMeltFraction(at(12)) &&
   candleMeltFraction(at(12)) <= candleMeltFraction(at(18)) &&
   candleMeltFraction(at(18)) <= candleMeltFraction(at(23)));
 check('melt burns much faster into the night than at midday',

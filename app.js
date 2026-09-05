@@ -13,7 +13,7 @@ import {
   loadPlayer, savePlayer, recordCharge, updateLeaderboard,
   loadLeaderboard, syncLeaderboardToSupabase, signOutPlayer, deletePlayer,
 } from './storage.js';
-import { sfx } from './sound.js';
+import { sfx, music } from './sound.js';
 
 const el = (id) => document.getElementById(id);
 
@@ -83,6 +83,10 @@ function showScreen(id) {
   el(id).classList.remove('hidden');
   // Painted title scene (generated art) spans the viewport only while the title screen is up.
   document.body.classList.toggle('on-start', id === 'screen-start');
+  // Background music is for devotion, not for starting — pause on the title/HOW screens
+  // and resume once the player is in the game/home.
+  if (id === 'screen-start' || id === 'screen-how') music.stop();
+  else if (sfx.isMusicEnabled() && musicPrimed) music.start();
   window.scrollTo(0, 0);
 }
 
@@ -116,11 +120,11 @@ function candleState() {
   return 'smouldering';
 }
 
-// Apply the day's melt to the home candle: --melt (0..1) for any JS math and
-// --melt-top (%) = how much of the candle body is clipped from the top. The
-// 6% floor always masks the tiny flame baked into the candle art so the CSS
-// flame below is the only flame shown; at night the melt reaches ~72%, leaving
-// a short stub that a fresh dawn (melt resets) replaces.
+// Apply the day's melt to the home candle: --melt (0..1) for the pool/flame
+// and --melt-top (%) = how much of the candle body is clipped from the wick.
+// 6% floor masks the tiny flame baked into the PNG so the CSS flame is the
+// only one shown; at 11:59 PM the melt reaches ~72%, leaving a stub that
+// midnight resets with a fresh candle.
 function applyCandleMelt(stage) {
   const melt = candleMeltFraction(new Date());
   stage.style.setProperty('--melt', melt.toFixed(3));
@@ -137,7 +141,7 @@ function renderCandle() {
   el('daily-card')?.classList.toggle('locked', !ladderDone);
   el('hero-card')?.classList.toggle('locked', !ladderDone);
 
-  // The candle melts through the day (browser clock), fresh again each dawn.
+  // The candle melts through the day (browser clock), fresh again at midnight.
   applyCandleMelt(el('candle-stage'));
 
   const state = candleState();
@@ -148,14 +152,14 @@ function renderCandle() {
 }
 
 // Keep the candle's melt in sync with the wall clock while the page stays open
-// (a long-lived home screen shouldn't freeze at morning forever). Light touch:
-// refresh every 5 minutes — the burn is imperceptible in between.
+// (a long-lived home screen shouldn't freeze at midnight forever). Light touch:
+// refresh every 60s so the slow burn is visible without burning CPU.
 function setupCandleClock() {
   setInterval(() => {
     const stage = el('candle-stage');
     if (!stage) return;
     applyCandleMelt(stage);
-  }, 5 * 60 * 1000);
+  }, 60 * 1000);
 }
 
 function renderLadder() {
@@ -321,7 +325,7 @@ function renderTimerBar() {
   }
   // Danger-phase tick sound (once per second when time is critically low).
   if (frac <= 0.2 && frac > 0 && Math.abs((timeLeft % 1)) < 0.1) {
-    sfx.tick();
+    sfx.tick(); haptics('tick');
   }
   updateFlame(frac);
 }
@@ -883,9 +887,9 @@ function commitAnswer(displayIdx, chosenOrig, bid) {
   updateStreakCombo();
 
   // Flame flares brighter on a correct answer, then settles back.
-  if (isCorrect) { pulseFlameBright(); sfx.correct(); burstSparkles(8); }
-  else if (isGrace) { sfx.grace(); }
-  else { sfx.wrong(); }
+  if (isCorrect) { pulseFlameBright(); sfx.correct(); burstSparkles(8); haptics('correct'); }
+  else if (isGrace) { sfx.grace(); haptics('correct'); }
+  else { sfx.wrong(); haptics('wrong'); }
 
   // Reward for getting far: milestone bonuses as the climb ramps up.
   const milestone = checkMilestoneReward();
@@ -1175,21 +1179,14 @@ function renderProfile() {
 // The title screen is the single opening page on first visit; returning players
 // skip straight to the Candle home (see init() below).
 
-// Sound on/off toggle (persists). Default: on.
+// Home header now just opens Settings; sound/music controls live there.
+// Keep a tiny shim so old callers (tests) don't crash — Settings is the new source of truth.
 function applySoundIcon() {
-  const on = sfx.isEnabled();
   const b = el('btn-sound');
-  if (b) b.textContent = on ? '🔊' : '🔇';
+  if (!b) return;
+  // gear is static; no state to reflect here
+  b.textContent = '⚙️';
 }
-if (localStorage.getItem('sd_muted') === '1') sfx.setEnabled(false);
-applySoundIcon();
-el('btn-sound')?.addEventListener('click', () => {
-  const on = !sfx.isEnabled();
-  sfx.setEnabled(on);
-  localStorage.setItem('sd_muted', on ? '0' : '1');
-  applySoundIcon();
-  if (on) sfx.correct(); // confirm sound back on
-});
 
 el('btn-begin').addEventListener('click', () => {
   const name = el('input-name').value.trim();
@@ -1231,6 +1228,8 @@ el('btn-again').addEventListener('click', startClimb);
 el('btn-home').addEventListener('click', () => { renderCandle(); showScreen('screen-home'); });
 el('btn-profile-head').addEventListener('click', () => { renderProfile(); showScreen('screen-profile'); });
 el('btn-profile-back').addEventListener('click', () => showScreen('screen-home'));
+el('btn-settings')?.addEventListener('click', () => openSettings());
+el('btn-settings-back')?.addEventListener('click', () => showScreen('screen-home'));
 
 // Sign out: keep history, clear the active name, return to the start screen.
 el('btn-profile-signout').addEventListener('click', () => {
@@ -1293,8 +1292,125 @@ async function init() {
   }
 }
 
+// ---------- Settings (sound, music, motion, haptics) ----------
+const LS_REDUCED = 'sd_reduced_motion';
+const LS_HAPTICS = 'sd_haptics';
+
+function applyReducedMotion(on) {
+  document.documentElement.classList.toggle('reduce-motion', !!on);
+}
+
+function haptics(kind) {
+  if (localStorage.getItem(LS_HAPTICS) === '0') return;
+  if (!('vibrate' in navigator)) return;
+  if (kind === 'correct') navigator.vibrate(22);
+  else if (kind === 'wrong') navigator.vibrate([30, 40, 30]);
+  else if (kind === 'tick') navigator.vibrate(10);
+}
+
+function renderSettings() {
+  const els = elsSettings();
+  if (!els.sfx) return;
+  const sfxOn = sfx.isSfxEnabled();
+  const musicOn = sfx.isMusicEnabled();
+  const reduced = localStorage.getItem(LS_REDUCED) === '1';
+  const hap = localStorage.getItem(LS_HAPTICS) !== '0'; // default on
+  els.sfx.checked = sfxOn;
+  els.music.checked = musicOn;
+  els.sfxVol.value = String(Math.round(sfx.getSfxVolume() * 100));
+  els.musicVol.value = String(Math.round(sfx.getMusicVolume() * 100));
+  els.sfxVolLabel.textContent = els.sfxVol.value + '%';
+  els.musicVolLabel.textContent = els.musicVol.value + '%';
+  els.reduced.checked = reduced;
+  els.haptics.checked = hap;
+  els.sfxVol.disabled = !sfxOn;
+  els.musicVol.disabled = !musicOn;
+  els.sfxVolLabel.style.opacity = sfxOn ? '1' : '.45';
+  els.musicVolLabel.style.opacity = musicOn ? '1' : '.45';
+  const reducedLabel = document.querySelector('label[for="set-reduced-motion"]');
+  if (reducedLabel) reducedLabel.closest('.settings-row')?.classList.toggle('on', reduced);
+}
+
+function elsSettings() {
+  return {
+    sfx: document.getElementById('set-sfx'),
+    sfxVol: document.getElementById('set-sfx-vol'),
+    sfxVolLabel: document.getElementById('set-sfx-vol-label'),
+    music: document.getElementById('set-music'),
+    musicVol: document.getElementById('set-music-vol'),
+    musicVolLabel: document.getElementById('set-music-vol-label'),
+    reduced: document.getElementById('set-reduced-motion'),
+    haptics: document.getElementById('set-haptics'),
+  };
+}
+
+function bindSettings() {
+  const e = elsSettings();
+  if (!e.sfx || e.sfx.dataset.bound) return;
+  e.sfx.dataset.bound = '1';
+
+  e.sfx.addEventListener('change', () => {
+    sfx.setSfxEnabled(e.sfx.checked);
+    renderSettings();
+    if (e.sfx.checked) sfx.correct();
+    haptics('correct');
+  });
+  e.sfxVol.addEventListener('input', () => {
+    sfx.setSfxVolume(Number(e.sfxVol.value) / 100);
+    e.sfxVolLabel.textContent = e.sfxVol.value + '%';
+  });
+  e.music.addEventListener('change', () => {
+    sfx.setMusicEnabled(e.music.checked);
+    renderSettings();
+    if (e.music.checked) {
+      // Start music immediately on explicit enable (counts as user gesture).
+      music.start();
+    }
+  });
+  e.musicVol.addEventListener('input', () => {
+    sfx.setMusicVolume(Number(e.musicVol.value) / 100);
+    e.musicVolLabel.textContent = e.musicVol.value + '%';
+    // If music is enabled, ensure it is playing so the volume change is audible.
+    if (sfx.isMusicEnabled()) music.start();
+  });
+  e.reduced.addEventListener('change', () => {
+    localStorage.setItem(LS_REDUCED, e.reduced.checked ? '1' : '0');
+    applyReducedMotion(e.reduced.checked);
+  });
+  e.haptics.addEventListener('change', () => {
+    localStorage.setItem(LS_HAPTICS, e.haptics.checked ? '1' : '0');
+    if (e.haptics.checked) haptics('correct');
+  });
+}
+
+function openSettings() {
+  renderSettings();
+  bindSettings();
+  showScreen('screen-settings');
+}
+
+// Try to start music after any first real gesture (autoplay policy needs it).
+let musicPrimed = false;
+function primeMusicOnce() {
+  if (musicPrimed) return;
+  musicPrimed = true;
+  if (sfx.isMusicEnabled()) music.start();
+  window.removeEventListener('click', primeMusicOnce);
+  window.removeEventListener('keydown', primeMusicOnce);
+  window.removeEventListener('touchstart', primeMusicOnce);
+}
+window.addEventListener('click', primeMusicOnce, { once: true });
+window.addEventListener('keydown', primeMusicOnce, { once: true });
+window.addEventListener('touchstart', primeMusicOnce, { once: true });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) music.stop();
+  else if (sfx.isMusicEnabled()) music.start();
+});
+
 init();
 setupCandleClock(); // keep the home candle melting with the wall clock
+applyReducedMotion(localStorage.getItem(LS_REDUCED) === '1');
+bindSettings();
 
 // ---------- Title-screen art upgrade ----------
 // When generated art exists (assets/hero-*.png full-body characters,

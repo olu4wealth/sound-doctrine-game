@@ -236,7 +236,7 @@ button:disabled { cursor: default; opacity: .55; }
 }
 .sound-toggle:hover { border-color: var(--sky-b); background: #f6faff; }
 
-.candle-stage { position: relative; width: 200px; height: 200px; margin: 8px auto 0; --melt-top: 6%; }
+.candle-stage { position: relative; width: 200px; height: 200px; margin: 8px auto 0; --melt-top: 6%; --melt: 0; }
 .candle-img {
   display: block;
   width: 200px; height: 200px;
@@ -244,12 +244,15 @@ button:disabled { cursor: default; opacity: .55; }
   filter: drop-shadow(0 8px 16px rgba(243, 167, 36, .28));
   transition: opacity .4s ease, filter .4s ease;
 }
-/* Melt: the candle body is clipped from the top as the night approaches and a
-   fresh candle (clip reset) appears each dawn. --melt-top is set by app.js. */
+/* Melt: the candle body is clipped from the wick as the day burns
+   (12:01 AM → 11:59 PM). --melt-top and --melt are set by app.js
+   from candleMeltFraction(); at midnight the clip resets for a fresh candle. */
 .candle-wrap {
   position: absolute; inset: 0;
+  z-index: 2;
   clip-path: inset(var(--melt-top) 0 0 0);
   transition: clip-path 1.2s ease;
+  will-change: clip-path;
 }
 .candle-stage[data-state="guttering"] .candle-img {
   filter: drop-shadow(0 4px 10px rgba(243, 167, 36, .22));
@@ -260,41 +263,60 @@ button:disabled { cursor: default; opacity: .55; }
 }
 .candle-caption { text-align: center; color: var(--ink-soft); font-weight: 700; margin-top: 8px; }
 
-/* Animated live flame on the home candle. It rides the melt line (--melt-top),
-   so it sinks slowly as the night approaches; the 6% melt floor masks the tiny
-   flame baked into the candle art, keeping this the only flame shown. */
-.candle-flame {
+/* Slow-melt wax pool at the foot of the stage — grows and softens
+   as --melt (0..1) climbs through the day. */
+.wax-pool {
   position: absolute;
-  left: 50%; margin-left: -8px;
-  /* bottom edge lands on the melt line (wick), so the flame sinks as it burns */
-  top: calc(var(--melt-top) - 22px);
-  width: 16px; height: 22px;
-  background:
-    radial-gradient(circle at 50% 72%, #fff7d6 0%, #ffd54f 34%, #ff9d2e 62%, rgba(255, 120, 20, .55) 86%, transparent 100%);
-  border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
-  box-shadow: 0 0 16px 6px rgba(255, 180, 60, .5);
-  transform-origin: 50% 100%;
-  animation: candleFlame .4s ease-in-out infinite alternate;
-  transition: top 1.2s ease, opacity .6s ease, filter .6s ease;
+  left: 50%; bottom: 10px;
+  transform: translateX(-50%);
+  z-index: 1;
+  width: calc(70px + var(--melt) * 44px);
+  height: calc(12px + var(--melt) * 18px);
+  background: radial-gradient(ellipse at 50% 35%, #fff8dc 0%, #ffeab8 42%, #ffd9a0 68%, rgba(255,210,140,0) 100%);
+  border-radius: 50%;
+  opacity: calc(.28 + var(--melt) * .42);
+  filter: blur(.3px);
+  transition: width 1.2s ease, height 1.2s ease, opacity 1.2s ease;
   pointer-events: none;
 }
+.candle-stage[data-state="smouldering"] .wax-pool { opacity: .52; }
+
+/* Subtle live flame on the wick — rides the melt line (--melt-top)
+   so it sinks as the candle shortens. Kept deliberately gentle;
+   the melt itself is the hero, not the flicker. */
+.candle-flame {
+  position: absolute;
+  left: 50%; margin-left: -7px;
+  z-index: 3;
+  top: calc(var(--melt-top) - 20px);
+  width: 14px; height: 20px;
+  background:
+    radial-gradient(circle at 50% 74%, #fff7d6 0%, #ffd54f 36%, #ff9d2e 64%, rgba(255, 120, 20, .52) 88%, transparent 100%);
+  border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+  box-shadow: 0 0 14px 5px rgba(255, 180, 60, .42);
+  transform-origin: 50% 100%;
+  animation: candleFlame 2.2s ease-in-out infinite alternate;
+  transition: top 1.2s ease, opacity .6s ease, filter .6s ease, width .6s ease, height .6s ease;
+  pointer-events: none;
+  opacity: calc(.92 - var(--melt) * .18);
+}
 .candle-stage[data-state="guttering"] .candle-flame {
-  opacity: .7;
-  width: 13px; height: 18px;
-  margin-left: -6.5px;
-  filter: brightness(.8);
-  animation-duration: .16s;
+  opacity: .62;
+  width: 11px; height: 16px;
+  margin-left: -5.5px;
+  filter: brightness(.86);
+  animation-duration: 1.4s;
 }
 .candle-stage[data-state="smouldering"] .candle-flame {
-  opacity: .1;
-  width: 10px; height: 12px;
-  margin-left: -5px;
-  filter: grayscale(.8) brightness(.5);
-  animation-duration: .6s;
+  opacity: .14;
+  width: 9px; height: 11px;
+  margin-left: -4.5px;
+  filter: grayscale(.7) brightness(.55);
+  animation-duration: 2.8s;
 }
 @keyframes candleFlame {
-  0%   { transform: skewX(-3deg) scale(1) translateY(0); }
-  100% { transform: skewX(3deg) scale(1.08) translateY(-2px); }
+  0%   { transform: skewX(-1.6deg) scale(1) translateY(0); }
+  100% { transform: skewX(1.4deg) scale(1.04) translateY(-1px); }
 }
 
 /* Soft halo + sparkles behind the candle (CSS-only, crisp at every resolution) */
@@ -515,9 +537,9 @@ button:disabled { cursor: default; opacity: .55; }
 .mascot-idle span { font-size: .68rem; font-weight: 800; color: var(--gold-deep); }
 @media (max-width: 420px) { .mascot-idle img { width: 52px; height: 52px; } }
 
-/* Mascot reaction — positioned ABOVE the feedback modal, not overshadowing it. */
+/* Mascot reaction — sits just above the feedback modal card, lowered so sad Timothy/Titus don't float too high. */
 .mascot-reaction {
-  position: absolute; left: 50%; top: -80px;
+  position: absolute; left: 50%; top: -42px;
   transform: translateX(-50%);
   z-index: 3000;
   display: flex; flex-direction: column; align-items: center; gap: 4px;
@@ -680,12 +702,22 @@ button:disabled { cursor: default; opacity: .55; }
   position: relative;
 }
 .mascot-reaction-host {
-  height: 80px;
+  height: 56px;
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  margin-bottom: -10px;
+  margin-bottom: -6px;
 }
+
+/* ---------- Reduced motion (accessibility) ---------- */
+.reduce-motion .candle-flame,
+.reduce-motion .flame,
+.reduce-motion .candle-spark,
+.reduce-motion .sparkle-p,
+.reduce-motion .mascot-reaction { animation: none !important; }
+.reduce-motion .sparkle-host { display: none !important; }
+.reduce-motion .candle-wrap,
+.reduce-motion .wax-pool { transition: none !important; }
 .feedback-modal-card.correct { border-top: 5px solid var(--green); }
 .feedback-modal-card.grace { border-top: 5px solid var(--amber); }
 .feedback-modal-card.wrong { border-top: 5px solid var(--red); }
@@ -903,6 +935,38 @@ button:disabled { cursor: default; opacity: .55; }
 .ghost.danger { border-color: var(--red); color: var(--red); }
 .ghost.danger:hover { border-color: var(--red); background: #fff0f0; }
 #btn-profile-delete, #btn-profile-signout { margin-top: 30px; }
+
+/* ---------- Settings ---------- */
+.settings-card {
+  background: #fff; border: 2px solid var(--line); border-radius: var(--radius);
+  padding: 10px 14px; box-shadow: var(--shadow); margin-bottom: 10px;
+}
+.settings-row {
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px;
+  padding: 14px 4px; border-bottom: 1px solid #f0e8d8;
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-row label.settings-label { font-weight: 900; color: var(--ink); font-size: .98rem; cursor: pointer; }
+.settings-hint { display: block; font-size: .78rem; font-weight: 700; color: var(--ink-soft); margin-top: 2px; }
+.settings-row input[type="range"] {
+  width: 140px; accent-color: var(--gold-deep);
+  height: 6px; border-radius: 999px;
+}
+.settings-vol { font-weight: 900; color: var(--ink-soft); min-width: 3ch; text-align: right; font-variant-numeric: tabular-nums; font-size: .92rem; }
+.settings-note { text-align: center; color: var(--ink-soft); font-size: .84rem; font-weight: 700; line-height: 1.5; margin: 6px 6px 10px; }
+.switch { position: relative; width: 52px; height: 30px; display: inline-block; cursor: pointer; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch-knob {
+  position: absolute; inset: 0; background: #e5e0d2; border-radius: 999px;
+  transition: background .2s ease;
+}
+.switch-knob::after {
+  content: ''; position: absolute; left: 3px; top: 3px;
+  width: 24px; height: 24px; background: #fff; border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,.18); transition: transform .2s ease;
+}
+.switch input:checked + .switch-knob { background: var(--green); }
+.switch input:checked + .switch-knob::after { transform: translateX(22px); }
 
 /* ---------- Responsive: all screen resolutions ---------- */
 

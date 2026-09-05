@@ -68,7 +68,8 @@
         </button>
         <div class="home-head-right">
           <div class="home-rank" id="home-rank">Recruit</div>
-          <button class="sound-toggle" id="btn-sound" aria-label="Toggle sound">🔊</button>
+          <button class="sound-toggle" id="btn-settings" aria-label="Open settings">⚙️</button>
+          <button class="sound-toggle hidden" id="btn-sound" aria-label="Toggle sound" style="display:none">🔊</button>
         </div>
       </header>
 
@@ -81,6 +82,7 @@
           <span class="candle-spark spark-b" aria-hidden="true">✧</span>
           <div class="candle-wrap"><img class="candle-img" id="candle-img" src="assets/candle-lit.png" alt="Lit candle" /></div>
           <div class="candle-flame" aria-hidden="true"></div>
+          <div class="wax-pool" aria-hidden="true"></div>
         </div>
         <div class="candle-caption" id="candle-caption">Your lamp is lit</div>
         <div class="streak-row">
@@ -239,6 +241,41 @@
         <button class="ghost danger" id="btn-profile-delete">Delete account</button>
       </div>
       <button class="ghost" id="btn-profile-back">Back</button>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="screen-settings" class="screen hidden">
+      <h2>Settings</h2>
+      <div class="settings-card">
+        <div class="settings-row">
+          <label for="set-sfx"><span class="settings-label">Sound effects</span><span class="settings-hint">Chimes, taps, grace notes</span></label>
+          <label class="switch"><input type="checkbox" id="set-sfx" /><span class="switch-knob"></span></label>
+        </div>
+        <div class="settings-row">
+          <label for="set-sfx-vol" class="settings-label">SFX volume</label>
+          <input id="set-sfx-vol" type="range" min="0" max="100" step="1" />
+          <span class="settings-vol" id="set-sfx-vol-label">55%</span>
+        </div>
+        <div class="settings-row">
+          <label for="set-music"><span class="settings-label">Background music</span><span class="settings-hint">A soft, reverent pad — never over the verse</span></label>
+          <label class="switch"><input type="checkbox" id="set-music" /><span class="switch-knob"></span></label>
+        </div>
+        <div class="settings-row">
+          <label for="set-music-vol" class="settings-label">Music volume</label>
+          <input id="set-music-vol" type="range" min="0" max="100" step="1" />
+          <span class="settings-vol" id="set-music-vol-label">28%</span>
+        </div>
+        <div class="settings-row">
+          <label for="set-reduced-motion"><span class="settings-label">Reduce motion</span><span class="settings-hint">Fewer flickers &amp; sparkles</span></label>
+          <label class="switch"><input type="checkbox" id="set-reduced-motion" /><span class="switch-knob"></span></label>
+        </div>
+        <div class="settings-row">
+          <label for="set-haptics"><span class="settings-label">Haptics</span><span class="settings-hint">Gentle vibration on correct/wrong (phone)</span></label>
+          <label class="switch"><input type="checkbox" id="set-haptics" /><span class="switch-knob"></span></label>
+        </div>
+      </div>
+      <p class="settings-note">Music fades automatically when you answer — it never competes with Scripture. Tip: keep music low and let the candle do the talking.</p>
+      <button class="ghost" id="btn-settings-back">Back</button>
     </section>
 
   </div>
