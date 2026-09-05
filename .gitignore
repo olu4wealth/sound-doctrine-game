@@ -8,3 +8,9 @@ test-results/
 
 # GitHub Actions (intentionally excluded)
 .github/workflows/
+
+# Local tooling / generated artifacts — not part of the game
+.dsh-vision-toolkit/
+verify/shots/
+verify_check_out.txt
+assets/*-alpha.png
