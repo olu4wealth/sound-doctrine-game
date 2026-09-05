@@ -652,6 +652,8 @@ button:disabled { cursor: default; opacity: .55; }
   background: linear-gradient(180deg, #fffdf6 0%, #fff6e0 100%);
   font-style: italic; quotes: "“" "”";
 }
+.q-quote { color: #e67e22; font-weight: 800; }
+.q-prompt .q-quote { color: #e67e22; font-weight: 800; }
 .feedback-modal-ref {
   display: block; font-size: .88rem; color: var(--gold-deep);
   font-weight: 800; margin-bottom: 18px; letter-spacing: .2px;

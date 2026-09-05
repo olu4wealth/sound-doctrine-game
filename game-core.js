@@ -33,7 +33,7 @@ export const MAX_HEARTS = 5;    // lives (kind hearts) — refilled gently, neve
 // timer no longer shortens as the climb gets harder. Word-order "rebuild the
 // verse" questions are the one exception: app.js grants extra reading time.
 export const QUESTION_TIME = 30;
-export const TIME_BONUS = { correct: 5, 'near-miss': 2, wrong: 0, timeout: 0 };
+export const TIME_BONUS = { correct: 3, 'near-miss': 0, wrong: 0, timeout: 0 };
 
 export function timeForTier(tier) {
   return QUESTION_TIME;

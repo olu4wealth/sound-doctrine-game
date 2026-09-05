@@ -133,7 +133,9 @@ function renderLadder() {
 
 // ---------- Session setup ----------
 function resetSession() {
-  // A new game always starts afresh: full lives, empty session, cleared per-question state.
+  // A new game always starts afresh: full lives, empty session, cleared per-question state, timer reset to 30s.
+  stopTimer();
+  timeLeft = 0; timeTotal = 0; frozenUntil = 0;
   setHearts(MAX_HEARTS);
   session = { questions: [], pot: 0, elapsedMs: 0, daily: false, oilVialsEarned: 0, bestTimeMs: 0, runTiers: [], maxRunTier: 0, streak: 0 };
   dailyIdx = 0;
@@ -229,13 +231,12 @@ function renderHeroQuestion() {
 function finishHero() { finishCommon(); }
 
 // ---------- Countdown timer ----------
-// Constant base time (QUESTION_TIME) for every question, plus two bonuses:
-// (Word-order "rebuild the verse" questions pass a larger floorSeconds so they
-// keep extra reading time — it never drops below 30s.)
+// Constant base time (QUESTION_TIME) for every question. No carry-over bonus —
+// each question always starts at 30s (word-order questions may pass a larger
+// floorSeconds so they keep extra reading time, never below 30s).
 function startCountdown(tier, idxInTier = 0, floorSeconds = 0) {
   stopTimer();
-  const carry = timeLeft > 0 ? 2 : 0; // flat 2s bonus banked from the previous question
-  timeTotal = Math.max(floorSeconds || 0, QUESTION_TIME + carry);
+  timeTotal = Math.max(floorSeconds || 0, QUESTION_TIME);
   timeLeft = timeTotal;
   timeRunning = true;
   renderTimerBar();
@@ -397,7 +398,7 @@ function renderQuestion(q, opts = {}) {
   el('q-subject').textContent = opts.hideSubject ? '' : q.subject;
   el('q-subject').classList.toggle('hidden', !!opts.hideSubject);
   el('q-type').textContent = `${TIER_EMOJI[q.tier]} T${q.tier} · ${TIER_NAMES[q.tier]}`;
-  el('q-prompt').textContent = q.prompt;
+  el('q-prompt').innerHTML = highlightQuotedSafe(q.prompt);
 
   const wrap = el('q-options');
   // Word-order questions (Choose Your Hero) replace the option grid entirely.
@@ -985,7 +986,11 @@ function shakeFeedback() {
 function syncPlayerHearts() { savePlayer(player); }
 
 function quotesOf(q) {
-  if (q.passage && q.verseText) return `\u201C${q.verseText}\u201D`;
+  if (q.passage && q.verseText) {
+    let s = `\u201C${q.verseText}\u201D`;
+    if (q.passageB && q.verseTextB) s += ` \u201C${q.verseTextB}\u201D`;
+    return s;
+  }
   if (Array.isArray(q.verses)) return q.verses.map((v) => `\u201C${v.verseText}\u201D`).join(' ');
   return '';
 }
@@ -995,6 +1000,14 @@ function refsOf(q) {
   if (q.passageB) r.push(q.passageB);
   if (Array.isArray(q.verses)) for (const v of q.verses) if (v.passage) r.push(v.passage);
   return r.join(' · ');
+}
+function highlightQuotedSafe(text) {
+  let h = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // curly quotes — keep the curly glyphs, wrap inner in orange
+  h = h.replace(/\u201C([^\u201D]+?)\u201D/g, '\u201C<span class="q-quote">$1</span>\u201D');
+  // straight double quotes — convert to curly + wrap
+  h = h.replace(/"([^"]+?)"/g, '\u201C<span class="q-quote">$1</span>\u201D');
+  return h;
 }
 
 function btnNextGo() {
@@ -1076,18 +1089,32 @@ function renderReport(report, session) {
     }
   }
 
-  // Weakest chapter card
+  // Weakest chapter card — now lists every missed verse so the player
+  // sees the exact passages (KJV) they need to re-read across all books.
   const weakestEl = el('report-weakest');
   if (weakestEl) {
     const wc = report.weakestChapter;
     if (wc) {
       const pct = Math.round((wc.acc || 0) * 100);
-      const versesList = wc.verses && wc.verses.length
-        ? `<ul class="weakest-verses">${wc.verses.map((v) => `<li><strong>${v.passage || wc.name}</strong> — &ldquo;${v.text}&rdquo;</li>`).join('')}</ul>`
-        : '';
-      weakestEl.innerHTML = `<h3>SPECIFIC WEAKNESS: ${wc.name}</h3><div class="weakest-meta">Accuracy: ${pct}% (${Math.round(wc.acc * wc.asked)}/${wc.asked} correct)</div>${versesList}`;
+      const allMissed = report.missedVerses || [];
+      const versesList = allMissed.length
+        ? `<ul class="weakest-verses">${allMissed.map((v) => `<li><strong>${v.passage || wc.name}</strong> — &ldquo;${v.text}&rdquo;</li>`).join('')}</ul>`
+        : (wc.verses && wc.verses.length
+          ? `<ul class="weakest-verses">${wc.verses.map((v) => `<li><strong>${v.passage || wc.name}</strong> — &ldquo;${v.text}&rdquo;</li>`).join('')}</ul>`
+          : '');
+      weakestEl.innerHTML = `<h3>SPECIFIC WEAKNESS: ${wc.name}</h3><div class="weakest-meta">Accuracy: ${pct}% (${Math.round(wc.acc * wc.asked)}/${wc.asked} correct) — ${allMissed.length} verse${allMissed.length===1?'':'s'} to revisit</div>${versesList}`;
     } else {
       weakestEl.innerHTML = '';
+    }
+  }
+  // Dedicated full missed-verses block (same data, always visible when there are misses)
+  const missedEl = el('report-missed');
+  if (missedEl) {
+    const mv = report.missedVerses || [];
+    if (mv.length) {
+      missedEl.innerHTML = `<h3>Verses you missed (${mv.length})</h3><ul>${mv.map((v) => `<li><strong>${v.passage}</strong> — &ldquo;${v.text}&rdquo;</li>`).join('')}</ul>`;
+    } else {
+      missedEl.innerHTML = report.answered ? '<p class="empty">No missed verses — perfect run!</p>' : '';
     }
   }
 

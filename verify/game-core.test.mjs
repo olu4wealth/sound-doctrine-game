@@ -155,7 +155,9 @@ check('row of tiers present', [1,2,3,4,5,6,7].every((t) => bank.some((q) => tier
 // 9. Countdown timer model (constant time + bonus time)
 check('QUESTION_TIME is 30s', QUESTION_TIME === 30);
 check('timeForTier is a constant 30s for every tier', [1, 2, 3, 4, 5, 6, 7, 99].every((t) => timeForTier(t) === QUESTION_TIME));
-check('bonusTime: correct > grace > wrong', bonusTime('correct') > bonusTime('near-miss') && bonusTime('near-miss') > bonusTime('wrong'));
+check('bonusTime: correct=3 after -2s reduction', bonusTime('correct') === 3);
+check('bonusTime: near-miss=0 after -2s reduction', bonusTime('near-miss') === 0);
+check('bonusTime: correct still > wrong', bonusTime('correct') > bonusTime('wrong'));
 check('bonusTime: timeout = 0', bonusTime('timeout') === 0);
 check('bonusTime: wrong = 0', bonusTime('wrong') === 0);
 check('MAX_HEARTS defined (kind hearts)', Number.isInteger(MAX_HEARTS) && MAX_HEARTS >= 3);
