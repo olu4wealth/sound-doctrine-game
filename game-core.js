@@ -101,6 +101,19 @@ export function nearMiss(q, chosenOrigIdx) {
   return Array.isArray(q.nearIndexes) && q.nearIndexes.includes(chosenOrigIdx);
 }
 
+// 50/50 lifeline: which *display* slots to hide. displayOrder maps displayIdx ->
+// original option idx (the same shuffle stored as q._displayOrder), and
+// correctIndex is an *original* index — so the correct answer is identified in
+// its original space and can never be hidden, regardless of where it lands.
+export function fiftyFiftyHide(displayOrder, correctIndex, maxHide = 2) {
+  if (!Array.isArray(displayOrder)) return [];
+  const wrongSlots = [];
+  for (let d = 0; d < displayOrder.length; d++) {
+    if (displayOrder[d] !== correctIndex) wrongSlots.push(d);
+  }
+  return wrongSlots.slice(-maxHide);
+}
+
 // Resolve an answer. chosenOrigIdx is the *original* option index the player picked
 // (i.e., after un-shuffling display order). bid is a BIDS entry (or null → 1×).
 // D3 two-step stake (REFOCUS Phase 6): Correct +stake, Wrong −stake, Grace +half-stake (50% retained).

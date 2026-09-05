@@ -117,6 +117,55 @@ test.describe('core player journey', () => {
     expect(Number(after)).toBeLessThanOrEqual(Number(before));
   });
 
+  test('50/50 lifeline never hides the correct answer', async ({ page }) => {
+    // seedPlayer grants 3 oil vials and a used ladder → lands straight on home.
+    await dismissTutorial(page);
+    await seedPlayer(page);
+    await page.goto('/');
+    await expect(page.locator('#screen-home')).toBeVisible();
+    await page.getByRole('button', { name: /begin a climb/i }).click();
+
+    // Up to 3 lifeline uses (one per oil vial).
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const pu = page.locator('#pu-5050');
+      if (await pu.isDisabled().catch(() => false)) break;
+
+      await pu.click();
+
+      const opts = page.locator('.option');
+      const total = await opts.count();
+      const hidden = [];
+      const visible = [];
+      for (let i = 0; i < total; i++) {
+        const o = opts.nth(i);
+        const isHidden = await o.evaluate((el) => getComputedStyle(el).visibility === 'hidden');
+        (isHidden ? hidden : visible).push(o);
+      }
+      const expectedHidden = total === 2 ? 1 : 2;
+      expect(hidden.length, '50/50 hides the expected count').toBe(expectedHidden);
+      for (const h of hidden) await expect(h).toBeDisabled();
+
+      const visibleTexts = (await Promise.all(visible.map((o) => o.textContent()))).map((t) => t.trim());
+
+      // Answer with a visible option; whatever the outcome, the correct answer
+      // must have been visible: on a correct pick we clicked it, and on a wrong
+      // pick the modal states the correct answer — assert it was not hidden.
+      await visible[0].click();
+      await expect(page.locator('#stake-modal-backdrop')).toBeVisible();
+      await page.getByRole('button', { name: /confirm/i }).click();
+      await expect(page.locator('#feedback-modal-backdrop')).toBeVisible();
+
+      const answerLine = page.locator('.feedback-answer');
+      if (await answerLine.count()) {
+        const stated = (await answerLine.textContent()).replace(/^.*was:\s*/i, '').trim();
+        expect(visibleTexts, `correct answer "${stated}" must remain visible after 50/50`).toContain(stated);
+      }
+
+      await page.locator('#feedback-modal-continue').click();
+      await page.waitForTimeout(400);
+    }
+  });
+
   test('exit returns to the candle home', async ({ page }) => {
     await beginClimb(page);
     await page.locator('#btn-exit').click();

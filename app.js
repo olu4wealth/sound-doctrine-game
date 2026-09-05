@@ -3,7 +3,7 @@
 // options, juicy micro-interactions. Content stays scripturally verified.
 import {
   TIER_NAMES, TIER_EMOJI, BIDS, BASE_POINTS, MAX_STREAK, MAX_HEARTS,
-  bonusTime, QUESTION_TIME,
+  bonusTime, QUESTION_TIME, fiftyFiftyHide,
   dailyCharge, dailySeed, resolveAnswer, tierOf,
   pickNextLadder, applyDailyVisit, buildChargeReport, compositeScore,
   sortLeaderboard, shareGrid, shuffle, mulberry32, hashCode,
@@ -623,12 +623,18 @@ function usePowerup(type) {
   }
   if (type === '5050') {
     sfx.powerup(); burstSparkles(6, 0.5, 0.5);
-    // Remove two incorrect options (never the correct one).
+    // Remove two incorrect options (never the correct one). The shuffle means
+    // display slots ≠ original indices, so translate via q._displayOrder —
+    // fiftyFiftyHide works in the original space where correctIndex lives.
     const wrap = el('q-options');
     const btns = [...wrap.querySelectorAll('.option:not(:disabled)')];
-    const wrong = btns.map((b, i) => ({ b, oi: Number(b.dataset.display) }))
-      .filter((x) => x.oi !== currentQ.correctIndex);
-    for (const w of wrong.slice(-2)) w.b.style.visibility = 'hidden';
+    const hide = new Set(fiftyFiftyHide(currentQ._displayOrder, currentQ.correctIndex));
+    for (const b of btns) {
+      if (hide.has(Number(b.dataset.display))) {
+        b.style.visibility = 'hidden';
+        b.disabled = true; // unreachable by keyboard / never "pending"
+      }
+    }
     renderPowerups();
     return;
   }

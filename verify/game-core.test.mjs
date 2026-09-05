@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
   mulberry32, hashCode, dailySeed, dailyCharge, resolveAnswer, nearMiss,
+  fiftyFiftyHide, shuffle,
   pickNextLadder, applyDailyVisit, buildChargeReport, compositeScore,
   sortLeaderboard, shareGrid, tierOf, MAX_STREAK, DAILY_LENGTH,
   timeForTier, bonusTime, MAX_HEARTS, candleMeltFraction, CANDLE_MORNING_HOUR,
@@ -60,6 +61,22 @@ if (optIdx !== undefined) {
   const r = resolveAnswer(q2, optIdx, { id: 'certain', mult: 4 });
   check('near-miss 4× = grace +200 (half)', r.outcome === 'near-miss' && r.points === 200);
 }
+
+// 2b. 50/50 lifeline — never hides the correct answer, in any shuffle order
+check('50/50 identity order hides the two last wrong slots', JSON.stringify(fiftyFiftyHide([0,1,2,3], 1)) === JSON.stringify([2,3]));
+check('50/50 shuffled order never hides the correct slot',
+  (() => {
+    for (let i = 0; i < 500; i++) {
+      const order = shuffle(Math.random, [0, 1, 2, 3]);
+      const hidden = fiftyFiftyHide(order, 1);
+      if (hidden.includes(order.indexOf(1))) return false;      // correct slot hidden → fail
+      if (hidden.length !== 2) return false;                     // must hide exactly 2
+      if (hidden.some((d) => order[d] === 1)) return false;      // paranoia: originals must differ
+    }
+    return true;
+  })());
+check('50/50 true/false hides only the single wrong option', JSON.stringify(fiftyFiftyHide([0,1], 0)) === JSON.stringify([1]));
+check('50/50 guards against a missing display order', JSON.stringify(fiftyFiftyHide(undefined, 0)) === JSON.stringify([]));
 
 // 3. pickNextLadder
 const model = { entryTier: 2, weakSubjects: new Set(['money']), seen: new Set() };
