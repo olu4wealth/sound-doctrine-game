@@ -234,7 +234,7 @@ function finishHero() { finishCommon(); }
 // keep extra reading time — it never drops below 30s.)
 function startCountdown(tier, idxInTier = 0, floorSeconds = 0) {
   stopTimer();
-  const carry = timeLeft > 0 ? timeLeft : 0; // leftover banked from the previous question
+  const carry = timeLeft > 0 ? 2 : 0; // flat 2s bonus banked from the previous question
   timeTotal = Math.max(floorSeconds || 0, QUESTION_TIME + carry);
   timeLeft = timeTotal;
   timeRunning = true;
