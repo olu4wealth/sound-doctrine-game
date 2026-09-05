@@ -10,6 +10,7 @@ import {
   pickNextLadder, applyDailyVisit, buildChargeReport, compositeScore,
   sortLeaderboard, shareGrid, tierOf, MAX_STREAK, DAILY_LENGTH,
   timeForTier, bonusTime, MAX_HEARTS, candleMeltFraction, CANDLE_MORNING_HOUR,
+  QUESTION_TIME,
 } from '../game-core.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -127,9 +128,9 @@ check('share grid uses ⩝⩞⩟', grid.includes('⩝') && grid.includes('⩟'))
 // 8. Tier metadata
 check('row of tiers present', [1,2,3,4,5,6,7].every((t) => bank.some((q) => tierOf(q) === t)));
 
-// 9. Countdown timer model (tier-scaled time + bonus time)
-check('timeForTier is tier-scaled (harder = less time)', timeForTier(1) > timeForTier(7));
-check('timeForTier clamps to valid range', timeForTier(99) === timeForTier(7));
+// 9. Countdown timer model (constant time + bonus time)
+check('QUESTION_TIME is 30s', QUESTION_TIME === 30);
+check('timeForTier is a constant 30s for every tier', [1, 2, 3, 4, 5, 6, 7, 99].every((t) => timeForTier(t) === QUESTION_TIME));
 check('bonusTime: correct > grace > wrong', bonusTime('correct') > bonusTime('near-miss') && bonusTime('near-miss') > bonusTime('wrong'));
 check('bonusTime: timeout = 0', bonusTime('timeout') === 0);
 check('bonusTime: wrong = 0', bonusTime('wrong') === 0);

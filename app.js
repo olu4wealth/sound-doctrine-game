@@ -3,7 +3,7 @@
 // options, juicy micro-interactions. Content stays scripturally verified.
 import {
   TIER_NAMES, TIER_EMOJI, BIDS, BASE_POINTS, MAX_STREAK, MAX_HEARTS,
-  timeForTier, bonusTime,
+  bonusTime, QUESTION_TIME,
   dailyCharge, dailySeed, resolveAnswer, tierOf,
   pickNextLadder, applyDailyVisit, buildChargeReport, compositeScore,
   sortLeaderboard, shareGrid, shuffle, mulberry32, hashCode,
@@ -229,18 +229,12 @@ function renderHeroQuestion() {
 function finishHero() { finishCommon(); }
 
 // ---------- Countdown timer ----------
-function adaptiveTimeForTier(tier, questionIndexInTier) {
-  // Base time from tier (harder tier = less base time)
-  let base = timeForTier(tier);
-  // Speed up by 10% per answered question within the same tier band
-  // (so T2 starts at 26s, gets tighter as you progress)
-  const progressFactor = Math.min(1, (questionIndexInTier || 0) / 5);
-  return Math.max(10, Math.round(base * (1 - progressFactor * 0.3)));
-}
-
+// Constant 30 seconds for every question, regardless of tier or progress.
+// (Word-order "rebuild the verse" questions pass a larger floorSeconds so they
+// still get extra reading time — it never drops below 30s.)
 function startCountdown(tier, idxInTier = 0, floorSeconds = 0) {
   stopTimer();
-  timeTotal = Math.max(floorSeconds || 0, adaptiveTimeForTier(tier, idxInTier));
+  timeTotal = Math.max(floorSeconds || 0, QUESTION_TIME);
   timeLeft = timeTotal;
   timeRunning = true;
   renderTimerBar();

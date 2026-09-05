@@ -29,12 +29,14 @@ export const MAX_STREAK = 7;    // candle cap
 export const DAILY_LENGTH = 10; // Daily Quest questions per day
 export const MAX_HEARTS = 5;    // lives (kind hearts) — refilled gently, never a paywall
 
-// Per-question countdown (seconds) — tighter on harder rungs (Duolingo-style pressure).
-export const TIER_TIME = [null, 30, 26, 22, 20, 18, 16, 15];
+// Per-question countdown (seconds) — a constant 30s for every tier, so the
+// timer no longer shortens as the climb gets harder. Word-order "rebuild the
+// verse" questions are the one exception: app.js grants extra reading time.
+export const QUESTION_TIME = 30;
 export const TIME_BONUS = { correct: 5, 'near-miss': 2, wrong: 0, timeout: 0 };
 
 export function timeForTier(tier) {
-  return TIER_TIME[Math.min(7, Math.max(1, tier))] ?? TIER_TIME[1];
+  return QUESTION_TIME;
 }
 export function bonusTime(outcome) {
   return TIME_BONUS[outcome] ?? 0;
