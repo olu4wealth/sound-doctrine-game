@@ -154,7 +154,7 @@ test.describe('daily quest + report + leaderboard', () => {
     for (let i = 0; i < 10; i++) {
       const ok = await answerOne(page);
       if (!ok) break;
-      const cont = page.getByRole('button', { name: /continue|see the report/i });
+      const cont = page.locator('#feedback-modal-continue');
       if (await cont.count()) await cont.click();
       await page.waitForTimeout(1100);
       if (await page.locator('#screen-report').isVisible().catch(() => false)) break;
@@ -174,7 +174,7 @@ test.describe('daily quest + report + leaderboard', () => {
     for (let i = 0; i < 10; i++) {
       const ok = await answerOne(page);
       if (!ok) break;
-      const cont = page.getByRole('button', { name: /continue|see the report/i });
+      const cont = page.locator('#feedback-modal-continue');
       if (await cont.count()) await cont.click();
       await page.waitForTimeout(1100);
       if (await page.locator('#screen-report').isVisible().catch(() => false)) break;

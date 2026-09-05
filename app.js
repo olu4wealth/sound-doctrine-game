@@ -458,6 +458,8 @@ function renderQuestion(q) {
     btn.className = `option opt-${accent[displayIdx]}`;
     btn.textContent = q.options[orig];
     btn.dataset.display = String(displayIdx);
+    btn.dataset.badge = ['A', 'B', 'C', 'D'][displayIdx] || '?';
+    btn.setAttribute('aria-label', `${['A', 'B', 'C', 'D'][displayIdx]}: ${q.options[orig]}`);
     btn.addEventListener('click', () => onAnswer(displayIdx));
     wrap.appendChild(btn);
   });

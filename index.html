@@ -19,15 +19,16 @@
     <!-- START (title screen — the game's single opening page; returning players skip straight home) -->
     <section id="screen-start" class="screen">
       <!-- Key art: huge transparent mascots anchored half off each screen edge -->
-      <img class="title-hero title-hero-left" src="assets/hero-timothy.png" alt="" decoding="async" onerror="this.style.display='none'" />
-      <img class="title-hero title-hero-right" src="assets/hero-titus.png" alt="" decoding="async" onerror="this.style.display='none'" />
+      <picture><source srcset="assets/hero-timothy.webp" type="image/webp" /><img class="title-hero title-hero-left" src="assets/hero-timothy.png" alt="" decoding="async" onerror="this.style.display='none'" /></picture>
+      <picture><source srcset="assets/hero-titus.webp" type="image/webp" /><img class="title-hero title-hero-right" src="assets/hero-titus.png" alt="" decoding="async" onerror="this.style.display='none'" /></picture>
       <div class="start-inner">
       <img class="crest" src="assets/icon-crest.png" alt="Sound Doctrine crest" />
       <h1 class="title">Sound Doctrine</h1>
       <p class="subtitle">Saints, Martyrs &amp; Heroes<br />1 &amp; 2 Timothy &middot; Titus</p>
       <p class="tagline">Three books. One charge. Know the doctrine.</p>
       <div class="name-entry">
-        <input id="input-name" type="text" maxlength="24" placeholder="Your name (shown on the board)" autocomplete="off" />
+        <label for="input-name" class="sr-only">Your name (shown on the leaderboard)</label>
+        <input id="input-name" type="text" maxlength="24" placeholder="Your name (shown on the board)" autocomplete="off" aria-label="Your name" />
       </div>
       <button class="primary" id="btn-begin">Begin the Charge</button>
       <div class="start-secondary">
@@ -55,8 +56,8 @@
     <!-- HOME (Candle + Ladder) -->
     <section id="screen-home" class="screen hidden">
       <!-- Same mascots as the title screen, flanking the game menu -->
-      <img class="home-hero home-hero-left" src="assets/hero-timothy.png" alt="" decoding="async" onerror="this.style.display='none'" />
-      <img class="home-hero home-hero-right" src="assets/hero-titus.png" alt="" decoding="async" onerror="this.style.display='none'" />
+      <picture><source srcset="assets/hero-timothy.webp" type="image/webp" /><img class="home-hero home-hero-left" src="assets/hero-timothy.png" alt="" decoding="async" onerror="this.style.display='none'" /></picture>
+      <picture><source srcset="assets/hero-titus.webp" type="image/webp" /><img class="home-hero home-hero-right" src="assets/hero-titus.png" alt="" decoding="async" onerror="this.style.display='none'" /></picture>
       <div class="home-inner">
       <header class="home-head">
         <button class="profile-chip" id="btn-profile-head" aria-label="Open my profile">

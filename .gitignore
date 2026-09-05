@@ -14,3 +14,6 @@ test-results/
 verify/shots/
 verify_check_out.txt
 assets/*-alpha.png
+vet-*.png
+tools/vet-capture.mjs
+tools/vet-dom.mjs
