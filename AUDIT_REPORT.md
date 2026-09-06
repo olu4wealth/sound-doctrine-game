@@ -5,6 +5,11 @@
 > canonical `data/questions-merged.json` (166 questions). Some "critical" items below
 > (regenerate merged file, metadata backfill) have been partially done since — see
 > `docs/AI-PIPELINE.md` for the current validator status.
+>
+> `verify/validate_questions.py`, referenced below, has since been removed. It read
+> the legacy `data/questions.json` and so reported 144/144 while the live bank was
+> 175. `verify/check.mjs` covers all six gates plus verbatim KJV matching, runs over
+> the canonical bank, and is wired into `npm test`.
 
 ## Executive Summary
 
