@@ -29,11 +29,10 @@ const PLAYER_DEFAULTS = {
   createdAt: null,
   streak: 0,
   lastChargeDay: null,
-  oilVials: 10, // every new player starts with 10 oil vials
   totalDays: 0,
   totalAnswered: 0,
   totalCorrect: 0,
-  lifetimePot: 0, // banked points across every run — drives rank + leaderboard
+  lifetimePot: 0, // banked lifetime Score across every mode — drives rank + leaderboard
   fails: 0,
   bestTimeMs: null,
   bestStreak: 0,
@@ -46,12 +45,15 @@ const PLAYER_DEFAULTS = {
   ladderPlayed: false, // Daily Quest + Choose Your Hero unlock after a Ladder climb
 };
 export function loadPlayer() {
-  // Merge defaults under whatever is saved so new fields exist for old saves too.
   const saved = read(KEYS.player, {});
   const merged = { ...PLAYER_DEFAULTS, ...saved };
-  // Returning players who predate the Ladder-first gate keep everything unlocked.
   if (saved.ladderPlayed === undefined && (merged.totalAnswered || 0) > 0) {
     merged.ladderPlayed = true;
+  }
+  // Migrate old saves: oil vials removed, lifetimePot -> lifetimeScore alias
+  if ('oilVials' in merged) delete merged.oilVials;
+  if (merged.lifetimePot != null && merged.lifetimeScore == null) {
+    merged.lifetimeScore = merged.lifetimePot;
   }
   return merged;
 }
@@ -76,7 +78,6 @@ export function recordCharge(player, session) {
   if (session.bestTimeMs != null) {
     p.bestTimeMs = p.bestTimeMs == null ? session.bestTimeMs : Math.min(p.bestTimeMs, session.bestTimeMs);
   }
-  p.oilVials = (p.oilVials || 0) + (session.oilVialsEarned || 0);
   // Adaptive: advance entryTier when strong; learn weak subjects.
   const acc = p.totalAnswered ? p.totalCorrect / p.totalAnswered : 0;
   if (acc >= 0.8 && p.entryTier < 7) p.entryTier += 1;

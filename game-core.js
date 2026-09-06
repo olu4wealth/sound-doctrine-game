@@ -17,11 +17,9 @@ export const TIER_NAMES = [
 export const TIER_EMOJI = [null, '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣'];
 
 export const BIDS = [
-  { id: 'safe',      label: 'Safe',       mult: 1 },
-  { id: 'cautious',  label: 'Cautious',   mult: 2 },
+  { id: 'safe',      label: 'Sure',       mult: 1 },
   { id: 'confident', label: 'Confident',  mult: 3 },
-  { id: 'certain',   label: 'Certain',    mult: 4 },
-  { id: 'preach',    label: 'Preach It',  mult: 5 },
+  { id: 'preach',    label: 'All in',     mult: 5 },
 ];
 
 export const BASE_POINTS = 100; // per correct question at 1× bid
@@ -284,17 +282,13 @@ export function pickNextLadder(bank, model) {
 }
 
 // ---------- Streak / Candle ----------
-// model: { streak (consecutive days, capped), lastChargeDay ("YYYY-MM-DD"),
-//         oilVials, totalDays }
+// model: { streak (consecutive days, capped), lastChargeDay ("YYYY-MM-DD"), totalDays }
 export function applyDailyVisit(model, todayStr) {
   const next = { ...model };
   const today = todayStr || dailySeed(new Date());
   if (next.lastChargeDay === today) {
-    // Don't double-count. `alreadyDone` is a transient flag for the caller and must
-    // never be persisted, so callers should strip it (see stripTransient).
     return { ...next, alreadyDone: true };
   }
-
   if (!next.lastChargeDay) {
     next.streak = 1;
   } else {
@@ -304,14 +298,8 @@ export function applyDailyVisit(model, todayStr) {
     if (days === 1) {
       next.streak = Math.min(MAX_STREAK, (next.streak || 0) + 1);
     } else if (days > 1) {
-      // Gutter (gentle ramp-down), never a cliff:
-      // lose one day per missed day, min 0; if oil vial available, spend it to keep the flame.
-      if ((next.oilVials || 0) > 0) {
-        next.oilVials -= 1;
-        // streak unchanged (shield consumed)
-      } else {
-        next.streak = Math.max(0, (next.streak || 0) - 1);
-      }
+      // No oil vial shield — gentle ramp-down: lose one per missed day.
+      next.streak = Math.max(0, (next.streak || 0) - 1);
     }
   }
   next.lastChargeDay = today;
@@ -712,7 +700,7 @@ export const CANON_CHAPTERS = [
   ...[1, 2, 3].map((c) => `Titus ${c}`),
 ];
 export const MASTERY_THRESHOLD = 0.8; // accuracy needed to count a chapter mastered
-export const MASTERY_MIN_ASKED = 3;   // ...over at least this many questions
+export const MASTERY_MIN_ASKED = 5;   // need real volume — 1/1 must never read as mastered
 
 export function chapterMastery(lifetimeChapters = {}) {
   return CANON_CHAPTERS.map((name) => {

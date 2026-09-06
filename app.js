@@ -181,7 +181,7 @@ function resetSession() {
   stopTimer();
   timeLeft = 0; timeTotal = 0; frozenUntil = 0;
   setHearts(MAX_HEARTS);
-  session = { questions: [], pot: 0, elapsedMs: 0, daily: false, oilVialsEarned: 0, bestTimeMs: 0, runTiers: [], maxRunTier: 0, streak: 0 };
+  session = { questions: [], pot: 0, elapsedMs: 0, daily: false, bestTimeMs: 0, runTiers: [], maxRunTier: 0, streak: 0, usedLifelines: {} };
   dailyIdx = 0;
   heroIdx = 0;
   const clearQ = (q) => {
@@ -662,40 +662,23 @@ function pulseFlameBright() {
   pulseFlame(flame, 1.15 + Math.min(0.5, (streak - 1) * 0.12));
 }
 
-// ---------- Oil-vial power-ups ----------
-function oilCount() { return player.oilVials || 0; }
-function setOil(n) { player.oilVials = Math.max(0, n); }
-
-// Spend one oil vial; returns true if enough oil was available.
-function spendOil() {
-  if (oilCount() < 1) return false;
-  setOil(oilCount() - 1);
-  savePlayer(player);
-  return true;
-}
-
-// Refresh the power-up buttons' enabled/disabled state + the HUD oil counter.
+// ---------- Lifelines (once per game, no oil) ----------
 function renderPowerups() {
-  const n = oilCount();
+  const used = session?.usedLifelines || {};
   document.querySelectorAll('.powerup').forEach((b) => {
-    // 50/50 is meaningless on word-order questions (there are no options to hide).
+    const type = b.dataset.pu;
+    const already = !!used[type];
     const wordBlock = b.id === 'pu-5050' && currentQ?.type === 'wordorder';
-    b.disabled = n < 1 || !timeRunning || wordBlock; // need oil + a live question
+    b.disabled = already || !timeRunning || wordBlock;
+    b.classList.toggle('used', already);
   });
-  const hud = el('hud-oil');
-  if (hud) {
-    hud.textContent = `🫗 ${n}`;
-    hud.classList.toggle('empty', n < 1);
-  }
 }
 
 function usePowerup(type) {
-  if (!timeRunning || !currentQ) return; // only during a live question
-  if (!spendOil()) {
-    // No oil — flash the buttons to signal.
-    nudge(document.querySelectorAll('.powerup'));
-    return;
-  }
+  if (!timeRunning || !currentQ) return;
+  const used = session.usedLifelines || (session.usedLifelines = {});
+  if (used[type]) { nudge(document.querySelectorAll('.powerup')); return; }
+  used[type] = true;
   if (type === 'skip') {
     sfx.powerup(); burstSparkles(6, 0.5, 0.5);
     stopTimer();
@@ -858,7 +841,7 @@ function openStakeModal(displayIdx, q) {
     const p = BASE_POINTS * bid.mult;
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'stake-opt' + (bid.mult === selectedBid.mult ? ' active' : '');
+    btn.className = 'stake-opt';
     btn.dataset.mult = String(bid.mult);
     btn.innerHTML = `<span class="stake-mult">${bid.mult}× ${bid.label}</span>` +
                     `<span class="stake-pts">+${p} · −${p}</span>`;
@@ -869,14 +852,11 @@ function openStakeModal(displayIdx, q) {
     'A near-miss keeps half (Grace).';
 
   backdrop.querySelector('#stake-back').addEventListener('click', closeStakeModal);
-  // Tapping the dimmed area behind the card backs out too, the way a sheet does.
   backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeStakeModal(); });
   backdrop.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeStakeModal(); });
 
   revealModal(backdrop.querySelector('.stake-card'));
-  // Land focus on the stake the player last used, so a keyboard or switch user
-  // arrives already on the default rather than at the top of the dialog.
-  (opts.querySelector('.stake-opt.active') || opts.firstElementChild)?.focus();
+  opts.firstElementChild?.focus();
 }
 
 function commitStake(bid, displayIdx) {
