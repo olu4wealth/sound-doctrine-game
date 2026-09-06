@@ -17,3 +17,5 @@ assets/*-alpha.png
 vet-*.png
 tools/vet-capture.mjs
 tools/vet-dom.mjs
+
+assets/background-texture.png
