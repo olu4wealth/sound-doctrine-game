@@ -548,7 +548,7 @@ test.describe('retention surfaces', () => {
     // Still a scoreline...
     expect(shared.text).toMatch(/Sound Doctrine/);
     expect(shared.text).toMatch(/\d+\/\d+ · \d+%/);
-    expect(shared.text).toMatch(/[⩝⩞⩟]/);
+    expect(shared.text).toMatch(/[\u{1F7E9}\u{1F7E8}\u{1F7E5}]/u);
     // ...now with a quip and an invitation, and a link to open the game.
     expect(shared.text).toMatch(/[\u201C\u201D]|spirit is willing/);
     expect(shared.text).toMatch(/Think you know|your turn/i);

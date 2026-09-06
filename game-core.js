@@ -611,10 +611,12 @@ export function rankProgress(points) {
 
 // ---------- Share card (Daily Quest) ----------
 export function shareGrid(answers, size = 10) {
-  // answers: array of 'correct' | 'near-miss' | 'wrong' (session outcomes)
+  // answers: array of 'correct' | 'near-miss' | 'wrong' (session outcomes).
+  // Green / yellow / red squares: standard emoji, so the grid survives being
+  // pasted into a message app instead of arriving as a row of boxes.
   const cells = answers.slice(0, size).map((a) =>
-    a === 'correct' ? '⩝' : a === 'near-miss' ? '⩞' : '⩟');
-  while (cells.length < size) cells.push('⩟');
+    a === 'correct' ? '🟩' : a === 'near-miss' ? '🟨' : '🟥');
+  while (cells.length < size) cells.push('🟥');
   const lines = [];
   for (let i = 0; i < cells.length; i += 5) lines.push(cells.slice(i, i + 5).join(''));
   return lines.join('\n');
@@ -629,39 +631,40 @@ export const SHARE_QUIPS = [
   {
     min: 1, // a perfect run
     lines: [
-      '\u201CI have fought a good fight, I have finished my course.\u201D Not one dropped. \uD83C\uDFC6',
-      '\u201CStudy to shew thyself approved.\u201D Consider thyself approved. \u2705',
+      '“I have fought a good fight, I have finished my course.” Not one dropped. 🏆',
+      '“Study to shew thyself approved.” Consider thyself approved. ✅',
     ],
   },
   {
     min: 0.8,
     lines: [
-      '\u201CRightly dividing the word of truth\u201D \u2014 give or take a verse. \uD83D\uDCD6',
-      '\u201CLet no man despise thy youth\u201D \u2014 nor this scoreline. \uD83D\uDCAA',
+      '“Rightly dividing the word of truth” — give or take a verse. 📖',
+      '“Let no man despise thy youth” — nor this scoreline. 💪',
     ],
   },
   {
     min: 0.5,
     lines: [
-      '\u201CEver learning\u201D \u2014 and getting there, slowly. \uD83D\uDD6F\uFE0F',
-      'The spirit is willing, but the recall is weak. \uD83D\uDE05',
+      '“Ever learning” — and getting there, slowly. 📈',
+      'The spirit is willing, but the recall is weak. 😅',
     ],
   },
   {
     min: 0.2,
     lines: [
-      '\u201CAvoid foolish questions,\u201D says Titus 3:9. I answered every one of them. \uD83D\uDE2C',
-      '\u201CGreat is the mystery\u201D \u2014 still a mystery to me. \uD83E\uDD37',
+      '“Avoid foolish questions,” says Titus 3:9. I answered every one of them. 😬',
+      '“Great is the mystery” — still a mystery to me. 🤔',
     ],
   },
   {
     min: 0,
     lines: [
-      '\u201CEver learning, and never able to come to the knowledge.\u201D Emphasis on ever. \uD83D\uDCDA',
-      '\u201CLet no man despise thy youth.\u201D My score, though \u2014 fair game. \uD83E\uDEE0',
+      '“Ever learning, and never able to come to the knowledge.” Emphasis on ever. 📚',
+      '“Let no man despise thy youth.” My score, though — fair game. 😳',
     ],
   },
 ];
+
 
 // Pick the quip band for an accuracy (0..1). `pick` chooses within the band and
 // defaults to random, so two shares of the same score do not read identically.
@@ -678,12 +681,18 @@ export function shareQuip(acc, pick = Math.random) {
 // the same weak subjects, so study → test → restudy closes in one sitting.
 export function retestRun(bank, report, n = LADDER_LENGTH, rng = Math.random) {
   const missedIds = new Set((report?.missedVerses || []).map((m) => m.id));
+  // `report.weaknesses` names are subjectCategory() output ("Sound doctrine");
+  // `q.subject` is the bank's raw tag ("sound doctrine", "doctrine"). Matching
+  // them directly meant every mapped subject failed, so this pool was near
+  // empty and a retest quietly padded from the wider bank instead of the ground
+  // the player had just lost. Both sides go through the same mapping now.
   const weak = new Set((report?.weaknesses || []).map((w) => w.name));
+  const weakChapters = new Set((report?.chapters || []).map((c) => c.name));
   const missed = bank.filter((q) => missedIds.has(q.id));
   // Same doctrinal ground, questions they haven't just seen.
   const sameGround = bank.filter((q) =>
     !missedIds.has(q.id) &&
-    (weak.has(q.subject) || (report?.chapters || []).some((c) => c.name === `${q.book} ${q.chapter}`)));
+    (weak.has(subjectCategory(q.subject)) || weakChapters.has(`${q.book} ${q.chapter}`)));
   const out = [...missed, ...shuffle(rng, sameGround)].slice(0, n);
   // If the player missed almost nothing, pad from the wider bank rather than
   // handing back a two-question run.

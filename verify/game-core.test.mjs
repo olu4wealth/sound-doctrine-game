@@ -194,6 +194,16 @@ check('retest leads with the missed questions',
 check('retest never repeats a question', new Set(rt.map((q) => q.id)).size === rt.length);
 check('retest still fills when nothing was missed',
   retestRun(bank, { missedVerses: [], weaknesses: [], chapters: [] }, LADDER_LENGTH).length === LADDER_LENGTH);
+// `weaknesses` names are categories; `q.subject` is the bank's raw tag. Matching
+// them directly meant a mapped subject never hit, so the retest padded from the
+// wider bank rather than the ground the player had just lost.
+const groundRun = retestRun(bank, { missedVerses: [], weaknesses: [{ name: 'Sound doctrine' }], chapters: [] }, LADDER_LENGTH, () => 0);
+const onGround = bank.filter((q) => q.subject === 'sound doctrine' || q.subject === 'doctrine');
+check('retest pulls a mapped weak category onto the same ground',
+  onGround.length > 0 && onGround.every((q) => groundRun.some((r) => r.id === q.id)));
+check('retest still matches weak chapters',
+  retestRun(bank, { missedVerses: [], weaknesses: [], chapters: [{ name: '1 Timothy 3' }] }, LADDER_LENGTH, () => 0)
+    .some((q) => `${q.book} ${q.chapter}` === '1 Timothy 3'));
 
 // 6d. Lifetime mastery — reads data storage.js already kept but nothing displayed
 const ms = masterySummary({ '1 Timothy 1': { asked: 5, correct: 5 }, 'Titus 2': { asked: 4, correct: 1 } });
@@ -217,7 +227,8 @@ check('countdown formats minutes near the end', formatCountdown(90 * 1000) === '
 // 7. Share grid
 const grid = shareGrid(['correct','correct','near-miss','wrong','correct','correct','correct','correct','correct','correct']);
 check('share grid 10 cells', grid.split('\n').length === 2);
-check('share grid uses ⩝⩞⩟', grid.includes('⩝') && grid.includes('⩟'));
+check('share grid uses coloured squares', grid.includes('\u{1F7E9}') && grid.includes('\u{1F7E8}') && grid.includes('\u{1F7E5}'));
+check('share grid dropped the math operators', !/[\u2A5D-\u2A5F]/u.test(grid));
 
 // 7b. Share quip — a shared score needs a line worth reading
 const allLines = SHARE_QUIPS.flatMap((b) => b.lines);
@@ -232,6 +243,14 @@ check('quips stay inside the books the game covers',
   allLines.every((l) => !/Genesis|Romans|Psalm/.test(l)));
 check('out-of-range accuracy is clamped, not crashed',
   typeof shareQuip(NaN, () => 0) === 'string' && typeof shareQuip(5, () => 0) === 'string');
+
+// A share is pasted into other people's apps, so every glyph has to be one they
+// render: no variation-selector or ZWJ sequences, and nothing from Symbols and
+// Pictographs Extended-A (Unicode 13/14), which older phones show as a box.
+const shareGlyphs = allLines.join('') + grid;
+check('share text needs no variation selectors', !shareGlyphs.includes('\uFE0F'));
+check('share text uses no ZWJ sequences', !shareGlyphs.includes('\u200D'));
+check('share text avoids the newest emoji block', !/[\u{1FA70}-\u{1FAFF}]/u.test(shareGlyphs));
 
 // 8. Tier metadata
 check('row of tiers present', [1,2,3,4,5,6,7].every((t) => bank.some((q) => tierOf(q) === t)));
