@@ -18,9 +18,14 @@
 
     <!-- START (title screen — the game's single opening page; returning players skip straight home) -->
     <section id="screen-start" class="screen">
-      <!-- Key art: huge transparent mascots anchored half off each screen edge -->
-      <picture><source srcset="assets/hero-timothy.webp" type="image/webp" /><img class="title-hero title-hero-left" src="assets/hero-timothy.png" alt="" aria-hidden="true" decoding="async" onerror="this.style.display='none'" /></picture>
-      <picture><source srcset="assets/hero-titus.webp" type="image/webp" /><img class="title-hero title-hero-right" src="assets/hero-titus.png" alt="" aria-hidden="true" decoding="async" onerror="this.style.display='none'" /></picture>
+      <!-- Key art: huge transparent mascots anchored half off each screen edge.
+           The stage clips them: iOS Safari counts an overflowing fixed element
+           toward the page width and zooms out to fit it, which knocked every
+           centred screen off to the left. -->
+      <div class="hero-stage" aria-hidden="true">
+        <picture><source srcset="assets/hero-timothy.webp" type="image/webp" /><img class="title-hero title-hero-left" src="assets/hero-timothy.png" alt="" aria-hidden="true" decoding="async" onerror="this.style.display='none'" /></picture>
+        <picture><source srcset="assets/hero-titus.webp" type="image/webp" /><img class="title-hero title-hero-right" src="assets/hero-titus.png" alt="" aria-hidden="true" decoding="async" onerror="this.style.display='none'" /></picture>
+      </div>
       <div class="start-inner">
       <img class="crest" src="assets/icon-crest.png" alt="Sound Doctrine crest" />
       <h1 class="title">Sound Doctrine</h1>
@@ -55,9 +60,11 @@
 
     <!-- HOME (Candle + Ladder) -->
     <section id="screen-home" class="screen hidden">
-      <!-- Same mascots as the title screen, flanking the game menu -->
-      <picture aria-hidden="true"><source srcset="assets/hero-timothy.webp" type="image/webp" /><img class="home-hero home-hero-left" src="assets/hero-timothy.png" alt="" aria-hidden="true" decoding="async" onerror="this.style.display='none'" /></picture>
-      <picture aria-hidden="true"><source srcset="assets/hero-titus.webp" type="image/webp" /><img class="home-hero home-hero-right" src="assets/hero-titus.png" alt="" aria-hidden="true" decoding="async" onerror="this.style.display='none'" /></picture>
+      <!-- Same mascots as the title screen, flanking the game menu (same clipping stage) -->
+      <div class="hero-stage" aria-hidden="true">
+        <picture aria-hidden="true"><source srcset="assets/hero-timothy.webp" type="image/webp" /><img class="home-hero home-hero-left" src="assets/hero-timothy.png" alt="" aria-hidden="true" decoding="async" onerror="this.style.display='none'" /></picture>
+        <picture aria-hidden="true"><source srcset="assets/hero-titus.webp" type="image/webp" /><img class="home-hero home-hero-right" src="assets/hero-titus.png" alt="" aria-hidden="true" decoding="async" onerror="this.style.display='none'" /></picture>
+      </div>
       <div class="home-inner">
       <header class="home-head">
         <button class="profile-chip" id="btn-profile-head" aria-label="Open my profile">
@@ -176,7 +183,6 @@
           <span class="q-type" id="q-type"></span>
         </div>
         <p class="q-prompt" id="q-prompt"></p>
-        <div class="stake-row" id="stake-row"></div>
         <div class="options" id="q-options"></div>
       </div>
 

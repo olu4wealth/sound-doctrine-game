@@ -35,20 +35,24 @@ async function beginClimb(page) {
   await page.getByRole('button', { name: /begin a climb/i }).click();
 }
 
-async function answerOne(page) {
+// Choosing an option opens the confidence popup; stake it to actually answer.
+async function stake(page, bidMult = 1) {
+  await page.locator(`.stake-opt[data-mult="${bidMult}"]`).click();
+}
+
+async function answerOne(page, bidMult = 1) {
   const opt = page.locator('.option:not([disabled])').first();
   if (await opt.count() === 0) return false;
-  // Stake is now an inline row chosen BEFORE answering (default 1× Safe), so a
-  // question costs a single tap — no modal, no confirm step.
+  // Choosing an option opens the confidence popup; picking a stake there answers.
   await opt.click();
+  await stake(page, bidMult);
   return true;
 }
 
-// Pick a stake from the inline row, then answer.
+// Answer a given option, staking it at the given multiplier in the popup.
 async function chooseBidAndAnswer(page, bidMult, optionIndex) {
-  const pill = page.locator(`.stake-pill[data-mult="${bidMult}"]`);
-  if (await pill.count()) await pill.click();
   await page.locator('.option').nth(optionIndex).click();
+  await stake(page, bidMult);
 }
 
 test.describe('core player journey', () => {
@@ -95,9 +99,11 @@ test.describe('core player journey', () => {
     await expect(page.locator('#q-options')).toBeVisible();
     await expect(page.locator('.option')).toHaveCount(4);
 
-    // Single-step: the stake row is already on screen; one tap answers.
-    await expect(page.locator('#stake-row')).toBeVisible();
+    // Choosing an option asks for confidence first, then answers.
     await page.locator('.option').nth(0).click();
+    await expect(page.locator('#stake-modal-backdrop')).toBeVisible();
+    await page.locator('.stake-opt[data-mult="1"]').click();
+    await expect(page.locator('#stake-modal-backdrop')).toHaveCount(0);
     await expect(page.locator('#feedback-modal-backdrop')).toBeVisible();
     await expect(page.locator('.feedback-modal-verse')).not.toBeEmpty();
     await expect(page.locator('.feedback-modal-ref')).toContainText('(KJV)');
@@ -147,8 +153,8 @@ test.describe('core player journey', () => {
       // Answer with a visible option; whatever the outcome, the correct answer
       // must have been visible: on a correct pick we clicked it, and on a wrong
       // pick the modal states the correct answer — assert it was not hidden.
-      // Stake is chosen inline before answering now, so one click commits.
       await visible[0].click();
+      await stake(page);
       await expect(page.locator('#feedback-modal-backdrop')).toBeVisible();
 
       const answerLine = page.locator('.feedback-answer');
@@ -160,6 +166,87 @@ test.describe('core player journey', () => {
       await page.locator('#feedback-modal-continue').click();
       await page.waitForTimeout(400);
     }
+  });
+
+  test('quoted prompts highlight the verse without leaking their own markup', async ({ page }) => {
+    await beginClimb(page);
+    // Curly-quoted prompts used to print the highlight span into the question.
+    for (let i = 0; i < 6; i++) {
+      const prompt = page.locator('#q-prompt');
+      await expect(prompt).not.toBeEmpty();
+      expect(await prompt.textContent()).not.toContain('q-quote');
+      expect(await prompt.textContent()).not.toContain('<span');
+      // Where a prompt quotes scripture, the quote is wrapped exactly once.
+      const spans = await prompt.locator('.q-quote').count();
+      expect(await prompt.locator('.q-quote .q-quote').count()).toBe(0);
+      if (spans) expect(await prompt.locator('.q-quote').first().textContent()).not.toContain('class=');
+
+      if (!(await answerOne(page))) break;
+      const cont = page.locator('#feedback-modal-continue');
+      if (!(await cont.count())) break;
+      await cont.click();
+      await page.waitForTimeout(350);
+      if (await page.locator('#screen-report').isVisible().catch(() => false)) break;
+    }
+  });
+
+  test('no screen widens the page, so the layout stays centred', async ({ page }) => {
+    // iOS Safari charges an overflowing fixed element to the page width and
+    // zooms the document out to fit it, which slid every centred screen left.
+    // Anything hanging past the viewport must sit inside a clipping ancestor.
+    const probe = () => {
+      const vw = document.documentElement.clientWidth;
+      const unclipped = [];
+      document.querySelectorAll('body *').forEach((e) => {
+        const r = e.getBoundingClientRect();
+        if (!(r.width > 0 && r.height > 0)) return;
+        if (r.left >= -0.5 && r.right <= vw + 0.5) return;
+        for (let a = e.parentElement; a; a = a.parentElement) {
+          const ox = getComputedStyle(a).overflowX;
+          if (ox === 'hidden' || ox === 'clip' || ox === 'auto' || ox === 'scroll') return;
+        }
+        const cs = getComputedStyle(e);
+        unclipped.push(`${e.tagName}.${(e.className || '').toString().slice(0, 40)} pos=${cs.position} L=${r.left.toFixed(1)} R=${r.right.toFixed(1)}`);
+      });
+      const card = document.querySelector('.question-card');
+      const r = card && card.getBoundingClientRect();
+      return {
+        vw, docScrollW: document.documentElement.scrollWidth, unclipped,
+        cardGapL: r ? Math.round(r.left) : null,
+        cardGapR: r ? Math.round(vw - r.right) : null,
+      };
+    };
+
+    await dismissTutorial(page);
+    await page.goto('/');
+    await passIntro(page);
+    await page.getByPlaceholder(/your name/i).fill('Playwright Tester');
+    await page.getByRole('button', { name: /begin the charge/i }).click();
+    await expect(page.locator('#screen-home')).toBeVisible();
+    // The title/home key art hangs half off each edge — clipped, not overflowing.
+    const home = await page.evaluate(probe);
+    expect(home.unclipped, 'home screen must not widen the page').toEqual([]);
+    expect(home.docScrollW).toBe(home.vw);
+
+    await page.getByRole('button', { name: /begin a climb/i }).click();
+    await expect(page.locator('.question-card')).toBeVisible();
+    const game = await page.evaluate(probe);
+    expect(game.unclipped, 'game screen must not widen the page').toEqual([]);
+    expect(game.docScrollW).toBe(game.vw);
+    expect(game.cardGapL, 'question card is centred, not tilted left').toBe(game.cardGapR);
+  });
+
+  test('the confidence popup fits inside the viewport', async ({ page }) => {
+    await beginClimb(page);
+    await page.locator('.option').first().click();
+    await expect(page.locator('#stake-modal-backdrop')).toBeVisible();
+    const box = await page.locator('.stake-card').boundingBox();
+    const vp = page.viewportSize();
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(vp.width);
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    // Every stake stays reachable without scrolling the backdrop.
+    expect(box.y + box.height).toBeLessThanOrEqual(vp.height);
   });
 
   test('exit returns to the candle home', async ({ page }) => {
@@ -293,8 +380,8 @@ test.describe('choose your hero', () => {
     await page.locator('.hero-card[data-hero="titus"]').click();
     await expect(page.locator('#screen-game')).toBeVisible();
 
-    // Answer whatever the current question is: word order (tap every chip)
-    // or a classic option (a single click, stake already selected inline).
+    // Answer whatever the current question is: word order (tap every chip, which
+    // is all-or-nothing and never asks for a stake) or a classic option.
     const answerCurrent = async () => {
       const chips = page.locator('#wordpool .word-chip:not([disabled])');
       if (await chips.count()) {
@@ -302,6 +389,7 @@ test.describe('choose your hero', () => {
         return;
       }
       await page.locator('.option:not([disabled])').first().click();
+      await stake(page);
     };
 
     for (let i = 0; i < 14; i++) {
@@ -321,16 +409,36 @@ test.describe('choose your hero', () => {
 // Retention pass: the surfaces added in feat/retention-loop
 // ---------------------------------------------------------------------------
 test.describe('retention surfaces', () => {
-  test('stake row is inline — no modal between answering and feedback', async ({ page }) => {
+  test('confidence is asked in a popup once an option is chosen', async ({ page }) => {
     await beginClimb(page);
-    await expect(page.locator('#stake-row')).toBeVisible();
-    await expect(page.locator('.stake-pill')).toHaveCount(5);
-    // Choosing 3× then answering must go straight to feedback.
-    await page.locator('.stake-pill[data-mult="3"]').click();
-    await expect(page.locator('.stake-pill[data-mult="3"]')).toHaveClass(/active/);
-    await page.locator('.option').first().click();
-    await expect(page.locator('#feedback-modal-backdrop')).toBeVisible();
+    // Nothing on the card until an answer is picked.
     await expect(page.locator('#stake-modal-backdrop')).toHaveCount(0);
+    await page.locator('.option').first().click();
+    await expect(page.locator('#stake-modal-backdrop')).toBeVisible();
+    await expect(page.locator('.stake-opt')).toHaveCount(5);
+    // The chosen option is held pending behind the popup, and the popup quotes it.
+    await expect(page.locator('.option.pending')).toHaveCount(1);
+    await expect(page.locator('.stake-chosen')).not.toBeEmpty();
+    // Staking answers — straight through to the verse correction.
+    await page.locator('.stake-opt[data-mult="3"]').click();
+    await expect(page.locator('#stake-modal-backdrop')).toHaveCount(0);
+    await expect(page.locator('#feedback-modal-backdrop')).toBeVisible();
+  });
+
+  test('backing out of the confidence popup returns the question and the clock', async ({ page }) => {
+    await beginClimb(page);
+    const before = Number(await page.locator('#ring-label').textContent());
+    await page.locator('.option').first().click();
+    await expect(page.locator('#stake-modal-backdrop')).toBeVisible();
+    await page.locator('#stake-back').click();
+    await expect(page.locator('#stake-modal-backdrop')).toHaveCount(0);
+    await expect(page.locator('.option.pending')).toHaveCount(0);
+    await expect(page.locator('#feedback-modal-backdrop')).toHaveCount(0);
+    // Options are live again and the clock is ticking down from where it paused.
+    await expect(page.locator('.option').first()).toBeEnabled();
+    await expect
+      .poll(async () => Number(await page.locator('#ring-label').textContent()))
+      .toBeLessThan(before);
   });
 
   test('a climb is a finishable 10-question run (unlocking never needs a loss)', async ({ page }) => {
@@ -363,7 +471,7 @@ test.describe('retention surfaces', () => {
       const opt = page.locator('.option:not([disabled])').first();
       const chips = page.locator('#wordpool .word-chip:not([disabled])');
       if (await chips.count()) { while (await chips.count()) await chips.first().click(); }
-      else if (await opt.count()) { await opt.click(); }
+      else if (await opt.count()) { await opt.click(); await stake(page); }
       const cont = page.locator('#feedback-modal-continue');
       if (await cont.count()) { await cont.click(); await page.waitForTimeout(300); }
       if (await page.locator('#screen-report').isVisible()) break;
@@ -402,6 +510,7 @@ test.describe('motion', () => {
   test('score chip counts up instead of jumping to the final value', async ({ page }) => {
     await beginClimb(page);
     await page.locator('.option').first().click();
+    await stake(page);
     // Sampled mid-tween the chip should not already equal its settled value.
     await page.waitForTimeout(100);
     const mid = await page.locator('#hud-score').textContent();
@@ -512,6 +621,7 @@ test.describe('motion — reduced', () => {
     await page.getByRole('button', { name: /begin a climb/i }).click();
     await expect(page.locator('#q-options')).toBeVisible();
     await page.locator('.option').first().click();
+    await stake(page);
     // The score lands on its final value with no counting animation in between.
     const first = await page.locator('#hud-score').textContent();
     await page.waitForTimeout(500);

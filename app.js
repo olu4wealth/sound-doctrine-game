@@ -310,6 +310,15 @@ function startCountdown(q, idxInRun = 0, floorSeconds = 0) {
   stopTimer();
   timeTotal = Math.max(floorSeconds || 0, timeForQuestion(q));
   timeLeft = timeTotal;
+  runCountdown();
+}
+// Resume on whatever is left, rather than re-budgeting from the top: the stake
+// popup pauses the clock, and backing out of it must not hand back free time.
+function resumeCountdown() {
+  if (timerInt || timeLeft <= 0) return;
+  runCountdown();
+}
+function runCountdown() {
   timeRunning = true;
   renderTimerBar();
   timerInt = setInterval(() => {
@@ -489,7 +498,6 @@ function renderQuestion(q, opts = {}) {
     wrap.appendChild(btn);
   });
 
-  renderStakeRow(q);
   el('q-options').classList.remove('hidden');
   el('feedback').classList.add('hidden');
   el('feedback').classList.remove('correct', 'wrong', 'grace');
@@ -731,7 +739,6 @@ function usePowerup(type) {
 // The verse's words are shuffled into a pool; the player taps them in order.
 // Tapping a placed word returns it to the pool. Completing the line commits.
 function renderWordOrder(q) {
-  renderStakeRow(q); // hides itself for word-order
   const wrap = el('q-options');
   wrap.innerHTML = '';
   wrap.classList.remove('count-2');
@@ -798,65 +805,99 @@ function commitWordOrder(q, line, pool) {
   commitAnswer(0, isCorrect ? 0 : -1, null);
 }
 
-// ---------- Answering (single-step: pick a stake inline, then answer) ----------
-// The stake used to open a full-screen blurred modal on EVERY question — two
-// modal transitions per question, and the stake fed only `session.pot`, which was
-// then discarded. The stake row is now inline and sticky across questions, so a
-// question costs one tap to answer instead of a tap, a modal and a confirm.
+// ---------- Answering (tap an option, then stake it in the popup) ----------
+// The stake row used to sit inline above the options, which cost a tap before
+// the player had even decided — and on a small screen it pushed the options
+// below the fold. Confidence is asked once the answer is chosen, in a popup
+// over the question, and picking a multiplier commits: still two taps, but the
+// second one is the one that carries the meaning.
 let _pending = null;   // re-entrancy guard so a double-tap can't answer twice
 let selectedBid = BIDS[0]; // remembered across questions (default 1× Safe)
 
-function renderStakeRow(q) {
-  const wrap = el('stake-row');
-  if (!wrap) return;
-  // Word order has no options to stake against — it's all-or-nothing.
-  if (q.type === 'wordorder') { wrap.classList.add('hidden'); return; }
-  wrap.classList.remove('hidden');
-  wrap.innerHTML = '<span class="stake-row-label">How sure?</span>';
-  const opts = document.createElement('div');
-  opts.className = 'stake-row-opts';
-  BIDS.forEach((bid) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'stake-pill' + (bid.mult === selectedBid.mult ? ' active' : '');
-    btn.dataset.mult = String(bid.mult);
-    btn.setAttribute('aria-pressed', bid.mult === selectedBid.mult ? 'true' : 'false');
-    btn.innerHTML = `<span class="stake-pill-mult">${bid.mult}×</span><span class="stake-pill-label">${bid.label}</span>`;
-    btn.addEventListener('click', () => {
-      selectedBid = bid;
-      opts.querySelectorAll('.stake-pill').forEach((b) => {
-        const on = Number(b.dataset.mult) === bid.mult;
-        b.classList.toggle('active', on);
-        b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      });
-      updateStakeHint();
-    });
-    opts.appendChild(btn);
-  });
-  wrap.appendChild(opts);
-  const hint = document.createElement('div');
-  hint.className = 'stake-row-hint';
-  hint.id = 'stake-row-hint';
-  wrap.appendChild(hint);
-  updateStakeHint();
-}
-
-function updateStakeHint() {
-  const hint = el('stake-row-hint');
-  if (!hint) return;
-  const p = BASE_POINTS * selectedBid.mult;
-  hint.textContent = `Correct +${p} · Wrong −${p}`;
-}
-
 function onAnswer(displayIdx) {
   if (!timeRunning) return;
-  if (_pending) return; // already committing
-  _pending = true;
+  if (_pending !== null) return; // stake popup is already open for this question
   const q = currentQ;
-  const chosenOrig = q._displayOrder[displayIdx];
+  // The clock stops the moment an option is chosen — deliberating over the
+  // stake must not cost the time that was budgeted for reading the question.
   stopTimer();
-  commitAnswer(displayIdx, chosenOrig, selectedBid);
+  renderPowerups(); // power-ups grey out while the stake is being set
+  openStakeModal(displayIdx, q);
+}
+
+// The confidence popup: opened by choosing an option, closed by staking it
+// (which answers) or by backing out (which returns the clock and the question).
+function openStakeModal(displayIdx, q) {
+  _pending = displayIdx;
+  document.getElementById('stake-modal-backdrop')?.remove();
+
+  const chosenText = q.options[q._displayOrder[displayIdx]];
+  const buttons = el('q-options').querySelectorAll('.option');
+  buttons.forEach((b) => {
+    b.classList.toggle('pending', Number(b.dataset.display) === displayIdx);
+  });
+
+  const backdrop = document.createElement('div');
+  backdrop.id = 'stake-modal-backdrop';
+  backdrop.className = 'feedback-modal-backdrop stake-modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="stake-card" role="dialog" aria-modal="true" aria-labelledby="stake-head">
+      <div class="stake-head" id="stake-head">How sure?</div>
+      <div class="stake-chosen">“${escapeHtml(chosenText)}”</div>
+      <div class="stake-options" id="stake-options"></div>
+      <div class="stake-preview" id="stake-preview"></div>
+      <div class="stake-actions">
+        <button type="button" class="ghost" id="stake-back">‹ Change answer</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+
+  const opts = backdrop.querySelector('#stake-options');
+  BIDS.forEach((bid) => {
+    const p = BASE_POINTS * bid.mult;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'stake-opt' + (bid.mult === selectedBid.mult ? ' active' : '');
+    btn.dataset.mult = String(bid.mult);
+    btn.innerHTML = `<span class="stake-mult">${bid.mult}× ${bid.label}</span>` +
+                    `<span class="stake-pts">+${p} · −${p}</span>`;
+    btn.addEventListener('click', () => commitStake(bid, displayIdx));
+    opts.appendChild(btn);
+  });
+  backdrop.querySelector('#stake-preview').textContent =
+    'A near-miss keeps half (Grace).';
+
+  backdrop.querySelector('#stake-back').addEventListener('click', closeStakeModal);
+  // Tapping the dimmed area behind the card backs out too, the way a sheet does.
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeStakeModal(); });
+  backdrop.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeStakeModal(); });
+
+  revealModal(backdrop.querySelector('.stake-card'));
+  // Land focus on the stake the player last used, so a keyboard or switch user
+  // arrives already on the default rather than at the top of the dialog.
+  (opts.querySelector('.stake-opt.active') || opts.firstElementChild)?.focus();
+}
+
+function commitStake(bid, displayIdx) {
+  if (_pending === null) return;
+  selectedBid = bid;
   _pending = null;
+  document.getElementById('stake-modal-backdrop')?.remove();
+  const q = currentQ;
+  el('q-options').querySelectorAll('.option').forEach((b) => b.classList.remove('pending'));
+  commitAnswer(displayIdx, q._displayOrder[displayIdx], bid);
+}
+
+// Back out of the stake: the answer is un-chosen and the clock picks up exactly
+// where it stopped, so backing out is free but not a way to farm extra time.
+function closeStakeModal() {
+  if (_pending === null) return;
+  _pending = null;
+  document.getElementById('stake-modal-backdrop')?.remove();
+  el('q-options').querySelectorAll('.option').forEach((b) => b.classList.remove('pending'));
+  if (currentQ && timeLeft > 0) resumeCountdown();
+  renderPowerups();
 }
 
 function commitAnswer(displayIdx, chosenOrig, bid) {
@@ -864,7 +905,6 @@ function commitAnswer(displayIdx, chosenOrig, bid) {
   const qWrap = el('q-options');
   const buttons = qWrap.querySelectorAll('.option');
 
-  el('stake-row')?.querySelectorAll('.stake-pill').forEach((b) => { b.disabled = true; });
   const res = resolveAnswer(q, chosenOrig, bid);
   const isCorrect = res.outcome === 'correct';
   const isGrace = res.outcome === 'near-miss';
@@ -1065,12 +1105,21 @@ function refsOf(q) {
   if (Array.isArray(q.verses)) for (const v of q.verses) if (v.passage) r.push(v.passage);
   return r.join(' · ');
 }
+// Question option text is authored data, not markup — escape it before it is
+// interpolated into a template (the stake popup quotes the chosen answer).
+function escapeHtml(text) {
+  return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 function highlightQuotedSafe(text) {
   let h = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  // curly quotes — keep the curly glyphs, wrap inner in orange
+  // Normalise straight quotes to curly FIRST, then wrap once. Wrapping in two
+  // passes meant the straight-quote pass matched the quotes inside the
+  // class="q-quote" attribute the curly pass had just inserted, printing the
+  // span markup into the prompt — every curly-quoted question read as
+  // `“q-quote”>All scripture is given by…`.
+  h = h.replace(/"([^"]+?)"/g, '\u201C$1\u201D');
   h = h.replace(/\u201C([^\u201D]+?)\u201D/g, '\u201C<span class="q-quote">$1</span>\u201D');
-  // straight double quotes — convert to curly + wrap
-  h = h.replace(/"([^"]+?)"/g, '\u201C<span class="q-quote">$1</span>\u201D');
   return h;
 }
 
@@ -1409,6 +1458,7 @@ el('btn-exit').addEventListener('click', () => {
   // Clear any modal/pending state so quitting mid-question can't leave a stale
   // backdrop over the home screen or a stuck _pending lock.
   document.getElementById('feedback-modal-backdrop')?.remove();
+  document.getElementById('stake-modal-backdrop')?.remove();
   _pending = null;
   // Half a climb still counts as having climbed — the unlock gate should never
   // be able to strand a player who tried.
@@ -1680,7 +1730,7 @@ function showTutorial() {
       target: '#hud-score',
       place: 'below',
       h3: 'Confidence × Multiplier',
-      p: 'After you answer, set your <strong>Confidence</strong> from 1× Safe up to 5× Certain. A <strong>correct</strong> answer multiplies your points, but a <strong>wrong</strong> one costs that same amount — press on in faith, and near-misses keep half (Grace).',
+      p: 'Choosing an option asks <strong>how sure</strong> you are, from 1× Safe up to 5× Preach It. A <strong>correct</strong> answer multiplies your points, but a <strong>wrong</strong> one costs that same amount — press on in faith, and near-misses keep half (Grace).',
     },
   ];
 
