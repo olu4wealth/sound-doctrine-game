@@ -845,6 +845,10 @@ button:disabled { cursor: default; opacity: .55; }
 .missed-verses ul { list-style: none; }
 .missed-verses li { margin-bottom: 8px; font-size: .92rem; color: var(--ink-soft); line-height: 1.5; }
 .missed-verses li strong { color: var(--gold-deep); }
+.missed-cat {
+  font-size: .72rem; font-weight: 800; color: var(--ink-soft);
+  font-style: italic; margin-left: 2px;
+}
 .missed-tag {
   display: inline-block; vertical-align: 1px;
   font-size: .66rem; font-weight: 900; letter-spacing: .3px; text-transform: uppercase;
@@ -854,7 +858,8 @@ button:disabled { cursor: default; opacity: .55; }
 
 .report-rx { margin-top: 18px; background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); }
 .report-rx h3 { color: var(--ink); margin-bottom: 8px; }
-.report-rx ul { padding-left: 18px; color: var(--ink-soft); }
+.report-rx ol { padding-left: 20px; color: var(--ink-soft); }
+.report-rx ol li::marker { color: var(--gold-deep); font-weight: 900; }
 .report-rx li { margin-bottom: 6px; }
 
 /* ---------- Daily ---------- */

@@ -394,6 +394,15 @@ function subjectCategory(subject) {
   return CATEGORY_MAP[subject] || subject;
 }
 
+// Display-only. An unmapped subject falls through to the bank's own lowercase
+// tag, so a report could read "Start here: obedience to powers." next to
+// "Start here: Bishops & deacons." This capitalises for display without
+// touching the grouping key, which several lookups still match on.
+export function categoryLabel(category) {
+  const c = String(category || '');
+  return c ? c.charAt(0).toUpperCase() + c.slice(1) : c;
+}
+
 // bank: full bank (used to resolve subjects to passages for the Rx)
 export function buildChargeReport(session, bank) {
   const answered = session.questions || [];
@@ -436,19 +445,30 @@ export function buildChargeReport(session, bank) {
   const strongest = subjects.filter((r) => r.acc >= 0.5).slice(0, 3);
   const weakest = subjects.filter((r) => r.acc < 0.5).slice(-3).reverse();
 
-  // Study prescription ("how to do better") per weak subject
-  const rx = weakest.map((w) => {
-    const refs = [...(w.refs || [])].join(', ');
-    let instruction;
-    if (w.acc === 0) {
-      instruction = `Your weakest area was <strong>${w.key}</strong> — start there. Read <em>${refs}</em> and pray through it; the next climb will test it again.`;
-    } else if (w.acc < 0.5) {
-      instruction = `<strong>${w.key}</strong> is where you stumbled. Re-read <em>${refs}</em> slowly; the doctrine is worth the hour.`;
-    } else {
-      instruction = `You were close on <strong>${w.key}</strong>. Read <em>${refs}</em> once more — a re-climb should lock it in.`;
-    }
+  // Study prescription ("how to do better"): an ordered plan, weakest first.
+  // Every line used to open "Your weakest area was X — start there", which
+  // cannot be true of three subjects at once, and each one re-listed passages
+  // the report already prints in full under "Verses to revisit". The plan ranks
+  // the subjects and says what to do; the verses stay in the list that owns
+  // them, tagged with the subject so a step points somewhere findable.
+  // (`weakest` is already filtered to acc < 0.5, so the old third branch — the
+  // "you were close" one for acc >= 0.5 — was unreachable.)
+  const rx = weakest.map((w, i) => {
+    const step = ['Start here', 'Then', 'After that'][Math.min(i, 2)];
+    const diagnosis = w.acc === 0
+      ? 'Nothing landed.'
+      : 'You stumbled more than you stood.';
+    // Vary the action by rank as well, or three steps read as one sentence
+    // pasted three times.
+    const action = [
+      'Read its tagged verses above slowly and pray through them before you climb again.',
+      'Its verses are tagged above too — give them the same hour.',
+      'Finish on its verses above; the next climb will ask again.',
+    ][Math.min(i, 2)];
+    const instruction = `<strong>${step}: ${categoryLabel(w.key)}.</strong> ${diagnosis} ${action}`;
     return {
       subject: w.key,
+      rank: i + 1,
       refs: [...(w.refs || [])],
       instruction,
     };
@@ -467,7 +487,8 @@ export function buildChargeReport(session, bank) {
     };
   }
   const missedVerses = answered.filter((q) => !q._correct).map((q) => ({
-    id: q.id, book: q.book, chapter: q.chapter, subject: q.subject,
+    id: q.id, book: q.book, chapter: q.chapter,
+    subject: q.subject, category: subjectCategory(q.subject),
     passage: referencesOf(q).join(' · '),
     text: q.verseText || (Array.isArray(q.verses) ? q.verses.map((v) => v.verseText).join(' ') : ''),
   }));
@@ -598,6 +619,59 @@ export function shareGrid(answers, size = 10) {
   for (let i = 0; i < cells.length; i += 5) lines.push(cells.slice(i, i + 5).join(''));
   return lines.join('\n');
 }
+
+// ---------- Share quip ----------
+// A shared result used to be a title, a block of glyphs and a score — nothing
+// that told a reader what the game was or gave them a reason to open it. Every
+// line riffs on a verse from the three books the game actually covers, so the
+// share carries the flavour of the thing it is advertising.
+export const SHARE_QUIPS = [
+  {
+    min: 1, // a perfect run
+    lines: [
+      '\u201CI have fought a good fight, I have finished my course.\u201D Not one dropped. \uD83C\uDFC6',
+      '\u201CStudy to shew thyself approved.\u201D Consider thyself approved. \u2705',
+    ],
+  },
+  {
+    min: 0.8,
+    lines: [
+      '\u201CRightly dividing the word of truth\u201D \u2014 give or take a verse. \uD83D\uDCD6',
+      '\u201CLet no man despise thy youth\u201D \u2014 nor this scoreline. \uD83D\uDCAA',
+    ],
+  },
+  {
+    min: 0.5,
+    lines: [
+      '\u201CEver learning\u201D \u2014 and getting there, slowly. \uD83D\uDD6F\uFE0F',
+      'The spirit is willing, but the recall is weak. \uD83D\uDE05',
+    ],
+  },
+  {
+    min: 0.2,
+    lines: [
+      '\u201CAvoid foolish questions,\u201D says Titus 3:9. I answered every one of them. \uD83D\uDE2C',
+      '\u201CGreat is the mystery\u201D \u2014 still a mystery to me. \uD83E\uDD37',
+    ],
+  },
+  {
+    min: 0,
+    lines: [
+      '\u201CEver learning, and never able to come to the knowledge.\u201D Emphasis on ever. \uD83D\uDCDA',
+      '\u201CLet no man despise thy youth.\u201D My score, though \u2014 fair game. \uD83E\uDEE0',
+    ],
+  },
+];
+
+// Pick the quip band for an accuracy (0..1). `pick` chooses within the band and
+// defaults to random, so two shares of the same score do not read identically.
+export function shareQuip(acc, pick = Math.random) {
+  const a = Math.max(0, Math.min(1, Number(acc) || 0));
+  const band = SHARE_QUIPS.find((b) => a >= b.min) || SHARE_QUIPS[SHARE_QUIPS.length - 1];
+  const i = Math.min(band.lines.length - 1, Math.floor(pick() * band.lines.length));
+  return band.lines[i];
+}
+
 // ---------- Retest (Charge Report → "Take the retest") ----------
 // The report already names exactly what you missed and which passages to read.
 // This turns that into a run: every question you just got wrong, then more from

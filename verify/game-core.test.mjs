@@ -12,7 +12,7 @@ import {
   runBankedPoints, rankOf, rankProgress, retestRun, masterySummary,
   chapterMastery, msUntilDailyReset, formatCountdown, timeForQuestion,
   readingSeconds, STREAK_MILESTONE, LADDER_LENGTH, RANK_MIN_ANSWERED, MAX_QUESTION_TIME,
-  sortLeaderboard, shareGrid, tierOf, MAX_STREAK, DAILY_LENGTH,
+  sortLeaderboard, shareGrid, shareQuip, SHARE_QUIPS, tierOf, MAX_STREAK, DAILY_LENGTH,
   timeForTier, bonusTime, MAX_HEARTS, candleMeltFraction, CANDLE_MORNING_HOUR,
   QUESTION_TIME,
 } from '../game-core.js';
@@ -218,6 +218,20 @@ check('countdown formats minutes near the end', formatCountdown(90 * 1000) === '
 const grid = shareGrid(['correct','correct','near-miss','wrong','correct','correct','correct','correct','correct','correct']);
 check('share grid 10 cells', grid.split('\n').length === 2);
 check('share grid uses ⩝⩞⩟', grid.includes('⩝') && grid.includes('⩟'));
+
+// 7b. Share quip — a shared score needs a line worth reading
+const allLines = SHARE_QUIPS.flatMap((b) => b.lines);
+check('every accuracy lands on a quip',
+  [0, 0.1, 0.2, 0.45, 0.5, 0.79, 0.8, 0.99, 1].every((a) => allLines.includes(shareQuip(a, () => 0))));
+check('a perfect run gets the perfect-run band',
+  SHARE_QUIPS[0].lines.includes(shareQuip(1, () => 0)));
+check('a wipeout does not get the perfect-run band',
+  !SHARE_QUIPS[0].lines.includes(shareQuip(0, () => 0)));
+check('the band varies its line', shareQuip(1, () => 0) !== shareQuip(1, () => 0.99));
+check('quips stay inside the books the game covers',
+  allLines.every((l) => !/Genesis|Romans|Psalm/.test(l)));
+check('out-of-range accuracy is clamped, not crashed',
+  typeof shareQuip(NaN, () => 0) === 'string' && typeof shareQuip(5, () => 0) === 'string');
 
 // 8. Tier metadata
 check('row of tiers present', [1,2,3,4,5,6,7].every((t) => bank.some((q) => tierOf(q) === t)));

@@ -7,7 +7,7 @@ import {
   STREAK_MILESTONE, LADDER_LENGTH, DAILY_LENGTH, timeForQuestion,
   dailyCharge, dailySeed, resolveAnswer, tierOf,
   pickNextLadder, applyDailyVisit, buildChargeReport, leaderboardScore,
-  sortLeaderboard, shareGrid, shuffle, mulberry32, hashCode,
+  sortLeaderboard, shareGrid, shareQuip, categoryLabel, shuffle, mulberry32, hashCode,
   heroRun, HEROES,
   rankOf, rankProgress, retestRun, masterySummary,
   msUntilDailyReset, formatCountdown,
@@ -1240,8 +1240,9 @@ function renderReport(report, session) {
     if (mv.length) {
       const items = mv.map((v) => {
         const inWeakest = weakName && `${v.book} ${v.chapter}` === weakName;
-        const tag = inWeakest ? ' <span class="missed-tag">weakest chapter</span>' : '';
-        return `<li><strong>${v.passage}</strong>${tag} — &ldquo;${v.text}&rdquo;</li>`;
+        const weakTag = inWeakest ? ' <span class="missed-tag">weakest chapter</span>' : '';
+        const catTag = v.category ? ` <span class="missed-cat">${categoryLabel(v.category)}</span>` : '';
+        return `<li><strong>${v.passage}</strong>${catTag}${weakTag} — &ldquo;${v.text}&rdquo;</li>`;
       }).join('');
       missedEl.innerHTML = `<h3>Verses to revisit (${mv.length})</h3><ul>${items}</ul>`;
     } else {
@@ -1250,7 +1251,7 @@ function renderReport(report, session) {
   }
 
   const rx = report.prescriptions.length
-    ? `<h3>How to do better</h3><ul>${report.prescriptions.map((p) => `<li>${p.instruction}</li>`).join('')}</ul>`
+    ? `<h3>How to do better</h3><ol>${report.prescriptions.map((p) => `<li>${p.instruction}</li>`).join('')}</ol>`
     : '<h3>How to do better</h3><p>Keep climbing — seek the harder rungs.</p>';
   el('report-rx').innerHTML = rx;
 
@@ -1288,7 +1289,17 @@ function renderReport(report, session) {
 // ---------- Item 3: share card ----------
 // `shareGrid` was fully implemented and unit-tested but `#btn-daily-share` was
 // hidden on entry and never un-hidden, so no player could ever reach it.
-function shareText() {
+// Wherever this copy happens to be served from — GitHub Pages, a local server,
+// somebody's fork. A share with no link is a dead end.
+function gameUrl() {
+  try {
+    const { origin, pathname } = window.location;
+    if (!origin || origin === 'null') return '';
+    return (origin + pathname).replace(/index\.html$/, '');
+  } catch { return ''; }
+}
+
+function shareText(withUrl = true) {
   const out = (session?.questions || []).map((q) => q._outcome);
   const total = out.length || 1;
   const right = (session?.questions || []).filter((q) => q._correct).length;
@@ -1299,15 +1310,30 @@ function shareText() {
     : lastRunMode === 'hero'
       ? `Sound Doctrine — ${HEROES[session?.hero]?.name || 'Hero'} run`
       : 'Sound Doctrine — Ladder climb';
-  const streak = player.streak ? `\n🔥 ${player.streak}-day streak` : '';
-  return `${title}\n${grid}\n${right}/${total} · ${pct}%${streak}`;
+  const streak = player.streak ? ` · 🔥 ${player.streak}-day streak` : '';
+  // A scoreline alone told a reader nothing about the game and gave them no way
+  // in. The quip carries the flavour, the invitation carries the link.
+  const quip = shareQuip(right / total);
+  const url = gameUrl();
+  const invite = lastRunMode === 'daily'
+    ? 'Same questions for everyone today — your turn:'
+    : 'Think you know 1 & 2 Timothy and Titus better?';
+  // The share sheet renders a `url` field better than a pasted link, so it is
+  // held back there and folded in only for the clipboard fallback.
+  const tail = (withUrl && url) ? `\n${invite}\n${url}` : `\n${invite}`;
+  return `${title}\n${grid}\n${right}/${total} · ${pct}%${streak}\n\n${quip}${tail}`;
 }
 
 async function doShare(btn) {
-  const text = shareText();
+  const url = gameUrl();
   try {
-    if (navigator.share) { await navigator.share({ text }); return; }
-    await navigator.clipboard.writeText(text);
+    if (navigator.share) {
+      await navigator.share(url
+        ? { title: 'Sound Doctrine', text: shareText(false), url }
+        : { title: 'Sound Doctrine', text: shareText(false) });
+      return;
+    }
+    await navigator.clipboard.writeText(shareText(true));
     const old = btn.textContent;
     btn.textContent = 'Copied!';
     setTimeout(() => { btn.textContent = old; }, 1600);

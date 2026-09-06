@@ -517,6 +517,44 @@ test.describe('retention surfaces', () => {
     await expect(again).toHaveText(n ? new RegExp(`Retest the ${n} you missed`) : /Climb Again/i);
   });
 
+  test('the study plan ranks the weak areas instead of repeating one line', async ({ page }) => {
+    await playToReport(page);
+    const steps = await page.locator('#report-rx li').allInnerTexts();
+    if (!steps.length) return; // a clean run has nothing to prescribe
+    // "Your weakest area was X — start there" used to open every line, which
+    // cannot be true of three subjects at once.
+    expect(steps.filter((t) => /start here/i.test(t))).toHaveLength(1);
+    expect(new Set(steps).size).toBe(steps.length);
+    // The plan points at the verse list rather than reprinting its passages.
+    for (const t of steps) expect(t).not.toMatch(/\d+:\d+/);
+    // Every step names a category that is actually tagged on a missed verse.
+    const tags = await page.locator('#report-missed .missed-cat').allInnerTexts();
+    const named = steps.map((t) => (t.match(/^(?:Start here|Then|After that): (.+?)\./) || [])[1]);
+    for (const n of named) if (n) expect(tags).toContain(n);
+  });
+
+  test('a shared result carries a scriptural hook and a way in', async ({ page }) => {
+    await playToReport(page);
+    const shared = await page.evaluate(() => new Promise((resolve) => {
+      let captured = null;
+      Object.defineProperty(navigator, 'share', {
+        configurable: true,
+        value: (d) => { captured = { text: d.text, url: d.url }; return Promise.resolve(); },
+      });
+      document.getElementById('btn-report-share').click();
+      setTimeout(() => resolve(captured), 400);
+    }));
+    expect(shared).not.toBeNull();
+    // Still a scoreline...
+    expect(shared.text).toMatch(/Sound Doctrine/);
+    expect(shared.text).toMatch(/\d+\/\d+ · \d+%/);
+    expect(shared.text).toMatch(/[⩝⩞⩟]/);
+    // ...now with a quip and an invitation, and a link to open the game.
+    expect(shared.text).toMatch(/[\u201C\u201D]|spirit is willing/);
+    expect(shared.text).toMatch(/Think you know|your turn/i);
+    expect(shared.url).toMatch(/^https?:\/\//);
+  });
+
   test('the report play-again button starts a run', async ({ page }) => {
     await playToReport(page);
     await page.locator('#btn-again').click();
