@@ -302,6 +302,11 @@
 
   </div>
 
+  <!-- GSAP + Flip, vendored (see vendor/README.md). Loaded as classic scripts so
+       they resolve before app.js's module graph, and precached by sw.js for offline. -->
+  <script src="vendor/gsap.min.js"></script>
+  <script src="vendor/Flip.min.js"></script>
+  <script>window.gsap && window.Flip && window.gsap.registerPlugin(window.Flip);</script>
   <script type="module" src="app.js"></script>
 </body>
 </html>

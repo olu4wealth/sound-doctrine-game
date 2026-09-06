@@ -51,12 +51,20 @@ body.textured {
 body { min-height: 100dvh; line-height: 1.5; }
 
 .app {
+  position: relative;
   max-width: 560px;
   margin: 0 auto;
   padding: 20px 16px calc(32px + env(safe-area-inset-bottom));
 }
 
 .screen { animation: fade .22s ease; }
+/* Crossfade support: GSAP pulls the departing screen out of flow while it fades. */
+.screen-leaving {
+  position: absolute;
+  left: 16px; right: 16px; top: 20px;
+  pointer-events: none;
+  animation: none;
+}
 .hidden { display: none !important; }
 @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes flicker {
@@ -1085,6 +1093,15 @@ button:disabled { cursor: default; opacity: .55; }
 @media (prefers-reduced-motion: reduce) {
   .flame, .sparkle-p, .mascot-reaction { animation: none !important; }
   .sparkle-host { display: none !important; }
+  /* The targeted rules above left ten animations running, three of them infinite
+     (crestGlow, spotPulse, timer-shake). This catches the rest. GSAP tweens are
+     JS and are NOT covered by any of this — motion.js gates those itself. */
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 

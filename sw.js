@@ -4,7 +4,7 @@
 // static shell (it only changes when CACHE_VERSION is bumped), network-first for the
 // question bank so content fixes reach players without waiting for a new shell.
 
-const CACHE_VERSION = 'sd-v1';
+const CACHE_VERSION = 'sd-v2';
 const SHELL = [
   './',
   './index.html',
@@ -13,6 +13,9 @@ const SHELL = [
   './game-core.js',
   './storage.js',
   './sound.js',
+  './motion.js',
+  './vendor/gsap.min.js',
+  './vendor/Flip.min.js',
   './manifest.webmanifest',
   './assets/icon-crest.png',   // favicon + apple-touch-icon path (no <picture> there)
   './assets/icon-crest.webp',

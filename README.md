@@ -78,6 +78,22 @@ and the retention surfaces: the inline stake row, the fixed-length climb, rank
 progress, the daily reset countdown, the Mastery screen, share/retest, and
 service-worker registration.
 
+## Motion
+
+Animation lives in `motion.js`, built on **GSAP 3.15** (vendored in `vendor/`, not
+installed — see `vendor/README.md`). Six behaviours run through it: score/pot
+counters that tally rather than teleport, staggered reveals on the Charge Report
+and Mastery screen, the answer→feedback timeline, interruptible flame pulses,
+screen crossfades, and Flip-animated leaderboard reordering.
+
+GSAP tweens are JavaScript, so the CSS `@media (prefers-reduced-motion: reduce)`
+block does **not** cover them. Every helper in `motion.js` checks `motionOK()`
+itself and applies the final value instantly instead — that check is the file's
+contract, and it is covered by e2e tests.
+
+Cost: ~96 KB raw / ~37 KB gzipped for `gsap.min.js` + `Flip.min.js`, both
+precached by the service worker so offline play still works.
+
 ## Deploying
 
 Any static host works (GitHub Pages, Cloudflare Pages, Netlify). No build step, no

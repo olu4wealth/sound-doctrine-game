@@ -383,3 +383,138 @@ test.describe('retention surfaces', () => {
     expect(ok).toBeTruthy();
   });
 });
+
+// ---------------------------------------------------------------------------
+// GSAP motion layer (motion.js + vendor/gsap.min.js)
+// ---------------------------------------------------------------------------
+test.describe('motion', () => {
+  test('GSAP and Flip load from vendor/ and Flip is registered', async ({ page }) => {
+    await dismissTutorial(page);
+    await page.goto('/');
+    const info = await page.evaluate(() => ({
+      version: window.gsap?.version,
+      flipRegistered: !!window.gsap?.core?.globals?.().Flip,
+    }));
+    expect(info.version).toBeTruthy();
+    expect(info.flipRegistered).toBe(true);
+  });
+
+  test('score chip counts up instead of jumping to the final value', async ({ page }) => {
+    await beginClimb(page);
+    await page.locator('.option').first().click();
+    // Sampled mid-tween the chip should not already equal its settled value.
+    await page.waitForTimeout(100);
+    const mid = await page.locator('#hud-score').textContent();
+    await page.waitForTimeout(1000);
+    const settled = await page.locator('#hud-score').textContent();
+    expect(settled).not.toBe('⚜ 0');
+    expect(mid).not.toBe(settled);
+  });
+
+  test('rank bar and mastery bars grow from zero', async ({ page }) => {
+    await dismissTutorial(page);
+    await page.addInitScript(() => localStorage.setItem('sd.player.v1', JSON.stringify({
+      name: 'Climber', ladderPlayed: true, hearts: 5, oilVials: 3, lifetimePot: 8400,
+      totalAnswered: 120, totalCorrect: 96, streak: 4, createdAt: Date.now(),
+      lifetimeChapters: { '1 Timothy 1': { asked: 6, correct: 6 } },
+    })));
+    await page.goto('/');
+    await expect(page.locator('#rank-pts')).toContainText('8,400');
+    await page.waitForTimeout(1200);
+    const w = await page.locator('#rank-bar-fill').evaluate((e) => parseFloat(getComputedStyle(e).width));
+    expect(w).toBeGreaterThan(0);
+  });
+
+  test('mastery grid staggers in and settles fully visible', async ({ page }) => {
+    await seedPlayer(page);
+    await dismissTutorial(page);
+    await page.goto('/');
+    await page.locator('#btn-mastery').click();
+    await expect(page.locator('.mastery-cell')).toHaveCount(13);
+    await page.waitForTimeout(1500);
+    // Every cell must end up painted — a stagger that strands opacity:0 is a bug.
+    const opacities = await page.locator('.mastery-cell').evaluateAll(
+      (els) => els.map((e) => parseFloat(getComputedStyle(e).opacity)));
+    expect(Math.min(...opacities)).toBeGreaterThan(0.5);
+  });
+
+  test('leaderboard rows carry Flip ids', async ({ page }) => {
+    await dismissTutorial(page);
+    await page.addInitScript(() => {
+      localStorage.setItem('sd.player.v1', JSON.stringify({ name: 'Climber', ladderPlayed: true, createdAt: Date.now() }));
+      localStorage.setItem('sd.leaderboard.v1', JSON.stringify([
+        { name: 'Aquila', lifetimePot: 12000, totalAnswered: 200, totalCorrect: 180, streak: 6 },
+        { name: 'Climber', lifetimePot: 8400, totalAnswered: 120, totalCorrect: 96, streak: 4 },
+      ]));
+    });
+    await page.goto('/');
+    await page.locator('#btn-lb2').click();
+    await expect(page.locator('[data-flip-id]')).toHaveCount(2);
+  });
+
+  test('screen transitions leave no stranded screen visible', async ({ page }) => {
+    await seedPlayer(page);
+    await dismissTutorial(page);
+    await page.goto('/');
+    await page.locator('#btn-mastery').click();
+    await page.waitForTimeout(700);
+    await expect(page.locator('#screen-home')).toBeHidden();
+    await page.locator('#btn-mastery-back').click();
+    await page.waitForTimeout(700);
+    await expect(page.locator('#screen-mastery')).toBeHidden();
+    await expect(page.locator('#screen-home')).toBeVisible();
+    // The crossfade helper must always clean up after itself.
+    await expect(page.locator('.screen-leaving')).toHaveCount(0);
+  });
+});
+
+// NOTE: `test.use({ reducedMotion })` silently no-ops under this config (the
+// project-level `use: {...devices[...]}` spread wins), so these emulate the media
+// query explicitly on the page. Verified: test.use -> matches=false,
+// page.emulateMedia -> matches=true.
+test.describe('motion — reduced', () => {
+  async function reducedPage(page, player) {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.addInitScript(() => localStorage.setItem('sd_tutorial_done', '1'));
+    if (player) await page.addInitScript(([p]) => localStorage.setItem('sd.player.v1', p), [JSON.stringify(player)]);
+    await page.goto('/');
+    expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
+  }
+
+  test('reduced motion applies final values instantly, never skipping state', async ({ page }) => {
+    await reducedPage(page, {
+      name: 'RM', ladderPlayed: true, hearts: 5, oilVials: 3, lifetimePot: 8400,
+      totalAnswered: 120, totalCorrect: 96, streak: 4, createdAt: Date.now(),
+      lifetimeChapters: { '1 Timothy 1': { asked: 6, correct: 6 } },
+    });
+    // No tween: the value is final on the first frame we can observe.
+    await expect(page.locator('#rank-pts')).toContainText('8,400');
+    await expect
+      .poll(() => page.locator('#rank-bar-fill').evaluate((e) => parseFloat(getComputedStyle(e).width)))
+      .toBeGreaterThan(0);
+    // Navigation still works without the crossfade.
+    await page.locator('#btn-mastery').click();
+    await expect(page.locator('#screen-mastery')).toBeVisible();
+    await expect(page.locator('.mastery-cell')).toHaveCount(13);
+    await page.locator('#btn-mastery-back').click();
+    await expect(page.locator('#screen-home')).toBeVisible();
+    await expect(page.locator('#screen-mastery')).toBeHidden();
+  });
+
+  test('reduced motion disables CSS keyframe animations too', async ({ page }) => {
+    await reducedPage(page);
+    const dur = await page.locator('.crest').evaluate((e) => getComputedStyle(e).animationDuration);
+    expect(parseFloat(dur)).toBeLessThan(0.01);
+  });
+
+  test('GSAP tweens are skipped, not merely shortened', async ({ page }) => {
+    await reducedPage(page, { name: 'RM', ladderPlayed: true, hearts: 5, oilVials: 3, createdAt: Date.now() });
+    await page.getByRole('button', { name: /begin a climb/i }).click();
+    await expect(page.locator('#q-options')).toBeVisible();
+    await page.locator('.option').first().click();
+    // The score lands on its final value with no counting animation in between.
+    const first = await page.locator('#hud-score').textContent();
+    await page.waitForTimeout(500);
+    expect(await page.locator('#hud-score').textContent()).toBe(first);
+  });
+});

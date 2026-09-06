@@ -16,6 +16,10 @@ import {
   loadPlayer, savePlayer, recordCharge, updateLeaderboard,
   loadLeaderboard, syncLeaderboardToSupabase, signOutPlayer, deletePlayer,
 } from './storage.js';
+import {
+  countUp, seedCounter, staggerIn, growBar, answerFeedback, revealModal,
+  pulseFlame, nudge, swapScreens, flipList, motionOK,
+} from './motion.js';
 import { sfx, music } from './sound.js';
 
 const el = (id) => document.getElementById(id);
@@ -76,8 +80,16 @@ async function loadBank() {
 }
 
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach((s) => s.classList.add('hidden'));
-  el(id).classList.remove('hidden');
+  const incoming = el(id);
+  if (!incoming) return;
+  // Find what's currently up so it can be animated OUT. Toggling `.hidden` alone
+  // meant screens hard-cut away with no exit — the app read as a slideshow.
+  const outgoing = [...document.querySelectorAll('.screen')]
+    .find((sc) => sc !== incoming && !sc.classList.contains('hidden'));
+  document.querySelectorAll('.screen').forEach((sc) => {
+    if (sc !== incoming && sc !== outgoing) sc.classList.add('hidden');
+  });
+  swapScreens(outgoing, incoming);
   // Painted title scene (generated art) spans the viewport only while the title screen is up.
   document.body.classList.toggle('on-start', id === 'screen-start');
   // Background music is for devotion, not for starting — pause on the title/HOW screens
@@ -127,7 +139,7 @@ function renderRankProgress() {
       ? `Next: ${rp.next} (${Math.max(0, rp.span - rp.into).toLocaleString()} to go)`
       : 'Highest rank reached';
   }
-  if (fill) fill.style.width = `${Math.round(rp.pct * 100)}%`;
+  growBar(fill, rp.pct * 100, { delay: 0.1 });
 }
 
 // Daily Quest rolls over at 00:00 UTC (dailySeed keys off UTC). Showing the
@@ -512,7 +524,8 @@ function updateProgress() {
 // Live score chip: the running pot is always visible in the HUD.
 function renderScore() {
   const chip = el('hud-score');
-  if (chip) chip.textContent = `⚜ ${session?.pot || 0}`;
+  // Was `chip.textContent = ...` — a 900-point answer looked the same as a 100.
+  if (chip) countUp(chip, session?.pot || 0, { format: (v) => `\u269C ${Math.round(v)}` });
 }
 
 function nextQuestion() {
@@ -597,6 +610,8 @@ function showFeedbackModal(head, verse, ref, kind, isLast, correctText) {
   if (hostEl && hostMascot) {
     hostEl.innerHTML = `<div class="mascot-reaction mascot-${mood}" id="mascot-reaction"><img src="${src}" alt="${name} ${mood}" /><span>${name}</span></div>`;
   }
+  // Card rises, mascot lands just after it — replaces the CSS `pop` hard-cut.
+  revealModal(backdrop.querySelector('.feedback-modal-card'), hostEl?.firstElementChild);
   
   document.getElementById('feedback-modal-continue').onclick = () => {
     // Reaction is already visible; just dismiss together with the modal
@@ -634,15 +649,9 @@ function pulseFlameBright() {
   const flame = el('flame');
   if (!flame) return;
   const streak = session.streak || 1;
-  const scale = 1.15 + Math.min(0.5, (streak - 1) * 0.12); // higher streak = bigger flare
-  flame.classList.add('bright');
-  flame.style.setProperty('--flare-scale', String(scale));
-  setTimeout(() => {
-    const meter = el('flame-meter');
-    if (meter) meter.style.setProperty('--flame-intensity', '1');
-    flame.style.removeProperty('--flare-scale');
-    flame.classList.remove('bright');
-  }, 450);
+  // Bigger flare the longer the streak. GSAP's overwrite makes the newest pulse
+  // win, so rapid answers can no longer strand the flame mid-flare.
+  pulseFlame(flame, 1.15 + Math.min(0.5, (streak - 1) * 0.12));
 }
 
 // ---------- Oil-vial power-ups ----------
@@ -676,8 +685,7 @@ function usePowerup(type) {
   if (!timeRunning || !currentQ) return; // only during a live question
   if (!spendOil()) {
     // No oil — flash the buttons to signal.
-    document.querySelectorAll('.powerup').forEach((b) => b.classList.add('no-oil'));
-    setTimeout(() => document.querySelectorAll('.powerup').forEach((b) => b.classList.remove('no-oil')), 500);
+    nudge(document.querySelectorAll('.powerup'));
     return;
   }
   if (type === 'skip') {
@@ -914,13 +922,18 @@ function commitAnswer(displayIdx, chosenOrig, bid) {
   renderHearts();
   syncPlayerHearts();
 
+  let correctBtn = null, chosenBtn = null;
   buttons.forEach((btn) => {
     btn.disabled = true;
     const oi = q._displayOrder[Number(btn.dataset.display)];
-    if (oi === q.correctIndex) btn.classList.add('correct');
+    if (oi === q.correctIndex) { btn.classList.add('correct'); correctBtn = btn; }
+    if (Number(btn.dataset.display) === displayIdx) chosenBtn = btn;
     if (Number(btn.dataset.display) === displayIdx && !isCorrect && !isGrace) btn.classList.add('wrong');
     if (Number(btn.dataset.display) === displayIdx && isGrace) btn.classList.add('grace');
   });
+  // Let the answer register on the options before the modal covers them. The
+  // timeline is killable, so tapping Continue immediately can't desync it.
+  answerFeedback({ correctBtn, chosenBtn, wrong: !isCorrect && !isGrace });
 
   const gained = bonusTime(res.outcome);
   let head = '';
@@ -1184,6 +1197,17 @@ function renderReport(report, session) {
     : '<h3>How to do better</h3><p>Keep climbing — seek the harder rungs.</p>';
   el('report-rx').innerHTML = rx;
 
+  // Item 2: the report used to paint every section at once. Cascade them, count
+  // the headline numbers up, and grow the mastery bars from zero.
+  staggerIn(document.querySelectorAll('#screen-report > *'), { stagger: 0.06, y: 16 });
+  const statNums = [...document.querySelectorAll('#report-summary .stat-num')];
+  if (statNums[1]) countUp(statNums[1], Math.round(report.acc * 100), { format: (v) => `${Math.round(v)}%` });
+  if (statNums[2]) countUp(statNums[2], report.pot, { format: (v) => `\u269C ${Math.round(v)}` });
+  document.querySelectorAll('#report-mastery .r-fill').forEach((bar, i) => {
+    const pct = parseFloat(bar.style.width) || 0;
+    growBar(bar, pct, { delay: 0.15 + i * 0.04 });
+  });
+
   // Share is available on every finished run, not just the (previously
   // unreachable) Daily Quest path.
   const share = el('btn-report-share');
@@ -1240,7 +1264,7 @@ function renderMastery() {
     <div class="mastery-sub">${sum.started} of ${sum.total} begun · ${(player.totalAnswered || 0).toLocaleString()} questions answered all-time</div>
     <div class="mastery-track"><div class="mastery-track-fill" style="width:${Math.round((sum.mastered / sum.total) * 100)}%"></div></div>`;
 
-  el('mastery-grid').innerHTML = sum.rows.map((r) => {
+  const masteryRows = sum.rows.map((r) => {
     const pct = Math.round(r.acc * 100);
     const cls = r.mastered ? 'mastered' : r.started ? 'started' : 'untouched';
     const label = r.started ? `${pct}%` : '—';
@@ -1251,26 +1275,40 @@ function renderMastery() {
       <div class="mastery-cell-meta"><b>${label}</b> <span>${meta}</span></div>
     </div>`;
   }).join('');
+  el('mastery-grid').innerHTML = masteryRows;
+  // Item 2: cascade the 13 chapters rather than painting them all at once.
+  staggerIn(document.querySelectorAll('#mastery-grid .mastery-cell'), { stagger: 0.035, y: 12 });
+  growBar(el('mastery-summary')?.querySelector('.mastery-track-fill'),
+    (sum.mastered / sum.total) * 100, { delay: 0.1 });
+  document.querySelectorAll('#mastery-grid .mastery-cell-bar span').forEach((bar, i) => {
+    const pct = parseFloat(bar.style.width) || 0;
+    growBar(bar, pct, { delay: 0.1 + i * 0.03 });
+  });
 }
 
 // ---------- Leaderboard ----------
 function renderLeaderboard() {
-  const rows = sortLeaderboard(loadLeaderboard());
-  el('lb-list').innerHTML = rows.length
-    ? rows.map((r, i) => {
-        const isMe = r.name === player.name;
-        // Display the SAME score the sort used — these used to be two different
-        // formulas, so row #1 could show a lower number than row #2.
-        const s = leaderboardScore(r);
-        const acc = Math.round((s.acc || 0) * 100);
-        return `<div class="lb-row ${isMe ? 'me' : ''}">
-          <span class="lb-rank">${s.provisional ? '–' : i + 1}</span>
-          <span class="lb-name">${esc(r.name)}${s.provisional ? '<span class="lb-prov">provisional</span>' : ''}</span>
-          <span class="lb-stats">🔥 ${r.streak || 0} · ${acc}% · ${(r.totalAnswered || 0)} answered</span>
-          <span class="lb-score">⚜ ${s.score.toLocaleString()}</span>
-        </div>`;
-      }).join('')
-    : '<p class="empty">No charges yet. Be the first onto the board.</p>';
+  // Item 6: Flip records where every row sits, lets the re-render reorder them,
+  // then animates each row from its old box to its new one — so climbing the
+  // board is something you watch happen instead of a silent re-paint.
+  flipList(el('lb-list'), () => {
+    const rows = sortLeaderboard(loadLeaderboard());
+    el('lb-list').innerHTML = rows.length
+      ? rows.map((r, i) => {
+          const isMe = r.name === player.name;
+          // Display the SAME score the sort used — these used to be two different
+          // formulas, so row #1 could show a lower number than row #2.
+          const s = leaderboardScore(r);
+          const acc = Math.round((s.acc || 0) * 100);
+          return `<div class="lb-row ${isMe ? 'me' : ''}" data-flip-id="${esc(r.name)}">
+            <span class="lb-rank">${s.provisional ? '\u2013' : i + 1}</span>
+            <span class="lb-name">${esc(r.name)}${s.provisional ? '<span class="lb-prov">provisional</span>' : ''}</span>
+            <span class="lb-stats">\uD83D\uDD25 ${r.streak || 0} \u00B7 ${acc}% \u00B7 ${(r.totalAnswered || 0)} answered</span>
+            <span class="lb-score">\u269C ${s.score.toLocaleString()}</span>
+          </div>`;
+        }).join('')
+      : '<p class="empty">No charges yet. Be the first onto the board.</p>';
+  });
 }
 
 // ---------- Profile ----------
