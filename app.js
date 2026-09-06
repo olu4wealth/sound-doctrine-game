@@ -109,14 +109,14 @@ function renderHearts() {
   el('hud-hearts').textContent = '❤️'.repeat(n) + '🤍'.repeat(MAX_HEARTS - n);
 }
 
-// ---------- Candle ----------
-// The home menu now shows a single static, self-contained candle.webp (no CSS
-// flame, no melt system, no sprite states). renderCandle only fills the personal
-// header data — the flame card itself is static markup in index.html.
+// ---------- Candle / home ----------
+// The menu no longer shows a candle sprite; renderCandle fills the personal
+// header (name, rank, streak) and the daily/ladder widgets.
 function renderCandle() {
   el('home-name').textContent = player.name || '—';
   el('home-rank').textContent = rankOf(rankPoints());
-  el('streak-num').textContent = player.streak || 0;
+  const streakEl = el('streak-num');
+  if (streakEl) streakEl.textContent = player.streak || 0;
   renderRankProgress();
   renderDailyCountdown();
 
@@ -1142,9 +1142,6 @@ function finishCommon() {
   session.streakAfter = player.streak || 0;
   session.hitMilestone = streakBefore < STREAK_MILESTONE && (player.streak || 0) >= STREAK_MILESTONE;
   player = recordCharge(player, session);
-  if (!session.daily && session.questions.length >= 8) {
-    player.oilVials = (player.oilVials || 0) + 1;
-  }
   setHearts(hearts()); // keep hearts as-is (persist below)
   savePlayer(player);
 
@@ -1168,7 +1165,7 @@ function renderReport(report, session) {
   el('report-summary').innerHTML = `
     <div class="stat"><span class="stat-num">${report.correct}/${report.answered}</span><span class="stat-label">correct</span></div>
     <div class="stat"><span class="stat-num">${Math.round(report.acc * 100)}%</span><span class="stat-label">accuracy</span></div>
-    <div class="stat"><span class="stat-num">⚜ ${report.pot}</span><span class="stat-label">pot</span></div>
+    <div class="stat"><span class="stat-num">⚜ ${report.pot}</span><span class="stat-label">score</span></div>
     <div class="stat"><span class="stat-num">${fmtTime(Math.round((session.bestTimeMs || 0) / 1000))}</span><span class="stat-label">solve time</span></div>
   `;
 
@@ -1386,11 +1383,10 @@ function renderProfile() {
       <div class="p-name">${esc(player.name)}</div>
       <div class="p-rank">${rankOf(rankPoints())}</div>
       <div class="p-grid">
-        <div><b>⚜ ${rankPoints().toLocaleString()}</b> lifetime pot</div>
+        <div><b>⚜ ${rankPoints().toLocaleString()}</b> lifetime score</div>
         <div><b>${player.streak || 0}</b> day streak</div>
         <div><b>${player.bestStreak || 0}</b> best streak</div>
         <div><b>${sum.mastered}/${sum.total}</b> chapters mastered</div>
-        <div><b>${player.oilVials || 0}</b> oil vials</div>
         <div><b>${player.totalAnswered || 0}</b> answered</div>
         <div><b>${player.totalCorrect || 0}</b> correct</div>
         <div><b>T${player.entryTier || 1}</b> entry tier</div>
@@ -1746,7 +1742,7 @@ function showTutorial() {
       target: '#powerups',
       place: 'below',
       h3: 'Power-ups',
-      p: 'Spend an <strong>oil vial (🫗)</strong> to <strong>Skip</strong> a question, cut it to <strong>50/50</strong>, or <strong>Freeze</strong> the clock for 5 seconds.',
+      p: 'Each lifeline is a <strong>one-time</strong> use per game: <strong>Skip</strong> a question, cut it to <strong>50/50</strong>, or <strong>Freeze</strong> the clock for 5 seconds.',
     },
     {
       target: '#hud-score',

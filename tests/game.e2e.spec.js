@@ -11,7 +11,7 @@ async function dismissTutorial(page) {
 async function seedPlayer(page, name = 'Playwright Tester') {
   await page.addInitScript(([n]) => {
     localStorage.setItem('sd.player.v1', JSON.stringify({
-      name: n, ladderPlayed: true, hearts: 5, oilVials: 3, createdAt: Date.now(),
+      name: n, ladderPlayed: true, hearts: 5, createdAt: Date.now(),
     }));
   }, [name]);
 }
@@ -66,18 +66,15 @@ test.describe('core player journey', () => {
 
     await expect(page.locator('#screen-home')).toBeVisible();
     await expect(page.locator('#home-name')).toHaveText('Playwright Tester');
-    // candle + streak are present (oil-vial pill removed from the menu)
-    await expect(page.locator('#candle-stage')).toBeVisible();
-    await expect(page.locator('#streak-num')).toBeVisible();
-    // the menu shows a single static animated candle.webp (no melt / no CSS flame)
-    await expect(page.locator('#candle-webp')).toBeVisible();
-    await expect(page.locator('#candle-webp')).toHaveJSProperty('complete', true);
+    // home shows the ladder + rank; the menu candle was removed
+    await expect(page.locator('#ladder')).toBeVisible();
+    await expect(page.locator('#btn-climb')).toBeVisible();
     // the two full-body mascots continue from the title screen onto the menu
     await expect(page.locator('.home-hero-left')).toBeVisible();
     await expect(page.locator('.home-hero-right')).toBeVisible();
-    // oil-vial icon removed + "(of 7)" trimmed from the streak label
+    // oil-vial icon removed + no leftover streak label
     await expect(page.locator('#oil-count')).toHaveCount(0);
-    await expect(page.locator('.streak-label')).not.toContainText('(of 7)');
+    await expect(page.locator('#candle-webp')).toHaveCount(0);
   });
 
   test('HUD shows hearts, progress, and a countdown ring', async ({ page }) => {
@@ -128,7 +125,7 @@ test.describe('core player journey', () => {
     await expect(page.locator('#screen-home')).toBeVisible();
     await page.getByRole('button', { name: /begin a climb/i }).click();
 
-    // Up to 3 lifeline uses (one per oil vial).
+    // Lifelines are once-per-game, so each question can use 50/50 at most once.
     for (let attempt = 0; attempt < 3; attempt++) {
       const pu = page.locator('#pu-5050');
       if (await pu.isDisabled().catch(() => false)) break;
@@ -415,7 +412,7 @@ test.describe('retention surfaces', () => {
     await expect(page.locator('#stake-modal-backdrop')).toHaveCount(0);
     await page.locator('.option').first().click();
     await expect(page.locator('#stake-modal-backdrop')).toBeVisible();
-    await expect(page.locator('.stake-opt')).toHaveCount(5);
+    await expect(page.locator('.stake-opt')).toHaveCount(3);
     // The chosen option is held pending behind the popup, and the popup quotes it.
     await expect(page.locator('.option.pending')).toHaveCount(1);
     await expect(page.locator('.stake-chosen')).not.toBeEmpty();
@@ -605,7 +602,7 @@ test.describe('motion', () => {
   test('rank bar and mastery bars grow from zero', async ({ page }) => {
     await dismissTutorial(page);
     await page.addInitScript(() => localStorage.setItem('sd.player.v1', JSON.stringify({
-      name: 'Climber', ladderPlayed: true, hearts: 5, oilVials: 3, lifetimePot: 8400,
+      name: 'Climber', ladderPlayed: true, hearts: 5, lifetimePot: 8400,
       totalAnswered: 120, totalCorrect: 96, streak: 4, createdAt: Date.now(),
       lifetimeChapters: { '1 Timothy 1': { asked: 6, correct: 6 } },
     })));
@@ -674,7 +671,7 @@ test.describe('motion — reduced', () => {
 
   test('reduced motion applies final values instantly, never skipping state', async ({ page }) => {
     await reducedPage(page, {
-      name: 'RM', ladderPlayed: true, hearts: 5, oilVials: 3, lifetimePot: 8400,
+      name: 'RM', ladderPlayed: true, hearts: 5, lifetimePot: 8400,
       totalAnswered: 120, totalCorrect: 96, streak: 4, createdAt: Date.now(),
       lifetimeChapters: { '1 Timothy 1': { asked: 6, correct: 6 } },
     });
@@ -699,7 +696,7 @@ test.describe('motion — reduced', () => {
   });
 
   test('GSAP tweens are skipped, not merely shortened', async ({ page }) => {
-    await reducedPage(page, { name: 'RM', ladderPlayed: true, hearts: 5, oilVials: 3, createdAt: Date.now() });
+    await reducedPage(page, { name: 'RM', ladderPlayed: true, hearts: 5, createdAt: Date.now() });
     await page.getByRole('button', { name: /begin a climb/i }).click();
     await expect(page.locator('#q-options')).toBeVisible();
     await page.locator('.option').first().click();
