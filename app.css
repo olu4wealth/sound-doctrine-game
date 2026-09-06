@@ -610,6 +610,10 @@ button:disabled { cursor: default; opacity: .55; }
   display: flex; align-items: center; justify-content: center;
   animation: fade .25s ease;
   padding: 20px;
+  /* Safety net: if the card still outgrows the viewport (large font settings,
+     landscape), it stays reachable instead of stranding Continue below the fold. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .feedback-modal-card {
   background: #fff;
@@ -621,6 +625,10 @@ button:disabled { cursor: default; opacity: .55; }
   box-shadow: 0 20px 50px rgba(120, 90, 30, .30);
   animation: pop .28s ease;
   position: relative;
+  /* Auto margins centre the card when it fits and pin it to the padding edge when
+     it does not, so a tall card never has its top cut off unreachably. */
+  margin: auto;
+  flex: 0 0 auto;
 }
 .mascot-reaction-host {
   height: 56px;
@@ -645,7 +653,12 @@ button:disabled { cursor: default; opacity: .55; }
   padding: 10px 12px; margin-bottom: 14px; font-size: .98rem; color: #2c7a00;
 }
 .feedback-answer strong { font-weight: 900; }
+/* The verse is the only part of this card whose height varies wildly, so it takes
+   the scroll rather than letting the card push Continue past the fold. */
 .feedback-modal-verse {
+  max-height: 40vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   font-size: 1.08rem; line-height: 1.65; color: var(--ink);
   margin-bottom: 10px; padding: 12px 14px 12px 16px;
   border-left: 4px solid var(--gold); border-radius: 0 12px 12px 0;
