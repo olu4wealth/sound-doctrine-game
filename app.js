@@ -1212,30 +1212,38 @@ function renderReport(report, session) {
     }
   }
 
-  // Weakest chapter card — now lists every missed verse so the player
-  // sees the exact passages (KJV) they need to re-read across all books.
+  // Weakest chapter — the diagnosis only. It used to print `report.missedVerses`,
+  // the whole run's misses, which made it a verbatim copy of the block below it
+  // AND misattributed those verses: "2 Timothy 2 — 0/2 correct — 5 verses to
+  // revisit" listed misses from 1 Timothy 6 and 2 Timothy 4. The verses live in
+  // one place now, and this card counts only its own chapter's misses.
   const weakestEl = el('report-weakest');
   if (weakestEl) {
     const wc = report.weakestChapter;
     if (wc) {
       const pct = Math.round((wc.acc || 0) * 100);
-      const allMissed = report.missedVerses || [];
-      const versesList = allMissed.length
-        ? `<ul class="weakest-verses">${allMissed.map((v) => `<li><strong>${v.passage || wc.name}</strong> — &ldquo;${v.text}&rdquo;</li>`).join('')}</ul>`
-        : (wc.verses && wc.verses.length
-          ? `<ul class="weakest-verses">${wc.verses.map((v) => `<li><strong>${v.passage || wc.name}</strong> — &ldquo;${v.text}&rdquo;</li>`).join('')}</ul>`
-          : '');
-      weakestEl.innerHTML = `<h3>SPECIFIC WEAKNESS: ${wc.name}</h3><div class="weakest-meta">Accuracy: ${pct}% (${Math.round(wc.acc * wc.asked)}/${wc.asked} correct) — ${allMissed.length} verse${allMissed.length===1?'':'s'} to revisit</div>${versesList}`;
+      const right = Math.round((wc.acc || 0) * wc.asked);
+      const own = (wc.verses || []).length;
+      const toRevisit = own ? ` — ${own} verse${own === 1 ? '' : 's'} to revisit below` : '';
+      weakestEl.innerHTML = `<h3>Weakest chapter: ${wc.name}</h3>` +
+        `<div class="weakest-meta">${pct}% — ${right} of ${wc.asked} correct${toRevisit}</div>`;
     } else {
       weakestEl.innerHTML = '';
     }
   }
-  // Dedicated full missed-verses block (same data, always visible when there are misses)
+  // The one list of misses. Verses from the weakest chapter are tagged, so the
+  // card above connects to them without repeating them.
   const missedEl = el('report-missed');
   if (missedEl) {
     const mv = report.missedVerses || [];
+    const weakName = report.weakestChapter?.name;
     if (mv.length) {
-      missedEl.innerHTML = `<h3>Verses you missed (${mv.length})</h3><ul>${mv.map((v) => `<li><strong>${v.passage}</strong> — &ldquo;${v.text}&rdquo;</li>`).join('')}</ul>`;
+      const items = mv.map((v) => {
+        const inWeakest = weakName && `${v.book} ${v.chapter}` === weakName;
+        const tag = inWeakest ? ' <span class="missed-tag">weakest chapter</span>' : '';
+        return `<li><strong>${v.passage}</strong>${tag} — &ldquo;${v.text}&rdquo;</li>`;
+      }).join('');
+      missedEl.innerHTML = `<h3>Verses to revisit (${mv.length})</h3><ul>${items}</ul>`;
     } else {
       missedEl.innerHTML = report.answered ? '<p class="empty">No missed verses — perfect run!</p>' : '';
     }
@@ -1264,12 +1272,16 @@ function renderReport(report, session) {
     share.classList.remove('hidden');
     share.textContent = lastRunMode === 'daily' ? 'Share your Daily Quest' : 'Share your result';
   }
-  // Retest only makes sense when there was something to get wrong.
-  const retest = el('btn-retest');
-  if (retest) {
+  // "Take the retest" and "Climb again" sat one above the other and read as the
+  // same action. They are one button now: with misses banked it replays them,
+  // otherwise it starts a fresh climb. A fresh climb after a retestable run is
+  // still a tap away through the candle home.
+  const again = el('btn-again');
+  if (again) {
     const missed = report.missedVerses?.length || 0;
-    retest.classList.toggle('hidden', missed === 0);
-    retest.textContent = missed ? `Take the retest (${missed} missed)` : 'Take the retest';
+    again.textContent = missed
+      ? `Retest the ${missed} you missed`
+      : 'Climb Again';
   }
 }
 
@@ -1430,7 +1442,12 @@ document.querySelectorAll('.hero-card[data-hero]').forEach((btn) => {
 el('pu-skip').addEventListener('click', () => usePowerup('skip'));
 el('pu-5050').addEventListener('click', () => usePowerup('5050'));
 el('pu-freeze').addEventListener('click', () => usePowerup('freeze'));
-el('btn-again').addEventListener('click', startClimb);
+// A retest is the more useful climb when the last run left misses behind; with
+// nothing to retest, startRetest falls through to a fresh climb anyway.
+el('btn-again').addEventListener('click', () => {
+  if (lastReport?.missedVerses?.length) startRetest();
+  else startClimb();
+});
 el('btn-home').addEventListener('click', () => { renderCandle(); showScreen('screen-home'); });
 el('btn-profile-head').addEventListener('click', () => { renderProfile(); showScreen('screen-profile'); });
 el('btn-profile-back').addEventListener('click', () => showScreen('screen-home'));
@@ -1475,7 +1492,6 @@ el('btn-report-share')?.addEventListener('click', (e) => doShare(e.currentTarget
 el('btn-daily-share')?.addEventListener('click', (e) => doShare(e.currentTarget));
 
 // Retest — replays exactly what you just missed
-el('btn-retest')?.addEventListener('click', startRetest);
 
 // Lifetime mastery
 el('btn-mastery')?.addEventListener('click', () => { renderMastery(); showScreen('screen-mastery'); });

@@ -465,19 +465,63 @@ test.describe('retention surfaces', () => {
     await expect(page.locator('#mastery-summary')).toContainText(/of 13 chapters mastered/i);
   });
 
-  test('report offers share and retest', async ({ page }) => {
+  // Play a whole climb, taking the last option each time so misses pile up.
+  async function playToReport(page) {
     await beginClimb(page);
-    for (let i = 0; i < 10; i++) {
-      const opt = page.locator('.option:not([disabled])').first();
+    for (let i = 0; i < 12; i++) {
       const chips = page.locator('#wordpool .word-chip:not([disabled])');
       if (await chips.count()) { while (await chips.count()) await chips.first().click(); }
-      else if (await opt.count()) { await opt.click(); await stake(page); }
+      else {
+        const opts = page.locator('.option:not([disabled])');
+        if (!(await opts.count())) break;
+        await opts.last().click();
+        await stake(page);
+      }
       const cont = page.locator('#feedback-modal-continue');
       if (await cont.count()) { await cont.click(); await page.waitForTimeout(300); }
       if (await page.locator('#screen-report').isVisible()) break;
     }
     await expect(page.locator('#screen-report')).toBeVisible({ timeout: 20_000 });
+  }
+
+  test('report offers share and retest', async ({ page }) => {
+    await playToReport(page);
     await expect(page.locator('#btn-report-share')).toBeVisible();
+  });
+
+  test('the report states each miss once, under one play-again button', async ({ page }) => {
+    await playToReport(page);
+
+    // The weakest-chapter card is a diagnosis: it names the chapter and its
+    // accuracy, and leaves the verses to the list below. It used to reprint
+    // the whole run's misses, duplicating that list word for word.
+    const weakest = page.locator('#report-weakest');
+    if (await weakest.locator('h3').count()) {
+      await expect(weakest.locator('li')).toHaveCount(0);
+      expect(await weakest.innerText()).not.toContain('\u201C'); // no verse quotes
+    }
+
+    // Every missed verse is listed exactly once, in one place.
+    const missed = page.locator('#report-missed li');
+    const n = await missed.count();
+    if (n) {
+      const refs = await page.locator('#report-missed li strong').allInnerTexts();
+      expect(new Set(refs).size).toBe(refs.length);
+      await expect(page.locator('#report-missed h3')).toContainText(`(${n})`);
+    }
+
+    // One "play again" CTA, not a retest button stacked on a climb button.
+    await expect(page.locator('#btn-retest')).toHaveCount(0);
+    const again = page.locator('#btn-again');
+    await expect(again).toBeVisible();
+    await expect(again).toHaveText(n ? new RegExp(`Retest the ${n} you missed`) : /Climb Again/i);
+  });
+
+  test('the report play-again button starts a run', async ({ page }) => {
+    await playToReport(page);
+    await page.locator('#btn-again').click();
+    await expect(page.locator('#screen-game')).toBeVisible();
+    await expect(page.locator('#hud-progress')).toContainText('/10');
   });
 
   test('service worker registers', async ({ page }) => {

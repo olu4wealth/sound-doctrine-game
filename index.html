@@ -203,9 +203,11 @@
       <div class="weakest-card" id="report-weakest"></div>
       <div class="missed-verses" id="report-missed"></div>
       <div class="report-rx" id="report-rx"></div>
-      <button class="primary" id="btn-retest">Take the retest</button>
+      <!-- One "play again" CTA: a retest IS a climb, seeded with the verses you
+           missed, so the two buttons read as the same action. Its label and
+           handler follow whether this run left anything to retest. -->
+      <button class="primary" id="btn-again">Climb Again</button>
       <button class="ghost hidden" id="btn-report-share">Share your result</button>
-      <button class="ghost" id="btn-again">Climb Again</button>
       <button class="ghost" id="btn-home">Back to the Candle</button>
     </section>
 

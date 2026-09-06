@@ -838,18 +838,19 @@ button:disabled { cursor: default; opacity: .55; }
 
 .weakest-card { margin: 0 0 14px; background: #fff0f0; border: 2px solid #ffcccc; border-radius: 16px; padding: 16px; }
 .weakest-card h3 { font-size: .85rem; letter-spacing: .5px; text-transform: uppercase; color: #a61e1e; margin-bottom: 6px; }
-.weakest-meta { font-size: .88rem; font-weight: 800; color: var(--ink); margin-bottom: 8px; }
-.weakest-verses { list-style: none; }
-.weakest-verses li { margin-bottom: 6px; font-size: .9rem; color: var(--ink-soft); }
+.weakest-meta { font-size: .88rem; font-weight: 800; color: var(--ink); }
 
 .missed-verses { margin: 0 0 14px; background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); }
 .missed-verses h3 { font-size: .9rem; letter-spacing: .5px; text-transform: uppercase; color: var(--ink); margin-bottom: 8px; }
 .missed-verses ul { list-style: none; }
 .missed-verses li { margin-bottom: 8px; font-size: .92rem; color: var(--ink-soft); line-height: 1.5; }
 .missed-verses li strong { color: var(--gold-deep); }
-
-.retest-row { display: flex; gap: 10px; margin: 14px 0; flex-wrap: wrap; }
-.retest-row .primary, .retest-row .ghost { flex: 1; min-width: 140px; }
+.missed-tag {
+  display: inline-block; vertical-align: 1px;
+  font-size: .66rem; font-weight: 900; letter-spacing: .3px; text-transform: uppercase;
+  color: #a61e1e; background: #fff0f0; border: 1px solid #ffcccc;
+  border-radius: 999px; padding: 1px 7px; margin-left: 4px;
+}
 
 .report-rx { margin-top: 18px; background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); }
 .report-rx h3 { color: var(--ink); margin-bottom: 8px; }
