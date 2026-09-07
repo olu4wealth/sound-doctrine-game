@@ -4,7 +4,7 @@
 // static shell (it only changes when CACHE_VERSION is bumped), network-first for the
 // question bank so content fixes reach players without waiting for a new shell.
 
-const CACHE_VERSION = 'sd-v2';
+const CACHE_VERSION = 'sd-v3';
 const SHELL = [
   './',
   './index.html',

@@ -54,7 +54,12 @@ body { min-height: 100dvh; line-height: 1.5; }
   position: relative;
   max-width: 560px;
   margin: 0 auto;
-  padding: 20px 16px calc(32px + env(safe-area-inset-bottom));
+  /* Kept in variables because the climb screen pins itself to the viewport and
+     has to subtract this padding from 100dvh (see body.in-game). */
+  --app-pad-top: 20px;
+  --app-pad-x: 16px;
+  --app-pad-bottom: calc(32px + env(safe-area-inset-bottom));
+  padding: var(--app-pad-top) var(--app-pad-x) var(--app-pad-bottom);
 }
 
 .screen { animation: fade .22s ease; }
@@ -347,10 +352,72 @@ button:disabled { cursor: default; opacity: .55; }
 .home-cta { display: flex; flex-direction: column; gap: 12px; }
 .home-cta .primary, .home-cta .ghost { width: 100%; }
 
+/* ---------- The climb: one question, one screen ----------
+   A question used to run past the fold, so the hearts, timer and progress bar
+   scrolled away exactly when they mattered. While a climb is up the app is
+   pinned to the viewport and the question card is the only elastic part.
+   A long question tightens first (the .fit-* steps set by fitQuestion()) and
+   only scrolls — inside the options list alone — once it is at its floor. */
+body.in-game { overflow: hidden; }
+body.in-game .app { height: 100dvh; }
+
+#screen-game {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  /* Auto-fit knobs. The breakpoints below set the comfortable size for the
+     screen; fitQuestion() steps them down only as far as a question needs. */
+  --prompt-size: 1.2rem;
+  --opt-size: 1rem;
+  --opt-pad-y: 14px;
+  --opt-gap: 10px;
+  --card-gap: 16px;
+}
+#screen-game > .hud,
+#screen-game > .progress,
+#screen-game > .flame-meter,
+#screen-game > .powerups { flex: 0 0 auto; }
+/* Hugs its content like before, but may shrink rather than push past the fold. */
+#screen-game > .question-card {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.question-card > .q-prompt { flex: 0 0 auto; }
+.question-card > .options {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+/* The list scrolls; the buttons in it keep their own height. Without this they
+   are squeezed as the card shrinks and their text is clipped inside them. */
+.question-card > .options > * { flex: 0 0 auto; }
+
+/* Three tightening steps, in order. Nothing here goes below a readable size —
+   past step 3 the options list takes a scrollbar instead. */
+#screen-game.fit-1 { --prompt-size: 1.05rem; --opt-size: .95rem; --opt-pad-y: 11px; --opt-gap: 8px; --card-gap: 12px; }
+#screen-game.fit-2 { --prompt-size: .98rem; --opt-size: .9rem; --opt-pad-y: 9px; --opt-gap: 7px; --card-gap: 10px; }
+#screen-game.fit-3 { --prompt-size: .92rem; --opt-size: .85rem; --opt-pad-y: 8px; --opt-gap: 6px; --card-gap: 8px; }
+#screen-game.fit-2 > .question-card,
+#screen-game.fit-3 > .question-card { padding: 14px; }
+/* At the deeper steps the chrome gives up its room too, before the list scrolls. */
+#screen-game.fit-3 > .progress { margin-bottom: 6px; }
+#screen-game.fit-3 > .flame-meter { margin: 0 0 4px; }
+#screen-game.fit-3 .flame { width: 20px; height: 30px; }
+#screen-game.fit-3 > .powerups { margin-bottom: 6px; }
+/* Tighter leading buys more than a smaller face does, and costs less to read. */
+#screen-game.fit-2 .option { line-height: 1.35; }
+#screen-game.fit-3 .option { line-height: 1.3; }
+#screen-game.fit-3 .q-prompt { line-height: 1.35; }
+
 /* ---------- HUD (Duolingo-style top bar) ---------- */
 .hud {
   display: flex; justify-content: space-between; align-items: center;
-  gap: 8px; margin-bottom: 10px;
+  gap: 8px; margin-bottom: 8px;
 }
 .hud-exit {
   width: 44px; height: 44px; margin: 0; padding: 0;
@@ -374,7 +441,7 @@ button:disabled { cursor: default; opacity: .55; }
 /* ---------- Live flame indicator (game screen) ---------- */
 .flame-meter {
   display: flex; justify-content: center; align-items: center;
-  margin: 6px 0 10px;
+  margin: 2px 0 6px;
   --flame-intensity: 1; /* 0 (out) .. 1 (full) — set by JS */
 }
 .flame {
@@ -448,14 +515,19 @@ button:disabled { cursor: default; opacity: .55; }
 @media (max-width: 420px) { .mascot-reaction img { width: 80px; height: 80px; } }
 
 /* Oil-vial power-ups — warm amber "glass vial" look to match the theme */
-.powerups { display: flex; gap: 8px; justify-content: center; margin: 2px 0 12px; flex-wrap: wrap; }
+/* One row, always. Wrapping the mascot onto a second line cost ~90px of a
+   phone's screen — the difference between a question fitting and not. */
+.powerups {
+  display: flex; gap: 8px; justify-content: center; align-items: center;
+  margin: 0 0 10px; flex-wrap: nowrap;
+}
 .powerup {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
   background: linear-gradient(180deg, #fffdf6, #fff4dc);
   border: 2px solid #e0a63a; border-radius: 14px;
   padding: 10px 16px; min-height: 44px; justify-content: center;
-  font-size: .9rem; font-weight: 900; color: #5a3a00;
-  cursor: pointer; margin-top: 0; width: auto;
+  font-size: .9rem; font-weight: 900; color: #5a3a00; white-space: nowrap;
+  cursor: pointer; margin-top: 0; width: auto; flex: 0 1 auto; min-width: 0;
   box-shadow: 0 2px 0 #d9a53a, inset 0 0 6px rgba(243, 180, 49, .18);
 }
 .powerup .pu-cost {
@@ -467,6 +539,31 @@ button:disabled { cursor: default; opacity: .55; }
 .powerup:hover:not(:disabled) { border-color: var(--gold-deep); background: #fff0d4; transform: translateY(-1px); }
 .powerup:disabled { opacity: .5; cursor: default; filter: grayscale(.4); }
 .powerup.no-oil { animation: shake .4s ease; border-color: var(--red); }
+
+/* Phones: the whole strip has to clear one row, mascot included. */
+@media (max-width: 480px) {
+  .powerup { padding: 8px 10px; font-size: .82rem; }
+  .powerup .pu-cost { min-width: 24px; height: 24px; font-size: .7rem; }
+  .mascot-idle { padding: 2px 4px; }
+  .mascot-idle img { width: 46px; height: 46px; outline-width: 2px; }
+  .mascot-idle span { font-size: .62rem; }
+}
+/* Short viewports (landscape phones): the decorative parts yield first. */
+@media (max-height: 620px) {
+  #screen-game > .flame-meter { margin: 0 0 4px; }
+  .flame { width: 20px; height: 30px; }
+  .mascot-idle img { width: 40px; height: 40px; }
+  .mascot-idle span { display: none; }
+}
+/* Very short (a phone held sideways): the flame goes — the HUD ring still
+   carries the countdown — and the vials sit on one compact line. */
+@media (max-height: 480px) {
+  #screen-game > .flame-meter { display: none; }
+  #screen-game > .powerups { margin-bottom: 6px; }
+  .powerup { flex-direction: row; gap: 5px; padding: 6px 10px; min-height: 36px; font-size: .78rem; }
+  .powerup .pu-cost { min-width: 20px; height: 20px; font-size: .66rem; }
+  .mascot-idle img { width: 34px; height: 34px; }
+}
 
 /* Sparkle burst particles (on correct / milestone) */
 .sparkle-host { position: fixed; inset: 0; pointer-events: none; z-index: 3000; overflow: hidden; }
@@ -485,7 +582,7 @@ button:disabled { cursor: default; opacity: .55; }
   100% { transform: skewX(3deg) scale(1.06) translateY(-2px); }
 }
 
-.progress { height: 12px; background: #e5e0d2; border-radius: 999px; overflow: hidden; margin-bottom: 18px; }
+.progress { height: 10px; background: #e5e0d2; border-radius: 999px; overflow: hidden; margin-bottom: 10px; }
 .progress-bar {
   height: 100%; width: 0;
   background: linear-gradient(90deg, var(--green), #8be04c);
@@ -500,7 +597,7 @@ button:disabled { cursor: default; opacity: .55; }
   padding: 20px;
   box-shadow: var(--shadow), 0 2px 0 #ece3d0;
 }
-.q-prompt { font-size: 1.2rem; line-height: 1.5; color: var(--ink); margin-bottom: 16px; font-weight: 700; }
+.q-prompt { font-size: var(--prompt-size); line-height: 1.45; color: var(--ink); margin-bottom: var(--card-gap); font-weight: 700; }
 
 .bid-row { display: flex; gap: 8px; margin-bottom: 16px; }
 .bid {
@@ -512,15 +609,15 @@ button:disabled { cursor: default; opacity: .55; }
 .bid .bid-mult { display: block; color: var(--gold-deep); font-size: .78rem; }
 .bid.active { background: #fff5e6; border-color: var(--gold-deep); color: var(--ink); }
 
-.options { display: flex; flex-direction: column; gap: 10px; }
+.options { display: flex; flex-direction: column; gap: var(--opt-gap); }
 .option {
   text-align: left;
   background: #fff;
   color: var(--ink);
   border: 2px solid var(--line);
   border-radius: 14px;
-  padding: 14px 16px;
-  font-size: 1rem;
+  padding: var(--opt-pad-y) 16px;
+  font-size: var(--opt-size);
   font-weight: 700;
   margin-top: 0;
   box-shadow: 0 2px 0 #ece3d0;
@@ -884,44 +981,57 @@ button:disabled { cursor: default; opacity: .55; }
 
 /* Very small phones (<360px) */
 @media (max-width: 360px) {
-  .app { padding: 14px 10px calc(26px + env(safe-area-inset-bottom)); }
+  .app { --app-pad-top: 12px; --app-pad-x: 10px; --app-pad-bottom: calc(20px + env(safe-area-inset-bottom)); }
   .question-card { padding: 14px; }
-  .q-prompt { font-size: 1rem; }
+  #screen-game { --prompt-size: 1rem; --opt-size: .94rem; --opt-pad-y: 12px; --card-gap: 12px; }
   .bid { font-size: .72rem; padding: 8px 4px; }
-  .option { padding: 12px; font-size: .94rem; }
-  .hud { gap: 8px; flex-wrap: wrap; row-gap: 6px; }
-  .hud-hearts { order: 3; flex-basis: 100%; font-size: .9rem; letter-spacing: 0; }
-  .hud-exit { width: 38px; height: 38px; font-size: .95rem; }
-  .hud-progress { font-size: .85rem; }
-.hud-score { padding: 4px 8px; font-size: .8rem; }
-  .hud-timer.timer-ring { width: 46px; height: 46px; }
-  .hud-timer.timer-ring .ring { width: 46px; height: 46px; }
-  .hud-timer.timer-ring .ring-label { font-size: .95rem; }
+  /* Hearts stay on the row with everything else: their own second row cost
+     28px of height, which is a line and a half of a question. */
+  .hud { gap: 6px; flex-wrap: nowrap; }
+  .hud-hearts { font-size: .85rem; letter-spacing: 0; min-width: 0; overflow: hidden; }
+  .hud-exit { width: 36px; height: 36px; font-size: .95rem; }
+  .hud-progress { font-size: .8rem; }
+  .hud-score { padding: 4px 7px; font-size: .78rem; }
+  .hud-oil { width: 32px; height: 32px; font-size: .78rem; }
+  .hud-timer.timer-ring { width: 44px; height: 44px; }
+  .hud-timer.timer-ring .ring { width: 44px; height: 44px; }
+  .hud-timer.timer-ring .ring-label { font-size: .9rem; }
   .title { font-size: 1.6rem; }
   .subtitle { font-size: .95rem; }
   .report-columns { grid-template-columns: 1fr; }
 }
 
+/* Tiny screens (<330px): five hearts genuinely will not share the row. */
+@media (max-width: 329px) {
+  .hud { flex-wrap: wrap; row-gap: 4px; }
+  .hud-hearts { order: 3; flex-basis: 100%; text-align: center; }
+}
+
 /* Small phones (361–420px) */
 @media (min-width: 361px) and (max-width: 420px) {
-  .app { padding: 16px 12px calc(30px + env(safe-area-inset-bottom)); }
+  .app { --app-pad-top: 14px; --app-pad-x: 12px; --app-pad-bottom: calc(22px + env(safe-area-inset-bottom)); }
   .question-card { padding: 16px; }
-  .q-prompt { font-size: 1.08rem; }
+  #screen-game { --prompt-size: 1.08rem; --opt-pad-y: 12px; --card-gap: 12px; }
   .bid { font-size: .78rem; }
-  .option { padding: 13px 14px 13px 44px; }
-  .hud { gap: 7px; }
-  .hud-exit { width: 40px; height: 40px; }
-  .hud-hearts { font-size: 1rem; letter-spacing: 0; }
-  .hud-timer.timer-ring { width: 50px; height: 50px; }
-  .hud-timer.timer-ring .ring { width: 50px; height: 50px; }
-  .hud-timer.timer-ring .ring-label { font-size: 1rem; }
+  .option { padding-left: 14px; padding-right: 14px; }
+  /* One row that actually fits: at 375px the old sizes came to 388px of HUD in
+     351px of room, which pushed the timer ring off the right edge. */
+  .hud { gap: 6px; }
+  .hud-exit { width: 38px; height: 38px; }
+  .hud-hearts { font-size: .9rem; letter-spacing: 0; min-width: 0; overflow: hidden; }
+  .hud-progress { font-size: .85rem; }
+  .hud-score { padding: 4px 8px; font-size: .8rem; }
+  .hud-oil { width: 34px; height: 34px; font-size: .8rem; }
+  .hud-timer.timer-ring { width: 46px; height: 46px; }
+  .hud-timer.timer-ring .ring { width: 46px; height: 46px; }
+  .hud-timer.timer-ring .ring-label { font-size: .95rem; }
 }
 
 /* Tablets (600–1023px): widen content, 2-col report */
 @media (min-width: 600px) and (max-width: 1023px) {
-  .app { max-width: 720px; padding: 24px 24px calc(40px + env(safe-area-inset-bottom)); }
+  .app { max-width: 720px; --app-pad-top: 24px; --app-pad-x: 24px; --app-pad-bottom: calc(40px + env(safe-area-inset-bottom)); }
   .question-card { padding: 28px; }
-  .q-prompt { font-size: 1.35rem; }
+  #screen-game { --prompt-size: 1.35rem; }
   .report-columns { grid-template-columns: repeat(2, 1fr); }
   .report-summary { grid-template-columns: repeat(4, 1fr); }
   .home-cta { flex-direction: row; }
@@ -929,12 +1039,11 @@ button:disabled { cursor: default; opacity: .55; }
 
 /* Large screens / desktop (>=1024px) */
 @media (min-width: 1024px) {
-  .app { max-width: 900px; padding: 32px 32px calc(48px + env(safe-area-inset-bottom)); }
+  .app { max-width: 900px; --app-pad-top: 32px; --app-pad-x: 32px; --app-pad-bottom: calc(48px + env(safe-area-inset-bottom)); }
   .question-card { padding: 32px; }
-  .q-prompt { font-size: 1.5rem; }
+  #screen-game { --prompt-size: 1.5rem; --opt-size: 1.1rem; --opt-pad-y: 18px; --opt-gap: 12px; }
   .report-columns { grid-template-columns: repeat(4, 1fr); }
   .report-summary { grid-template-columns: repeat(4, 1fr); gap: 20px; }
-  .option { padding: 18px 20px; font-size: 1.1rem; }
   .bid { font-size: .95rem; padding: 14px 8px; }
   .hud-hearts { font-size: 1.4rem; }
   .title { font-size: 2.4rem; }
@@ -1031,7 +1140,7 @@ button:disabled { cursor: default; opacity: .55; }
 .word-tools .ghost.small { width: auto; padding: 8px 18px; }
 
 /* True/False questions get the wide centered 2-option look */
-.options.count-2 .option { text-align: center; font-size: 1.08rem; padding: 16px 16px; }
+.options.count-2 .option { text-align: center; font-size: calc(var(--opt-size) + .08rem); padding: calc(var(--opt-pad-y) + 2px) 16px; }
 
 /* Title screen — painted background composition (activates when generated art exists).
    Phones: the portrait painting fills the column under a warm parchment veil.

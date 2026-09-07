@@ -305,6 +305,58 @@ test.describe('core player journey', () => {
   });
 });
 
+test.describe('a question fits one screen', () => {
+  // The screen swap fades the old screen out over its own frames; measure after.
+  async function settledOnQuestion(page) {
+    await beginClimb(page);
+    await expect(page.locator('.option').first()).toBeVisible();
+    await page.waitForTimeout(400);
+  }
+
+  test('the climb screen never scrolls, in either direction', async ({ page }) => {
+    await settledOnQuestion(page);
+    const m = await page.evaluate(() => {
+      window.scrollTo(5000, 5000); // try to scroll it; nothing should move
+      return {
+        inGame: document.body.classList.contains('in-game'),
+        y: window.scrollY,
+        x: window.scrollX,
+        hOverflow: document.documentElement.scrollWidth - window.innerWidth,
+      };
+    });
+    expect(m.inGame).toBe(true);
+    expect(m.y).toBe(0);
+    expect(m.x).toBe(0);
+    expect(m.hOverflow).toBeLessThanOrEqual(0);
+  });
+
+  test('the timer, hearts and progress bar all sit above the fold', async ({ page }) => {
+    await settledOnQuestion(page);
+    const vh = await page.evaluate(() => window.innerHeight);
+    for (const sel of ['#hud-hearts', '#hud-progress', '.hud-timer', '.progress', '.question-card']) {
+      const bottom = await page.locator(sel).evaluate((e) => e.getBoundingClientRect().bottom);
+      expect(bottom, `${sel} runs past the fold`).toBeLessThanOrEqual(vh + 1);
+    }
+  });
+
+  test('the power-up strip stays on one row', async ({ page }) => {
+    await settledOnQuestion(page);
+    // The strip centres items of different heights, so compare centres, not tops.
+    const centres = await page.locator('#powerups').evaluate((strip) => [...strip.children]
+      .map((c) => { const r = c.getBoundingClientRect(); return r.top + r.height / 2; }));
+    const spread = Math.max(...centres) - Math.min(...centres);
+    expect(spread, `power-ups wrapped: ${centres.map((c) => Math.round(c)).join(', ')}`).toBeLessThan(4);
+  });
+
+  test('the report scrolls again once the climb is over', async ({ page }) => {
+    await settledOnQuestion(page);
+    await page.locator('#btn-exit').click();
+    await expect(page.locator('#screen-home')).toBeVisible();
+    expect(await page.evaluate(() => document.body.classList.contains('in-game'))).toBe(false);
+    expect(await page.evaluate(() => getComputedStyle(document.body).overflow)).not.toBe('hidden');
+  });
+});
+
 test.describe('daily quest + report + leaderboard', () => {
   test('daily quest lists a seeded day', async ({ page }) => {
     await dismissTutorial(page);

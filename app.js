@@ -99,6 +99,10 @@ function showScreen(id) {
   swapScreens(outgoing, incoming);
   // Painted title scene (generated art) spans the viewport only while the title screen is up.
   document.body.classList.toggle('on-start', id === 'screen-start');
+  // The climb pins itself to the viewport so nothing about a question sits below
+  // the fold; every other screen scrolls normally.
+  document.body.classList.toggle('in-game', id === 'screen-game');
+  if (id === 'screen-game') scheduleFit();
   // Background music is for devotion, not for starting — pause on the title/HOW screens
   // and resume once the player is in the game/home.
   if (id === 'screen-start' || id === 'screen-how') music.stop();
@@ -458,6 +462,36 @@ function fmtTime(s) {
   return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 }
 
+// ---------- Fitting a question to one screen ----------
+// The climb screen is capped at the viewport height, so a long prompt with four
+// verse-length options can still outgrow it. Step the type and spacing down —
+// never past a readable floor — until the options list stops being clipped.
+const FIT_STEPS = ['fit-1', 'fit-2', 'fit-3'];
+function fitQuestion() {
+  const screen = el('screen-game');
+  const opts = el('q-options');
+  if (!screen || !opts || screen.classList.contains('hidden')) return;
+  // Measure at full size first; a short question must never keep a previous
+  // question's shrink.
+  screen.classList.remove(...FIT_STEPS);
+  for (const step of FIT_STEPS) {
+    if (opts.scrollHeight <= opts.clientHeight + 1) return; // nothing clipped
+    screen.classList.remove(...FIT_STEPS);
+    screen.classList.add(step);
+  }
+}
+// Two frames: renderQuestion can run before showScreen reveals the screen, and
+// the card has to be laid out before it can be measured.
+function scheduleFit() {
+  requestAnimationFrame(() => requestAnimationFrame(fitQuestion));
+}
+// Rotating or resizing changes the budget entirely.
+let fitResizeTimer = 0;
+window.addEventListener('resize', () => {
+  clearTimeout(fitResizeTimer);
+  fitResizeTimer = setTimeout(fitQuestion, 120);
+});
+
 // ---------- Question rendering ----------
 function renderQuestion(q, opts = {}) {
   frozenUntil = 0; // reset any freeze power-up for the next question
@@ -491,6 +525,7 @@ function renderQuestion(q, opts = {}) {
   // Budget follows this question's own reading load and effective tier.
   startCountdown({ ...q, tier: q._runTier || q.tier }, (session?.questions?.length || 0));
   renderPowerups();
+  scheduleFit();
 }
 
 function updateProgress() {
@@ -762,6 +797,7 @@ function renderWordOrder(q) {
   // Word order also needs handling time per chip on top of the reading budget.
   startCountdown(q, session?.questions?.length || 0, Math.max(24, Math.round(q.words.length * 2.2)));
   renderPowerups();
+  scheduleFit();
 }
 
 function commitWordOrder(q, line, pool) {
