@@ -597,6 +597,16 @@ body.in-game .app { height: 100dvh; }
   padding: 20px;
   box-shadow: var(--shadow), 0 2px 0 #ece3d0;
 }
+.q-tier {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #f1fbe8;
+  color: var(--green-dk);
+  font-size: .76rem;
+  font-weight: 800;
+}
 .q-prompt { font-size: var(--prompt-size); line-height: 1.45; color: var(--ink); margin-bottom: var(--card-gap); font-weight: 700; }
 
 .bid-row { display: flex; gap: 8px; margin-bottom: 16px; }

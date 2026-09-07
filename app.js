@@ -496,6 +496,7 @@ window.addEventListener('resize', () => {
 function renderQuestion(q, opts = {}) {
   frozenUntil = 0; // reset any freeze power-up for the next question
   setMascot(q.book);
+  renderTier(q._runTier || q.tier);
   el('q-prompt').innerHTML = highlightQuotedSafe(q.prompt);
 
   const wrap = el('q-options');
@@ -546,10 +547,9 @@ function updateProgress() {
     el('hud-progress').textContent = `${idx}/${total}`;
     el('progress-bar').style.width = `${Math.round((idx / total) * 100)}%`;
   } else {
-    // Free Ladder climb is uncapped — show streak and the current tier instead of /10.
+    // Free Ladder climb is uncapped — show the streak instead of a /10 counter.
     const qIndex = session.questions.length || 0;
-    const tier = climbTierFor(qIndex, LADDER_TIER_STEP);
-    el('hud-progress').textContent = `🔥 ${session.streak || 0} | ${TIER_EMOJI[tier]} T${tier} · ${TIER_NAMES[tier]}`;
+    el('hud-progress').textContent = `🔥 ${session.streak || 0}`;
     el('progress-bar').style.width = `${Math.round(Math.min(100, ((session.streak || 0) / STREAK_MILESTONE) * 100))}%`;
   }
 }
@@ -559,6 +559,13 @@ function renderScore() {
   const chip = el('hud-score');
   // Was `chip.textContent = ...` — a 900-point answer looked the same as a 100.
   if (chip) countUp(chip, session?.pot || 0, { format: (v) => `\u269C ${Math.round(v)}` });
+}
+
+// The current tier/rung, shown above the question (kept out of the top HUD).
+function renderTier(tier) {
+  const node = el('q-tier');
+  if (!node) return;
+  node.textContent = `${TIER_EMOJI[tier]} T${tier} · ${TIER_NAMES[tier]}`;
 }
 
 function nextQuestion() {
