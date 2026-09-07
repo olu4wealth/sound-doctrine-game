@@ -639,8 +639,15 @@ function showFeedbackModal(head, verse, ref, kind, isLast, correctText) {
   const backdrop = document.createElement('div');
   backdrop.id = 'feedback-modal-backdrop';
   backdrop.className = 'feedback-modal-backdrop';
+  const STATUS = {
+    correct: { icon: '✅', label: 'Correct!' },
+    grace:   { icon: '⚖️', label: 'Near miss' },
+    wrong:   { icon: '✗', label: 'Not quite' },
+  };
+  const st = STATUS[kind] || {};
   backdrop.innerHTML = `
     <div class="feedback-modal-card ${kind}">
+      <div class="feedback-modal-status"><span class="status-icon">${st.icon || ''}</span><span class="status-label">${st.label || ''}</span></div>
       <div class="mascot-reaction-host"></div>
       <div class="feedback-modal-head">${head}</div>
       ${correctLine}

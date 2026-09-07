@@ -721,9 +721,18 @@ body.in-game .app { height: 100dvh; }
 .reduce-motion .sparkle-p,
 .reduce-motion .mascot-reaction { animation: none !important; }
 .reduce-motion .sparkle-host { display: none !important; }
-.feedback-modal-card.correct { border-top: 5px solid var(--green); }
-.feedback-modal-card.grace { border-top: 5px solid var(--amber); }
-.feedback-modal-card.wrong { border-top: 5px solid var(--red); }
+.feedback-modal-card.correct { border-top: 5px solid var(--green); background: #f4fff4; }
+.feedback-modal-card.grace { border-top: 5px solid var(--amber); background: #fffdf3; }
+.feedback-modal-card.wrong { border-top: 5px solid var(--red); background: #fff4f4; }
+.feedback-modal-status {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 9px 12px; border-radius: 12px; margin-bottom: 6px;
+  font-size: 1.12rem; font-weight: 900; text-transform: uppercase; letter-spacing: .6px;
+}
+.feedback-modal-status .status-icon { font-size: 1.25rem; }
+.feedback-modal-card.correct .feedback-modal-status { background: #dcf7dc; color: #2c7a00; border: 2px solid var(--green); }
+.feedback-modal-card.grace .feedback-modal-status { background: #fff0cf; color: #8a5a00; border: 2px solid var(--amber); }
+.feedback-modal-card.wrong .feedback-modal-status { background: #ffdcdc; color: #b3261e; border: 2px solid var(--red); }
 .feedback-modal-head { font-size: 1.1rem; font-weight: 800; color: var(--ink); margin-bottom: 14px; line-height: 1.35; }
 .grace-detail { display: inline-block; font-size: .82rem; font-weight: 700; color: var(--ink-soft); background: #fff5e6; border: 1px solid #ffe3ae; border-radius: 999px; padding: 2px 10px; margin-top: 6px; }
 .feedback-answer {
