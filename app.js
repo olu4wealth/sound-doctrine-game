@@ -562,11 +562,11 @@ function renderScore() {
   if (chip) countUp(chip, session?.pot || 0, { format: (v) => `\u269C ${Math.round(v)}` });
 }
 
-// The book + chapter the question comes from, shown above the prompt.
+// The book's author (Timothy or Titus) the question comes from, shown above the prompt.
 function renderBook(q) {
   const node = el('q-book');
   if (!node) return;
-  node.textContent = `${q.book}${q.chapter ? ` · Ch ${q.chapter}` : ''}`;
+  node.textContent = MASCOTS[q.book]?.name || q.book;
 }
 
 // The current tier/rung, shown above the question (kept out of the top HUD).
