@@ -287,8 +287,7 @@ function renderHeroQuestion() {
   const q = list[heroIdx];
   q.tier = tierOf(q);
   currentQ = q;
-  renderQuestion(q, { hideSubject: true });
-  el('q-type').textContent = heroTypeLabel(q);
+  renderQuestion(q);
 }
 
 function finishHero() { finishCommon(); }
@@ -463,13 +462,6 @@ function fmtTime(s) {
 function renderQuestion(q, opts = {}) {
   frozenUntil = 0; // reset any freeze power-up for the next question
   setMascot(q.book);
-  el('q-book').textContent = q.book;
-  // The subject/area chip can hint at the correct answer (e.g. a hero-mode
-  // question labeled "faithfulness of God"), so it is hidden for modes where
-  // the prompt alone must carry the clue.
-  el('q-subject').textContent = opts.hideSubject ? '' : q.subject;
-  el('q-subject').classList.toggle('hidden', !!opts.hideSubject);
-  el('q-type').textContent = `${TIER_EMOJI[q.tier]} T${q.tier} · ${TIER_NAMES[q.tier]}`;
   el('q-prompt').innerHTML = highlightQuotedSafe(q.prompt);
 
   const wrap = el('q-options');
@@ -503,7 +495,6 @@ function renderQuestion(q, opts = {}) {
 
 function updateProgress() {
     // Unlimited Ladder: no fixed end. Show streak | current tier instead of a /N counter.
-  el('btn-stop')?.classList.toggle('hidden', !(mode === 'ladder' && !session._retestList));
   let idx, total;
   if (mode === 'daily' || mode === 'hero') {
     const list = mode === 'daily' ? session._dailyList : session._heroList;
@@ -549,7 +540,6 @@ function nextQuestion() {
     currentQ = rq;
     recordRunTier(qIndex, rq.tier);
     renderQuestion(rq);
-    el('q-type').textContent = `${TIER_EMOJI[rq.tier]} T${rq.tier} · Retest`;
     return;
   }
     // LADDER_TIER_STEP (1.5) instead of the default 4: with the old fixed 10-question
@@ -582,7 +572,6 @@ function renderDailyQuestion() {
   q.tier = tierOf(q);
   currentQ = q; // onAnswer/onTimeout/isLastQuestion treat currentQ as the object
   renderQuestion(q);
-  el('q-type').textContent = `${TIER_EMOJI[q.tier]} T${q.tier} · Daily Quest`;
 }
 
 function showFeedbackModal(head, verse, ref, kind, isLast, correctText) {
@@ -1541,16 +1530,6 @@ el('btn-daily-card')?.addEventListener('click', () => startDaily());
 el('btn-daily-start').addEventListener('click', () => beginDailyList());
 el('btn-daily-back').addEventListener('click', () => showScreen('screen-home'));
 el('btn-next').addEventListener('click', btnNextGo);
-
-// ---------- Stop an uncapped Ladder climb ----------
-// Quit gracefully: the pot scored so far is kept and the Charge Report still shows.
-// (Only meaningful on a free Ladder climb — Daily/Hero/Retest end on their own schedule.)
-el('btn-stop')?.addEventListener('click', () => {
-  if (mode === 'ladder' && !session._retestList &&
-      window.confirm('Stop this climb? Your score so far is kept and the report will show.')) {
-    finishCommon();
-  }
-});
 
 // Choose Your Hero
 el('btn-hero-card')?.addEventListener('click', openHeroSelect);

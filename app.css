@@ -359,7 +359,6 @@ button:disabled { cursor: default; opacity: .55; }
   color: var(--ink-soft); font-size: 1.1rem; font-weight: 900;
   flex: 0 0 auto;
 }
-.hud-stop { width: 38px; height: 38px; margin: 0 4px 0 0; padding: 0; border-radius: var(--pill); background: #f7f2e8; border: 2px solid var(--line); color: #7a5a2a; font-size: .72rem; font-weight: 800; flex: 0 0 auto; cursor: pointer; }
 .hud-hearts { font-size: 1.15rem; letter-spacing: 1px; flex: 1; text-align: center; white-space: nowrap; }
 .hud-progress { color: var(--ink-soft); font-weight: 900; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
 .hud-score {
@@ -501,13 +500,6 @@ button:disabled { cursor: default; opacity: .55; }
   padding: 20px;
   box-shadow: var(--shadow), 0 2px 0 #ece3d0;
 }
-.q-meta { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-.q-book {
-  background: #eef3ff; color: var(--indigo);
-  padding: 4px 12px; border-radius: 999px; font-size: .76rem; font-weight: 900; letter-spacing: .4px; text-transform: uppercase;
-}
-.q-subject { background: #fff5e6; color: var(--gold-deep); padding: 4px 12px; border-radius: 999px; font-size: .76rem; font-weight: 800; }
-.q-type { background: #f1fbe8; color: var(--green-dk); padding: 4px 12px; border-radius: 999px; font-size: .76rem; font-weight: 800; }
 .q-prompt { font-size: 1.2rem; line-height: 1.5; color: var(--ink); margin-bottom: 16px; font-weight: 700; }
 
 .bid-row { display: flex; gap: 8px; margin-bottom: 16px; }
