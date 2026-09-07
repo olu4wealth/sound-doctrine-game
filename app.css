@@ -742,7 +742,9 @@ body.in-game .app { height: 100dvh; }
   border-left: 4px solid var(--gold); border-radius: 0 12px 12px 0;
   background: linear-gradient(180deg, #fffdf6 0%, #fff6e0 100%);
   font-style: italic; quotes: "“" "”";
+  white-space: pre-line;
 }
+.feedback-verse { white-space: pre-line; }
 .q-quote { color: #e67e22; font-weight: 800; }
 .q-prompt .q-quote { color: #e67e22; font-weight: 800; }
 .feedback-modal-ref {

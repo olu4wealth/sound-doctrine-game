@@ -1117,10 +1117,10 @@ function syncPlayerHearts() { savePlayer(player); }
 function quotesOf(q) {
   if (q.passage && q.verseText) {
     let s = `\u201C${q.verseText}\u201D`;
-    if (q.passageB && q.verseTextB) s += ` \u201C${q.verseTextB}\u201D`;
+    if (q.passageB && q.verseTextB) s += `\n\u201C${q.verseTextB}\u201D`;
     return s;
   }
-  if (Array.isArray(q.verses)) return q.verses.map((v) => `\u201C${v.verseText}\u201D`).join(' ');
+  if (Array.isArray(q.verses)) return q.verses.map((v) => `\u201C${v.verseText}\u201D`).join('\n');
   return '';
 }
 function refsOf(q) {
