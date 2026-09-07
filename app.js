@@ -496,6 +496,7 @@ window.addEventListener('resize', () => {
 function renderQuestion(q, opts = {}) {
   frozenUntil = 0; // reset any freeze power-up for the next question
   setMascot(q.book);
+  renderBook(q);
   renderTier(q._runTier || q.tier);
   el('q-prompt').innerHTML = highlightQuotedSafe(q.prompt);
 
@@ -559,6 +560,13 @@ function renderScore() {
   const chip = el('hud-score');
   // Was `chip.textContent = ...` — a 900-point answer looked the same as a 100.
   if (chip) countUp(chip, session?.pot || 0, { format: (v) => `\u269C ${Math.round(v)}` });
+}
+
+// The book + chapter the question comes from, shown above the prompt.
+function renderBook(q) {
+  const node = el('q-book');
+  if (!node) return;
+  node.textContent = `${q.book}${q.chapter ? ` · Ch ${q.chapter}` : ''}`;
 }
 
 // The current tier/rung, shown above the question (kept out of the top HUD).
