@@ -42,7 +42,7 @@ let session = null;
 let timerInt = null;
 let currentQ = null;
 let dailyIdx = 0; // index into session._dailyList during a Daily Quest
-let heroIdx = 0; // index into session._heroList during a Choose Your Hero run
+let heroIdx = 0; // questions answered during a Choose Your Hero run (uncapped)
 let heroBank = []; // Choose Your Hero typed questions (data/heroes.json)
 let lastReport = null; // most recent Charge Report — powers "Take the retest"
 let lastRunMode = 'ladder'; // mode the last finished run was played in (for sharing)
@@ -273,25 +273,38 @@ function hydrateLazyImages(root) {
 function startHero(heroId) {
   if (!HEROES[heroId] || !heroBank.length) return;
   mode = 'hero';
-  const today = dailySeed(new Date());
-  const list = heroRun(bank, heroBank, heroId, today, mulberry32(hashCode(`hero:${today}:${heroId}`)));
   resetSession();
   session.hero = heroId;
-  session._heroList = list;
   heroIdx = 0;
-  list.forEach((q) => { q._usedThisRun = true; });
   renderHearts();
   showScreen('screen-game');
   renderHeroQuestion();
 }
 
 function renderHeroQuestion() {
-  const list = session._heroList;
-  if (heroIdx >= list.length) { finishHero(); return; }
-  const q = list[heroIdx];
+  const q = pickNextHeroQ();
+  if (!q) { finishHero(); return; }
   q.tier = tierOf(q);
   currentQ = q;
   renderQuestion(q);
+}
+
+// Pick the next question for an uncapped Choose Your Hero run, cycling when the
+// hero's pool is exhausted so the run only ends when the player runs out of hearts.
+function pickNextHeroQ() {
+  const hero = HEROES[session.hero];
+  if (!hero) return null;
+  const inHero = (q) => q.hero === session.hero;
+  const inBook = (q) => hero.books.includes(q.book) && tierOf(q) <= 5;
+  const poolAll = [...heroBank.filter(inHero), ...bank.filter(inBook)];
+  let pool = poolAll.filter((q) => !q._usedThisRun);
+  if (!pool.length) {
+    poolAll.forEach((q) => { q._usedThisRun = false; });
+    pool = poolAll;
+  }
+  const q = pool[Math.floor(Math.random() * pool.length)];
+  if (q) q._usedThisRun = true;
+  return q || null;
 }
 
 function finishHero() { finishCommon(); }
@@ -531,25 +544,14 @@ function renderQuestion(q, opts = {}) {
 }
 
 function updateProgress() {
-    // Unlimited Ladder: no fixed end. Show streak | current tier instead of a /N counter.
-  let idx, total;
-  if (mode === 'daily' || mode === 'hero') {
-    const list = mode === 'daily' ? session._dailyList : session._heroList;
-    const i = mode === 'daily' ? dailyIdx : heroIdx;
-    total = list?.length || 10;
-    idx = i + 1; // 1-based current question number
-    idx = Math.max(1, Math.min(idx, total));
+  if (mode === 'daily') {
+    // Daily Quest is a fixed fair run — show the honest counter.
+    const total = session._dailyList?.length || DAILY_LENGTH;
+    const idx = Math.max(1, Math.min(dailyIdx + 1, total));
     el('progress-bar').style.width = `${Math.round((idx / total) * 100)}%`;
     el('hud-progress').textContent = `${idx}/${total}`;
-  } else if (session._retestList) {
-    // Retest: fixed-length, honest 1-based counter.
-    total = runLength();
-    idx = Math.max(1, Math.min(session.questions.length + 1, total));
-    el('hud-progress').textContent = `${idx}/${total}`;
-    el('progress-bar').style.width = `${Math.round((idx / total) * 100)}%`;
   } else {
-    // Free Ladder climb is uncapped — show the streak instead of a /10 counter.
-    const qIndex = session.questions.length || 0;
+    // Ladder, Hero, and Retest are uncapped — show the streak instead of a counter.
     el('hud-progress').textContent = `🔥 ${session.streak || 0}`;
     el('progress-bar').style.width = `${Math.round(Math.min(100, ((session.streak || 0) / STREAK_MILESTONE) * 100))}%`;
   }
@@ -584,8 +586,8 @@ function nextQuestion() {
   if (qIndex >= runLength()) { finishClimb(); return; }
   // A queued retest run plays a fixed list instead of the adaptive picker.
   if (session._retestList) {
-    const rq = session._retestList[qIndex];
-    if (!rq) { finishClimb(); return; }
+    // Retest is uncapped too: cycle through the missed questions until hearts run out.
+    const rq = session._retestList[qIndex % session._retestList.length];
     rq.tier = tierOf(rq);
     currentQ = rq;
     recordRunTier(qIndex, rq.tier);
@@ -1080,23 +1082,14 @@ function onTimeout() {
 
 function isLastQuestion() {
   if (mode === 'daily') return dailyIdx >= session._dailyList.length - 1;
-  if (mode === 'hero') return heroIdx >= session._heroList.length - 1;
-  // Unlimited Ladder: there is no "final" question — the run ends only when hearts
-  // hit 0 or the player taps Stop. For a live climb runLength() is Infinity, so this
-  // stays false (the "Continue" button never flips to "See the report"). Daily Quest,
-  // Hero, and Retest remain fixed-length and still get the report-swap button.
-  return session.questions.length >= runLength() - 1;
+  // Ladder, Hero, and Retest are uncapped — the run ends only when hearts hit 0.
+  return false;
 }
 
 // How many questions this run holds.
 function runLength() {
   if (mode === 'daily') return session._dailyList?.length || DAILY_LENGTH;
-  if (mode === 'hero') return session._heroList?.length || DAILY_LENGTH;
-  // The Ladder is no longer a fixed 10-question run: it climbs until you run out of
-  // lives (or tap Stop). climbTierFor already caps at T7, so the difficulty ramps up
-  // and then plateaus while the run itself is uncapped. Retest keeps its fixed list.
-  if (session._retestList) return session._retestList.length;
-  return Infinity; // free Ladder climb
+  return Infinity; // Ladder, Hero, and Retest are uncapped
 }
 
 function popFeedback(kind) {
