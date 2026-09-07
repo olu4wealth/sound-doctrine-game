@@ -31,7 +31,7 @@ export const STREAK_MILESTONE = 7;
 // Streak's influence on scoring still saturates, so a long streak can't dwarf skill.
 export const STREAK_WEIGHT_CAP = 7;
 export const DAILY_LENGTH = 10; // Daily Quest questions per day
-export const LADDER_LENGTH = 10; // a Ladder climb is a fixed, finishable run
+export const LADDER_LENGTH = 10; // retest replay length; the live Ladder climb is unbounded (see runLength in app.js)
 export const MAX_HEARTS = 5;    // lives (kind hearts) — refilled gently, never a paywall
 
 // Per-question countdown (seconds) — a constant 30s for every tier, so the
@@ -474,12 +474,20 @@ export function buildChargeReport(session, bank) {
       verses: missedForChapter.map((q) => ({ passage: referencesOf(q).join(' · '), text: (q.verseText || (Array.isArray(q.verses) ? q.verses.map((v) => v.verseText).join(' ') : '')) })),
     };
   }
-  const missedVerses = answered.filter((q) => !q._correct).map((q) => ({
-    id: q.id, book: q.book, chapter: q.chapter,
-    subject: q.subject, category: subjectCategory(q.subject),
-    passage: referencesOf(q).join(' · '),
-    text: q.verseText || (Array.isArray(q.verses) ? q.verses.map((v) => v.verseText).join(' ') : ''),
-  }));
+  const missedVerses = [];
+  const seenPassages = new Set();
+  for (const q of answered) {
+    if (q._correct) continue;
+    const passage = referencesOf(q).join(' · ');
+    if (seenPassages.has(passage)) continue; // one verse, listed once
+    seenPassages.add(passage);
+    missedVerses.push({
+      id: q.id, book: q.book, chapter: q.chapter,
+      subject: q.subject, category: subjectCategory(q.subject),
+      passage,
+      text: q.verseText || (Array.isArray(q.verses) ? q.verses.map((v) => v.verseText).join(' ') : ''),
+    });
+  }
   const mastery = books.map((b) => ({
     name: b.key, acc: b.acc, asked: b.asked,
     chapters: allChapters.filter((c) => c.key.startsWith(b.key + ' ')).map((c) => ({ name: c.key, acc: c.acc, asked: c.asked })),

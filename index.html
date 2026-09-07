@@ -7,7 +7,10 @@
   <meta name="description" content="Sound Doctrine — a Scripture trivia game on 1 & 2 Timothy and Titus (KJV): climb the Ladder, keep the Candle, know the doctrine." />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Sound Doctrine — Saints, Martyrs &amp; Heroes</title>
+    <title>Sound Doctrine — Saints, Martyrs &amp; Heroes</title>
+  <!-- Optional gitignored config: supabase.config.js (deferred) sets window.__SD_*.
+       When absent or null, the Daily-Quest leaderboard stays 100% local. -->
+  <script src="./supabase.config.js" defer></script>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" type="image/png" href="assets/icon-crest.png" />
   <link rel="apple-touch-icon" href="assets/icon-crest.png" />
@@ -90,12 +93,7 @@
         <div class="rank-bar"><div class="rank-bar-fill" id="rank-bar-fill"></div></div>
       </div>
 
-      <!-- Visual Ladder T7→T1 -->
-      <div class="ladder" id="ladder">
-        <div class="ladder-title">THE LADDER</div>
-        <div class="ladder-rungs" id="ladder-rungs"></div>
-      </div>
-
+            
       <div class="home-cta">
         <button class="primary" id="btn-climb">Begin a Climb</button>
       </div>
@@ -109,9 +107,8 @@
       </div>
 
       <!-- Daily Quest last (unlocks after a Ladder climb) -->
-      <div class="daily-card" id="daily-card">
+            <div class="daily-card" id="daily-card">
         <div class="daily-card-title">DAILY QUEST</div>
-        <div class="daily-card-meta">10 QUESTIONS</div>
         <div class="daily-countdown" id="daily-countdown"></div>
         <button class="primary" id="btn-daily-card">Daily Quest</button>
         <div class="lock-note">🔒 Finish a Ladder climb to unlock</div>
@@ -132,6 +129,7 @@
       <header class="hud">
         <button class="hud-exit" id="btn-exit" aria-label="Quit"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         <div class="hud-hearts" id="hud-hearts">❤️❤️❤️❤️❤️</div>
+                <button class="hud-stop hidden" id="btn-stop" aria-label="Stop climb">⏹️ Stop</button>
         <div class="hud-progress" id="hud-progress">0/10</div>
         <div class="hud-score" id="hud-score" title="Your score this run">⚜ 0</div>
         <div class="timer-ring hud-timer">
@@ -241,10 +239,20 @@
     <!-- LEADERBOARD -->
     <section id="screen-lb" class="screen hidden">
       <h2>Leaderboard</h2>
-      <div class="lb-tabs">
-        <button class="lb-tab" data-tab="all">All time</button>
+            <div class="lb-tabs">
+        <button class="lb-tab active" data-tab="local">All time</button>
+        <button class="lb-tab" data-tab="daily">Daily Quest</button>
       </div>
       <div class="lb-list" id="lb-list"></div>
+      <div class="lb-daily hidden" id="lb-daily">
+        <div class="lb-daily-tabs">
+          <button class="lb-dtab active" data-ddb="all">All time</button>
+          <button class="lb-dtab" data-ddb="year">Year</button>
+          <button class="lb-dtab" data-ddb="week">Week</button>
+          <button class="lb-dtab" data-ddb="day">Day</button>
+        </div>
+        <div class="lb-list lb-daily-list" id="lb-daily-list"></div>
+      </div>
       <button class="ghost" id="btn-lb-back">Back</button>
     </section>
 

@@ -342,57 +342,6 @@ button:disabled { cursor: default; opacity: .55; }
 }
 .daily-card.locked .lock-note, .hero-card-home.locked .lock-note { display: block; }
 
-.ladder {
-  background: var(--card);
-  border: 2px solid var(--line);
-  border-radius: var(--radius);
-  padding: 16px 14px;
-  margin: 0 0 14px;
-  box-shadow: var(--shadow);
-}
-.ladder-title {
-  text-align: center; font-size: .82rem; font-weight: 900;
-  letter-spacing: 1px; color: var(--ink); margin-bottom: 10px;
-}
-.ladder-rungs {
-  position: relative;
-  display: flex; flex-direction: column;
-  padding-left: 8px;
-}
-.ladder-rungs::before {
-  content: ''; position: absolute;
-  left: 13px; top: 10px; bottom: 10px;
-  width: 2px; background: #e5e0d2; border-radius: 1px;
-}
-.ladder-rung {
-  display: flex; align-items: center; gap: 10px;
-  padding: 7px 0; position: relative;
-}
-.rung-dot {
-  width: 12px; height: 12px; border-radius: 50%;
-  background: #fff; border: 2px solid #e5e0d2;
-  flex: 0 0 12px; z-index: 1;
-}
-.ladder-rung.passed .rung-dot { background: var(--green); border-color: var(--green-dk); }
-.ladder-rung.you .rung-dot {
-  background: var(--gold); border-color: var(--gold-deep);
-  box-shadow: 0 0 0 4px rgba(243, 180, 49, .25);
-  width: 14px; height: 14px; flex: 0 0 14px;
-}
-.rung-capsule {
-  background: #f7f2e8; border: 1px solid var(--line);
-  border-radius: 999px; padding: 5px 12px;
-  font-size: .82rem; font-weight: 800; color: var(--ink-soft);
-}
-.ladder-rung.you .rung-capsule { background: #fff5e6; border-color: var(--gold-deep); color: var(--ink); }
-.ladder-rung.passed .rung-capsule { opacity: .72; }
-.rung-you {
-  margin-left: auto;
-  font-size: .72rem; font-weight: 900; color: #a61e1e;
-  background: #fff0f0; border: 1px solid #ffcccc;
-  padding: 3px 8px; border-radius: 999px; white-space: nowrap;
-}
-
 .home-second { display: flex; gap: 10px; }
 .home-second .ghost { flex: 1; }
 .home-cta { display: flex; flex-direction: column; gap: 12px; }
@@ -410,6 +359,7 @@ button:disabled { cursor: default; opacity: .55; }
   color: var(--ink-soft); font-size: 1.1rem; font-weight: 900;
   flex: 0 0 auto;
 }
+.hud-stop { width: 38px; height: 38px; margin: 0 4px 0 0; padding: 0; border-radius: var(--pill); background: #f7f2e8; border: 2px solid var(--line); color: #7a5a2a; font-size: .72rem; font-weight: 800; flex: 0 0 auto; cursor: pointer; }
 .hud-hearts { font-size: 1.15rem; letter-spacing: 1px; flex: 1; text-align: center; white-space: nowrap; }
 .hud-progress { color: var(--ink-soft); font-weight: 900; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
 .hud-score {
@@ -873,15 +823,22 @@ button:disabled { cursor: default; opacity: .55; }
 .lb-tab.active { background: #eef3ff; border-color: var(--sky-b); color: var(--sky-b); }
 .lb-list { display: flex; flex-direction: column; gap: 8px; }
 .lb-row {
-  display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 8px;
+    display: grid; grid-template-columns: 30px 1fr 70px 120px auto; align-items: center; gap: 8px;
   background: #fff; border: 2px solid var(--line); border-radius: 14px; padding: 12px 14px; box-shadow: var(--shadow);
 }
 .lb-row.me { border-color: var(--gold-deep); background: #fffdf4; }
 .lb-rank { font-weight: 900; color: var(--gold-deep); font-variant-numeric: tabular-nums; }
 .lb-name { font-weight: 800; }
+.lb-rank-title { font-size: .68rem; font-weight: 800; color: var(--gold-deep); text-transform: capitalize; }
 .lb-stats { color: var(--ink-soft); font-size: .8rem; font-weight: 700; }
 .lb-score { color: var(--green-dk); font-weight: 900; }
 .empty { text-align: center; color: var(--ink-soft); font-style: italic; padding: 20px 0; }
+
+/* Daily-Quest (Supabase) leaderboard sub-tabs */
+.lb-daily-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+.lb-dtab { flex: 1; background: #fff; color: var(--ink-soft); border: 2px solid var(--line); border-radius: 999px; font-size: .8rem; font-weight: 800; padding: 8px; cursor: pointer; }
+.lb-dtab.active { background: #eef3ff; border-color: var(--sky-b); color: var(--sky-b); }
+.lb-daily-list { display: flex; flex-direction: column; gap: 8px; }
 
 /* ---------- Profile ---------- */
 .profile-card { background: #fff; border: 2px solid var(--line); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
