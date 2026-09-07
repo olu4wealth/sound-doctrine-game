@@ -180,9 +180,20 @@ button:disabled { cursor: default; opacity: .55; }
   50% { filter: drop-shadow(0 10px 34px rgba(243, 167, 36, .5)); }
 }
 
+/* Decorative key-art stage. The mascots hang half off each edge, and a fixed
+   element that overflows the viewport is charged to the page width by iOS
+   Safari, which then zooms the whole document out to fit it — every centred
+   screen (the question card included) drifted left and shrank. The stage is
+   the fixed layer instead, and the art is absolute inside it, so the overhang
+   is clipped and the document is never wider than the viewport. */
+.hero-stage {
+  position: fixed; inset: 0; z-index: 0;
+  overflow: hidden; pointer-events: none;
+}
+
 /* Title-screen key art: huge transparent mascots anchored half off each screen edge */
 .title-hero {
-  position: fixed; bottom: -3vh; z-index: 0;
+  position: absolute; bottom: -3vh;
   width: clamp(260px, 34vw, 560px); height: auto;
   pointer-events: none; user-select: none;
   filter: drop-shadow(0 12px 28px rgba(120, 90, 30, .35));
@@ -198,7 +209,7 @@ button:disabled { cursor: default; opacity: .55; }
    menu (Candle home). Slightly smaller + fainter than on the title so the
    menu stays readable above them. */
 .home-hero {
-  position: fixed; bottom: -3vh; z-index: 0;
+  position: absolute; bottom: -3vh;
   width: clamp(220px, 28vw, 460px); height: auto;
   pointer-events: none; user-select: none;
   filter: drop-shadow(0 12px 28px rgba(120, 90, 30, .3));
@@ -581,33 +592,41 @@ button:disabled { cursor: default; opacity: .55; }
 .option.grace { background: #fff3d6; border-color: var(--amber); color: #8a5a00; }
 .option.pending { background: #fff5e6; border-color: var(--gold-deep); box-shadow: 0 0 0 3px rgba(243,180,49,.22); }
 
-/* ---------- Two-step stake card (D3) ---------- */
+/* ---------- Confidence popup (opened by choosing an option) ---------- */
 .stake-card {
   background: #fff; border: 2px solid #fff; border-radius: var(--radius);
   padding: 22px 18px 16px; max-width: 92%; width: 420px;
   box-shadow: 0 20px 50px rgba(120,90,30,.30); animation: pop .28s ease;
+  margin: auto; flex: 0 0 auto;
 }
-.stake-hint {
-  background: #fff8e6; border: 1px solid #ffe3ae; border-radius: 12px;
-  padding: 10px 12px; margin-bottom: 12px;
-  font-size: .8rem; line-height: 1.45; color: #7a5200; font-weight: 700;
-}
-.stake-hint strong { color: var(--gold-deep); }
 .stake-head { font-size: 1.05rem; font-weight: 900; color: var(--ink); margin-bottom: 6px; text-align: center; }
-.stake-chosen { font-size: .92rem; color: var(--ink-soft); text-align: center; margin-bottom: 12px; font-style: italic; }
-.stake-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-.stake-opt {
-  background: #fff; border: 2px solid var(--line); border-radius: 12px;
-  padding: 10px 8px; font-size: .84rem; font-weight: 800; color: var(--ink);
-  text-align: center; margin-top: 0; width: auto;
+.stake-chosen {
+  font-size: .92rem; color: var(--ink-soft); text-align: center;
+  margin-bottom: 12px; font-style: italic;
+  /* A long option must not stretch the card past the screen */
+  overflow-wrap: anywhere;
 }
-.stake-opt .stake-mult { color: var(--gold-deep); font-weight: 900; }
-.stake-opt .stake-pts { display: block; font-size: .72rem; color: var(--ink-soft); font-weight: 700; }
-.stake-opt.active { background: #fff5e6; border-color: var(--gold-deep); color: var(--ink); }
-.stake-opt:last-child { grid-column: 1 / -1; }
+.stake-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.stake-opt {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  background: #fff; border: 2px solid var(--line); border-radius: 12px;
+  padding: 11px 14px; font-size: .84rem; font-weight: 800; color: var(--ink);
+  text-align: left; margin-top: 0; width: auto;
+}
+.stake-opt .stake-mult { color: var(--gold-deep); font-weight: 900; font-size: .95rem; }
+.stake-opt .stake-pts { font-size: .74rem; color: var(--ink-soft); font-weight: 700; white-space: nowrap; }
+.stake-opt.active {
+  background: linear-gradient(180deg, #fff3d6, #ffe8b8);
+  border-color: var(--gold-deep); color: var(--ink);
+  box-shadow: 0 2px 0 var(--gold-deep);
+}
 .stake-preview { text-align: center; font-size: .82rem; font-weight: 800; color: var(--ink-soft); margin-bottom: 12px; min-height: 1.2em; }
 .stake-actions { display: flex; gap: 8px; }
-.stake-actions .ghost, .stake-actions .primary { flex: 1; margin-top: 0; padding: 12px 10px; font-size: .92rem; }
+.stake-actions .ghost { flex: 1; margin-top: 0; padding: 12px 10px; font-size: .92rem; }
+
+/* Lighter tint than the feedback modal: the question and the option being
+   staked stay legible behind it. */
+.stake-modal-backdrop { background: rgba(43, 42, 51, 0.42); }
 
 .feedback-modal-backdrop {
   position: fixed;
@@ -819,22 +838,28 @@ button:disabled { cursor: default; opacity: .55; }
 
 .weakest-card { margin: 0 0 14px; background: #fff0f0; border: 2px solid #ffcccc; border-radius: 16px; padding: 16px; }
 .weakest-card h3 { font-size: .85rem; letter-spacing: .5px; text-transform: uppercase; color: #a61e1e; margin-bottom: 6px; }
-.weakest-meta { font-size: .88rem; font-weight: 800; color: var(--ink); margin-bottom: 8px; }
-.weakest-verses { list-style: none; }
-.weakest-verses li { margin-bottom: 6px; font-size: .9rem; color: var(--ink-soft); }
+.weakest-meta { font-size: .88rem; font-weight: 800; color: var(--ink); }
 
 .missed-verses { margin: 0 0 14px; background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); }
 .missed-verses h3 { font-size: .9rem; letter-spacing: .5px; text-transform: uppercase; color: var(--ink); margin-bottom: 8px; }
 .missed-verses ul { list-style: none; }
 .missed-verses li { margin-bottom: 8px; font-size: .92rem; color: var(--ink-soft); line-height: 1.5; }
 .missed-verses li strong { color: var(--gold-deep); }
-
-.retest-row { display: flex; gap: 10px; margin: 14px 0; flex-wrap: wrap; }
-.retest-row .primary, .retest-row .ghost { flex: 1; min-width: 140px; }
+.missed-cat {
+  font-size: .72rem; font-weight: 800; color: var(--ink-soft);
+  font-style: italic; margin-left: 2px;
+}
+.missed-tag {
+  display: inline-block; vertical-align: 1px;
+  font-size: .66rem; font-weight: 900; letter-spacing: .3px; text-transform: uppercase;
+  color: #a61e1e; background: #fff0f0; border: 1px solid #ffcccc;
+  border-radius: 999px; padding: 1px 7px; margin-left: 4px;
+}
 
 .report-rx { margin-top: 18px; background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); }
 .report-rx h3 { color: var(--ink); margin-bottom: 8px; }
-.report-rx ul { padding-left: 18px; color: var(--ink-soft); }
+.report-rx ol { padding-left: 20px; color: var(--ink-soft); }
+.report-rx ol li::marker { color: var(--gold-deep); font-weight: 900; }
 .report-rx li { margin-bottom: 6px; }
 
 /* ---------- Daily ---------- */
@@ -1068,7 +1093,11 @@ button:disabled { cursor: default; opacity: .55; }
    Phones: the portrait painting fills the column under a warm parchment veil.
    Landscape devices (tablets): the landscape scene spans the full viewport and the
    column floats above it as a parchment card. Missing files degrade gracefully. */
-#screen-start { position: relative; }
+/* No `position` here: an id rule outranks `.screen-leaving`, so the title screen
+   ignored the crossfade's `position: absolute` and kept its `left/right: 16px`
+   as a relative offset — shoving itself 16px right, 4px past the viewport, and
+   widening the page for exactly as long as the fade ran. The key art that once
+   needed this ancestor now positions against .hero-stage instead. */
 #screen-start.has-bg {
   background: linear-gradient(180deg, rgba(255, 251, 240, .84) 0%, rgba(255, 251, 240, .92) 100%);
   border-radius: 26px;
@@ -1110,45 +1139,6 @@ button:disabled { cursor: default; opacity: .55; }
    ============================================================ */
 
 /* (focus-visible + reduce-motion already provided above by the a11y vet pass) */
-
-/* ---------- Inline stake row (replaces the full-screen stake modal) ---------- */
-.stake-row {
-  margin: 4px 0 14px;
-  padding: 10px 12px;
-  background: #fffaf0;
-  border: 2px solid #f3e2bd;
-  border-radius: 14px;
-}
-.stake-row-label {
-  display: block;
-  font-size: .74rem; font-weight: 900; letter-spacing: .6px;
-  text-transform: uppercase; color: var(--gold-deep); margin-bottom: 8px;
-}
-.stake-row-opts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-.stake-pill {
-  width: auto; margin: 0; padding: 8px 4px;
-  display: flex; flex-direction: column; align-items: center; gap: 1px;
-  background: #fff; color: var(--ink-soft);
-  border: 2px solid var(--line); border-radius: 12px;
-  font-size: .72rem; font-weight: 800; line-height: 1.1;
-}
-.stake-pill-mult { font-size: .95rem; font-weight: 900; color: var(--ink); }
-.stake-pill-label { font-size: .62rem; opacity: .8; }
-.stake-pill.active {
-  background: linear-gradient(180deg, #fff3d6, #ffe8b8);
-  border-color: var(--gold); color: var(--gold-deep);
-  box-shadow: 0 2px 0 var(--gold-deep);
-}
-.stake-pill.active .stake-pill-mult { color: var(--gold-deep); }
-.stake-pill:disabled { opacity: .45; }
-.stake-row-hint {
-  margin-top: 8px; text-align: center;
-  font-size: .76rem; font-weight: 800; color: var(--ink-soft);
-}
-@media (max-width: 360px) {
-  .stake-pill-label { display: none; }
-  .stake-row-opts { gap: 4px; }
-}
 
 /* ---------- Rank progress (home) ---------- */
 .rank-progress {

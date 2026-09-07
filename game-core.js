@@ -394,6 +394,15 @@ function subjectCategory(subject) {
   return CATEGORY_MAP[subject] || subject;
 }
 
+// Display-only. An unmapped subject falls through to the bank's own lowercase
+// tag, so a report could read "Start here: obedience to powers." next to
+// "Start here: Bishops & deacons." This capitalises for display without
+// touching the grouping key, which several lookups still match on.
+export function categoryLabel(category) {
+  const c = String(category || '');
+  return c ? c.charAt(0).toUpperCase() + c.slice(1) : c;
+}
+
 // bank: full bank (used to resolve subjects to passages for the Rx)
 export function buildChargeReport(session, bank) {
   const answered = session.questions || [];
@@ -436,19 +445,30 @@ export function buildChargeReport(session, bank) {
   const strongest = subjects.filter((r) => r.acc >= 0.5).slice(0, 3);
   const weakest = subjects.filter((r) => r.acc < 0.5).slice(-3).reverse();
 
-  // Study prescription ("how to do better") per weak subject
-  const rx = weakest.map((w) => {
-    const refs = [...(w.refs || [])].join(', ');
-    let instruction;
-    if (w.acc === 0) {
-      instruction = `Your weakest area was <strong>${w.key}</strong> — start there. Read <em>${refs}</em> and pray through it; the next climb will test it again.`;
-    } else if (w.acc < 0.5) {
-      instruction = `<strong>${w.key}</strong> is where you stumbled. Re-read <em>${refs}</em> slowly; the doctrine is worth the hour.`;
-    } else {
-      instruction = `You were close on <strong>${w.key}</strong>. Read <em>${refs}</em> once more — a re-climb should lock it in.`;
-    }
+  // Study prescription ("how to do better"): an ordered plan, weakest first.
+  // Every line used to open "Your weakest area was X — start there", which
+  // cannot be true of three subjects at once, and each one re-listed passages
+  // the report already prints in full under "Verses to revisit". The plan ranks
+  // the subjects and says what to do; the verses stay in the list that owns
+  // them, tagged with the subject so a step points somewhere findable.
+  // (`weakest` is already filtered to acc < 0.5, so the old third branch — the
+  // "you were close" one for acc >= 0.5 — was unreachable.)
+  const rx = weakest.map((w, i) => {
+    const step = ['Start here', 'Then', 'After that'][Math.min(i, 2)];
+    const diagnosis = w.acc === 0
+      ? 'Nothing landed.'
+      : 'You stumbled more than you stood.';
+    // Vary the action by rank as well, or three steps read as one sentence
+    // pasted three times.
+    const action = [
+      'Read its tagged verses above slowly and pray through them before you climb again.',
+      'Its verses are tagged above too — give them the same hour.',
+      'Finish on its verses above; the next climb will ask again.',
+    ][Math.min(i, 2)];
+    const instruction = `<strong>${step}: ${categoryLabel(w.key)}.</strong> ${diagnosis} ${action}`;
     return {
       subject: w.key,
+      rank: i + 1,
       refs: [...(w.refs || [])],
       instruction,
     };
@@ -467,7 +487,8 @@ export function buildChargeReport(session, bank) {
     };
   }
   const missedVerses = answered.filter((q) => !q._correct).map((q) => ({
-    id: q.id, book: q.book, chapter: q.chapter, subject: q.subject,
+    id: q.id, book: q.book, chapter: q.chapter,
+    subject: q.subject, category: subjectCategory(q.subject),
     passage: referencesOf(q).join(' · '),
     text: q.verseText || (Array.isArray(q.verses) ? q.verses.map((v) => v.verseText).join(' ') : ''),
   }));
@@ -590,26 +611,88 @@ export function rankProgress(points) {
 
 // ---------- Share card (Daily Quest) ----------
 export function shareGrid(answers, size = 10) {
-  // answers: array of 'correct' | 'near-miss' | 'wrong' (session outcomes)
+  // answers: array of 'correct' | 'near-miss' | 'wrong' (session outcomes).
+  // Green / yellow / red squares: standard emoji, so the grid survives being
+  // pasted into a message app instead of arriving as a row of boxes.
   const cells = answers.slice(0, size).map((a) =>
-    a === 'correct' ? '⩝' : a === 'near-miss' ? '⩞' : '⩟');
-  while (cells.length < size) cells.push('⩟');
+    a === 'correct' ? '🟩' : a === 'near-miss' ? '🟨' : '🟥');
+  while (cells.length < size) cells.push('🟥');
   const lines = [];
   for (let i = 0; i < cells.length; i += 5) lines.push(cells.slice(i, i + 5).join(''));
   return lines.join('\n');
 }
+
+// ---------- Share quip ----------
+// A shared result used to be a title, a block of glyphs and a score — nothing
+// that told a reader what the game was or gave them a reason to open it. Every
+// line riffs on a verse from the three books the game actually covers, so the
+// share carries the flavour of the thing it is advertising.
+export const SHARE_QUIPS = [
+  {
+    min: 1, // a perfect run
+    lines: [
+      '“I have fought a good fight, I have finished my course.” Not one dropped. 🏆',
+      '“Study to shew thyself approved.” Consider thyself approved. ✅',
+    ],
+  },
+  {
+    min: 0.8,
+    lines: [
+      '“Rightly dividing the word of truth” — give or take a verse. 📖',
+      '“Let no man despise thy youth” — nor this scoreline. 💪',
+    ],
+  },
+  {
+    min: 0.5,
+    lines: [
+      '“Ever learning” — and getting there, slowly. 📈',
+      'The spirit is willing, but the recall is weak. 😅',
+    ],
+  },
+  {
+    min: 0.2,
+    lines: [
+      '“Avoid foolish questions,” says Titus 3:9. I answered every one of them. 😬',
+      '“Great is the mystery” — still a mystery to me. 🤔',
+    ],
+  },
+  {
+    min: 0,
+    lines: [
+      '“Ever learning, and never able to come to the knowledge.” Emphasis on ever. 📚',
+      '“Let no man despise thy youth.” My score, though — fair game. 😳',
+    ],
+  },
+];
+
+
+// Pick the quip band for an accuracy (0..1). `pick` chooses within the band and
+// defaults to random, so two shares of the same score do not read identically.
+export function shareQuip(acc, pick = Math.random) {
+  const a = Math.max(0, Math.min(1, Number(acc) || 0));
+  const band = SHARE_QUIPS.find((b) => a >= b.min) || SHARE_QUIPS[SHARE_QUIPS.length - 1];
+  const i = Math.min(band.lines.length - 1, Math.floor(pick() * band.lines.length));
+  return band.lines[i];
+}
+
 // ---------- Retest (Charge Report → "Take the retest") ----------
 // The report already names exactly what you missed and which passages to read.
 // This turns that into a run: every question you just got wrong, then more from
 // the same weak subjects, so study → test → restudy closes in one sitting.
 export function retestRun(bank, report, n = LADDER_LENGTH, rng = Math.random) {
   const missedIds = new Set((report?.missedVerses || []).map((m) => m.id));
+  // `report.weaknesses` names are subjectCategory() output ("Sound doctrine");
+  // `q.subject` is the bank's raw tag ("sound doctrine", "doctrine"). Matching
+  // them directly meant every mapped subject failed, so this pool was near
+  // empty and a retest quietly padded from the wider bank instead of the ground
+  // the player had just lost. Both sides go through the same mapping now.
   const weak = new Set((report?.weaknesses || []).map((w) => w.name));
+  const weakChapters = new Set((report?.chapters || []).map((c) => c.name));
   const missed = bank.filter((q) => missedIds.has(q.id));
   // Same doctrinal ground, questions they haven't just seen.
   const sameGround = bank.filter((q) =>
     !missedIds.has(q.id) &&
-    (weak.has(q.subject) || (report?.chapters || []).some((c) => c.name === `${q.book} ${q.chapter}`)));
+    (weak.has(subjectCategory(q.subject)) || weakChapters.has(`${q.book} ${q.chapter}`)));
   const out = [...missed, ...shuffle(rng, sameGround)].slice(0, n);
   // If the player missed almost nothing, pad from the wider bank rather than
   // handing back a two-question run.
