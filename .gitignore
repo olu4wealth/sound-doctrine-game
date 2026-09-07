@@ -19,3 +19,6 @@ tools/vet-capture.mjs
 tools/vet-dom.mjs
 
 assets/background-texture.png
+
+# Optional gitignored Supabase config (publishable URL + anon key — never commit the key)
+supabase.config.js

@@ -21,6 +21,9 @@ import {
   pulseFlame, nudge, swapScreens, flipList, motionOK,
 } from './motion.js';
 import { sfx, music } from './sound.js';
+import {
+  getSupabaseClient, upsertDailyScore, subscribeDailyScore, loadDailyLeaderboard, SUPABASE_READY,
+} from './supabase.js';
 
 const el = (id) => document.getElementById(id);
 
@@ -43,6 +46,10 @@ let heroIdx = 0; // index into session._heroList during a Choose Your Hero run
 let heroBank = []; // Choose Your Hero typed questions (data/heroes.json)
 let lastReport = null; // most recent Charge Report — powers "Take the retest"
 let lastRunMode = 'ladder'; // mode the last finished run was played in (for sharing)
+// Daily-Quest (Supabase) leaderboard state. All no-op when offline (SUPABASE_READY false).
+let dailyLbCache = [];       // last-loaded daily scores (sorted client-side)
+let dailySub = null;         // Realtime unsubscribe handle
+let dailyActiveRange = 'all'; // 'day' | 'week' | 'year' | 'all'
 
 // Countdown state (per question)
 let timeLeft = 0;
@@ -113,23 +120,21 @@ function renderHearts() {
   el('hud-hearts').textContent = '❤️'.repeat(n) + '🤍'.repeat(MAX_HEARTS - n);
 }
 
-// ---------- Candle ----------
-// The home menu now shows a single static, self-contained candle.webp (no CSS
-// flame, no melt system, no sprite states). renderCandle only fills the personal
-// header data — the flame card itself is static markup in index.html.
+// ---------- Candle / home ----------
+// The menu no longer shows a candle sprite; renderCandle fills the personal
+// header (name, rank, streak) and the daily/ladder widgets.
 function renderCandle() {
   el('home-name').textContent = player.name || '—';
   el('home-rank').textContent = rankOf(rankPoints());
-  el('streak-num').textContent = player.streak || 0;
+  const streakEl = el('streak-num');
+  if (streakEl) streakEl.textContent = player.streak || 0;
   renderRankProgress();
   renderDailyCountdown();
 
   // New-player gating: Daily Quest + Choose Your Hero unlock after a Ladder climb.
   const ladderDone = !!player.ladderPlayed;
   el('daily-card')?.classList.toggle('locked', !ladderDone);
-  el('hero-card')?.classList.toggle('locked', !ladderDone);
-
-  renderLadder();
+    el('hero-card')?.classList.toggle('locked', !ladderDone);
 }
 
 // Rank progress: shows the banked lifetime pot and the distance to the next title.
@@ -165,27 +170,13 @@ function setupCandleClock() {
     if (!el('screen-home')?.classList.contains('hidden')) renderDailyCountdown();
   }, 60 * 1000);
 }
-function renderLadder() {
-  const wrap = el('ladder-rungs');
-  if (!wrap) return;
-  wrap.innerHTML = '';
-  const current = Math.min(7, Math.max(1, player.entryTier || 1));
-  for (let t = 7; t >= 1; t--) {
-    const row = document.createElement('div');
-    row.className = `ladder-rung${t === current ? ' you' : ''}${t < current ? ' passed' : ''}`;
-    row.dataset.tier = String(t);
-    row.innerHTML = `<span class="rung-dot" aria-hidden="true"></span><span class="rung-capsule">T${t} — ${TIER_NAMES[t]}</span>${t === current ? '<span class="rung-you">🔥YOU</span>' : ''}`;
-    wrap.appendChild(row);
-  }
-}
-
 // ---------- Session setup ----------
 function resetSession() {
   // A new game always starts afresh: full lives, empty session, cleared per-question state, timer reset to 30s.
   stopTimer();
   timeLeft = 0; timeTotal = 0; frozenUntil = 0;
   setHearts(MAX_HEARTS);
-  session = { questions: [], pot: 0, elapsedMs: 0, daily: false, oilVialsEarned: 0, bestTimeMs: 0, runTiers: [], maxRunTier: 0, streak: 0 };
+  session = { questions: [], pot: 0, elapsedMs: 0, daily: false, bestTimeMs: 0, runTiers: [], maxRunTier: 0, streak: 0, usedLifelines: {} };
   dailyIdx = 0;
   heroIdx = 0;
   const clearQ = (q) => {
@@ -232,7 +223,7 @@ function startDaily() {
   resetSession();
   session.daily = true;
   session._dailyList = list;
-  el('daily-charge-intro').textContent = `Today's Quest — ${list.length} questions (${today}). Same for everyone, so the board is fair.`;
+    el('daily-charge-intro').textContent = `Today's Quest — Same for everyone, so the board is fair.`;
   el('btn-daily-start').classList.remove('hidden');
   el('btn-daily-share').classList.add('hidden');
   el('daily-answered').classList.add('hidden');
@@ -300,8 +291,7 @@ function renderHeroQuestion() {
   const q = list[heroIdx];
   q.tier = tierOf(q);
   currentQ = q;
-  renderQuestion(q, { hideSubject: true });
-  el('q-type').textContent = heroTypeLabel(q);
+  renderQuestion(q);
 }
 
 function finishHero() { finishCommon(); }
@@ -506,13 +496,6 @@ window.addEventListener('resize', () => {
 function renderQuestion(q, opts = {}) {
   frozenUntil = 0; // reset any freeze power-up for the next question
   setMascot(q.book);
-  el('q-book').textContent = q.book;
-  // The subject/area chip can hint at the correct answer (e.g. a hero-mode
-  // question labeled "faithfulness of God"), so it is hidden for modes where
-  // the prompt alone must carry the clue.
-  el('q-subject').textContent = opts.hideSubject ? '' : q.subject;
-  el('q-subject').classList.toggle('hidden', !!opts.hideSubject);
-  el('q-type').textContent = `${TIER_EMOJI[q.tier]} T${q.tier} · ${TIER_NAMES[q.tier]}`;
   el('q-prompt').innerHTML = highlightQuotedSafe(q.prompt);
 
   const wrap = el('q-options');
@@ -546,6 +529,7 @@ function renderQuestion(q, opts = {}) {
 }
 
 function updateProgress() {
+    // Unlimited Ladder: no fixed end. Show streak | current tier instead of a /N counter.
   let idx, total;
   if (mode === 'daily' || mode === 'hero') {
     const list = mode === 'daily' ? session._dailyList : session._heroList;
@@ -555,12 +539,18 @@ function updateProgress() {
     idx = Math.max(1, Math.min(idx, total));
     el('progress-bar').style.width = `${Math.round((idx / total) * 100)}%`;
     el('hud-progress').textContent = `${idx}/${total}`;
-  } else {
-    // Fixed-length climb: a real, honest progress bar.
+  } else if (session._retestList) {
+    // Retest: fixed-length, honest 1-based counter.
     total = runLength();
     idx = Math.max(1, Math.min(session.questions.length + 1, total));
     el('hud-progress').textContent = `${idx}/${total}`;
     el('progress-bar').style.width = `${Math.round((idx / total) * 100)}%`;
+  } else {
+    // Free Ladder climb is uncapped — show streak and the current tier instead of /10.
+    const qIndex = session.questions.length || 0;
+    const tier = climbTierFor(qIndex, LADDER_TIER_STEP);
+    el('hud-progress').textContent = `🔥 ${session.streak || 0} | ${TIER_EMOJI[tier]} T${tier} · ${TIER_NAMES[tier]}`;
+    el('progress-bar').style.width = `${Math.round(Math.min(100, ((session.streak || 0) / STREAK_MILESTONE) * 100))}%`;
   }
 }
 
@@ -585,11 +575,11 @@ function nextQuestion() {
     currentQ = rq;
     recordRunTier(qIndex, rq.tier);
     renderQuestion(rq);
-    el('q-type').textContent = `${TIER_EMOJI[rq.tier]} T${rq.tier} · Retest`;
     return;
   }
-  // LADDER_TIER_STEP (1.5) instead of the default 4: a fixed 10-question climb
-  // would otherwise stop at T3 and leave T4–T7 unreachable.
+    // LADDER_TIER_STEP (1.5) instead of the default 4: with the old fixed 10-question
+  // climb the ramp would stop at T3 and leave T4–T7 unreachable. The Ladder is now
+  // unbounded, so this step just sets how quickly you reach T7 (capped) while you keep climbing.
   const effectiveTier = climbTierFor(qIndex, LADDER_TIER_STEP);
   const q = pickNextLadder(bank, {
     entryTier: effectiveTier,
@@ -617,7 +607,6 @@ function renderDailyQuestion() {
   q.tier = tierOf(q);
   currentQ = q; // onAnswer/onTimeout/isLastQuestion treat currentQ as the object
   renderQuestion(q);
-  el('q-type').textContent = `${TIER_EMOJI[q.tier]} T${q.tier} · Daily Quest`;
 }
 
 function showFeedbackModal(head, verse, ref, kind, isLast, correctText) {
@@ -697,40 +686,23 @@ function pulseFlameBright() {
   pulseFlame(flame, 1.15 + Math.min(0.5, (streak - 1) * 0.12));
 }
 
-// ---------- Oil-vial power-ups ----------
-function oilCount() { return player.oilVials || 0; }
-function setOil(n) { player.oilVials = Math.max(0, n); }
-
-// Spend one oil vial; returns true if enough oil was available.
-function spendOil() {
-  if (oilCount() < 1) return false;
-  setOil(oilCount() - 1);
-  savePlayer(player);
-  return true;
-}
-
-// Refresh the power-up buttons' enabled/disabled state + the HUD oil counter.
+// ---------- Lifelines (once per game, no oil) ----------
 function renderPowerups() {
-  const n = oilCount();
+  const used = session?.usedLifelines || {};
   document.querySelectorAll('.powerup').forEach((b) => {
-    // 50/50 is meaningless on word-order questions (there are no options to hide).
+    const type = b.dataset.pu;
+    const already = !!used[type];
     const wordBlock = b.id === 'pu-5050' && currentQ?.type === 'wordorder';
-    b.disabled = n < 1 || !timeRunning || wordBlock; // need oil + a live question
+    b.disabled = already || !timeRunning || wordBlock;
+    b.classList.toggle('used', already);
   });
-  const hud = el('hud-oil');
-  if (hud) {
-    hud.textContent = `🫗 ${n}`;
-    hud.classList.toggle('empty', n < 1);
-  }
 }
 
 function usePowerup(type) {
-  if (!timeRunning || !currentQ) return; // only during a live question
-  if (!spendOil()) {
-    // No oil — flash the buttons to signal.
-    nudge(document.querySelectorAll('.powerup'));
-    return;
-  }
+  if (!timeRunning || !currentQ) return;
+  const used = session.usedLifelines || (session.usedLifelines = {});
+  if (used[type]) { nudge(document.querySelectorAll('.powerup')); return; }
+  used[type] = true;
   if (type === 'skip') {
     sfx.powerup(); burstSparkles(6, 0.5, 0.5);
     stopTimer();
@@ -894,7 +866,7 @@ function openStakeModal(displayIdx, q) {
     const p = BASE_POINTS * bid.mult;
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'stake-opt' + (bid.mult === selectedBid.mult ? ' active' : '');
+    btn.className = 'stake-opt';
     btn.dataset.mult = String(bid.mult);
     btn.innerHTML = `<span class="stake-mult">${bid.mult}× ${bid.label}</span>` +
                     `<span class="stake-pts">+${p} · −${p}</span>`;
@@ -905,14 +877,11 @@ function openStakeModal(displayIdx, q) {
     'A near-miss keeps half (Grace).';
 
   backdrop.querySelector('#stake-back').addEventListener('click', closeStakeModal);
-  // Tapping the dimmed area behind the card backs out too, the way a sheet does.
   backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeStakeModal(); });
   backdrop.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeStakeModal(); });
 
   revealModal(backdrop.querySelector('.stake-card'));
-  // Land focus on the stake the player last used, so a keyboard or switch user
-  // arrives already on the default rather than at the top of the dialog.
-  (opts.querySelector('.stake-opt.active') || opts.firstElementChild)?.focus();
+  opts.firstElementChild?.focus();
 }
 
 function commitStake(bid, displayIdx) {
@@ -1097,9 +1066,10 @@ function onTimeout() {
 function isLastQuestion() {
   if (mode === 'daily') return dailyIdx >= session._dailyList.length - 1;
   if (mode === 'hero') return heroIdx >= session._heroList.length - 1;
-  // A Ladder climb is a fixed 10-question run. It used to be endless and could
-  // only end at 0 hearts, which meant a new player had to LOSE five times before
-  // Daily Quest and Choose Your Hero unlocked.
+  // Unlimited Ladder: there is no "final" question — the run ends only when hearts
+  // hit 0 or the player taps Stop. For a live climb runLength() is Infinity, so this
+  // stays false (the "Continue" button never flips to "See the report"). Daily Quest,
+  // Hero, and Retest remain fixed-length and still get the report-swap button.
   return session.questions.length >= runLength() - 1;
 }
 
@@ -1107,7 +1077,11 @@ function isLastQuestion() {
 function runLength() {
   if (mode === 'daily') return session._dailyList?.length || DAILY_LENGTH;
   if (mode === 'hero') return session._heroList?.length || DAILY_LENGTH;
-  return session._retestList ? session._retestList.length : LADDER_LENGTH;
+  // The Ladder is no longer a fixed 10-question run: it climbs until you run out of
+  // lives (or tap Stop). climbTierFor already caps at T7, so the difficulty ramps up
+  // and then plateaus while the run itself is uncapped. Retest keeps its fixed list.
+  if (session._retestList) return session._retestList.length;
+  return Infinity; // free Ladder climb
 }
 
 function popFeedback(kind) {
@@ -1198,9 +1172,6 @@ function finishCommon() {
   session.streakAfter = player.streak || 0;
   session.hitMilestone = streakBefore < STREAK_MILESTONE && (player.streak || 0) >= STREAK_MILESTONE;
   player = recordCharge(player, session);
-  if (!session.daily && session.questions.length >= 8) {
-    player.oilVials = (player.oilVials || 0) + 1;
-  }
   setHearts(hearts()); // keep hearts as-is (persist below)
   savePlayer(player);
 
@@ -1214,7 +1185,21 @@ function finishCommon() {
 }
 
 function finishClimb() { finishCommon(); }
-function finishDaily() { finishCommon(); }
+function finishDaily() {
+  finishCommon();
+  // Best-effort Daily-Quest score push, fired AFTER the local report renders so an
+  // absent/flaky Supabase never blocks the game (offline-safe by design).
+  if (SUPABASE_READY && player.name) {
+    const answered = (session.questions || []).length;
+    const correct = answered ? (session.questions || []).filter((q) => q._correct).length : 0;
+    void upsertDailyScore(player.name, {
+      score: session.pot || 0,
+      answered,
+      streak: player.streak || 0,
+      acc: answered ? correct / answered : 0,
+    }).catch(() => {});
+  }
+}
 
 // ---------- Report ----------
 function renderReport(report, session) {
@@ -1224,7 +1209,7 @@ function renderReport(report, session) {
   el('report-summary').innerHTML = `
     <div class="stat"><span class="stat-num">${report.correct}/${report.answered}</span><span class="stat-label">correct</span></div>
     <div class="stat"><span class="stat-num">${Math.round(report.acc * 100)}%</span><span class="stat-label">accuracy</span></div>
-    <div class="stat"><span class="stat-num">⚜ ${report.pot}</span><span class="stat-label">pot</span></div>
+    <div class="stat"><span class="stat-num">⚜ ${report.pot}</span><span class="stat-label">score</span></div>
     <div class="stat"><span class="stat-num">${fmtTime(Math.round((session.bestTimeMs || 0) / 1000))}</span><span class="stat-label">solve time</span></div>
   `;
 
@@ -1426,12 +1411,83 @@ function renderLeaderboard() {
           return `<div class="lb-row ${isMe ? 'me' : ''}" data-flip-id="${esc(r.name)}">
             <span class="lb-rank">${s.provisional ? '\u2013' : i + 1}</span>
             <span class="lb-name">${esc(r.name)}${s.provisional ? '<span class="lb-prov">provisional</span>' : ''}</span>
+            <span class="lb-rank-title">${esc(rankOf(s.score))}</span>
             <span class="lb-stats">\uD83D\uDD25 ${r.streak || 0} \u00B7 ${acc}% \u00B7 ${(r.totalAnswered || 0)} answered</span>
             <span class="lb-score">\u269C ${s.score.toLocaleString()}</span>
           </div>`;
         }).join('')
-      : '<p class="empty">No charges yet. Be the first onto the board.</p>';
+          : '<p class="empty">No charges yet. Be the first onto the board.</p>';
   });
+  // (Re)opening the local board resets to this tab and drops any Daily subscription
+  // so a stale realtime channel or a previous Daily view can't bleed into the feed.
+  el('lb-daily')?.classList.add('hidden');
+  el('lb-list')?.classList.remove('hidden');
+  clearDailySub();
+  document.querySelectorAll('.lb-tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === 'local'));
+}
+
+// ---------- Daily-Quest (Supabase) leaderboard ----------
+// Local-first: when Supabase isn't configured (SUPABASE_READY false) the Daily tab
+// shows an explanatory empty state and every helper below is a no-op.
+function clearDailySub() {
+  if (dailySub) { try { dailySub(); } catch (e) { /* unsubscribe best-effort */ } dailySub = null; }
+}
+function filterDailyRange(rows, range) {
+  const today = new Date().toISOString().slice(0, 10);
+  const wk = new Date(); wk.setDate(wk.getDate() - 7);
+  const yr = new Date(); yr.setFullYear(yr.getFullYear() - 1);
+  const weekAgo = wk.toISOString().slice(0, 10);
+  const yearAgo = yr.toISOString().slice(0, 10);
+  return rows
+    .filter((r) => {
+      if (range === 'all') return true;
+      if (range === 'day') return r.date === today;
+      if (range === 'week') return r.date >= weekAgo;
+      if (range === 'year') return r.date >= yearAgo;
+      return true;
+    })
+    .sort((a, b) => (b.score || 0) - (a.score || 0));
+}
+function renderDailyLeaderboard() {
+  const list = el('lb-daily-list');
+  if (!list) return;
+  if (!SUPABASE_READY) return; // the offline empty-state is set by openDailyLeaderboard()
+  const rows = filterDailyRange(dailyLbCache || [], dailyActiveRange).slice(0, 60);
+  list.innerHTML = rows.length
+    ? rows.map((r, i) => `<div class="lb-row" data-flip-id="${esc(r.name)}">
+        <span class="lb-rank">${i + 1}</span>
+        <span class="lb-name">${esc(r.name)}</span>
+        <span class="lb-rank-title">${esc(rankOf(r.score || 0))}</span>
+        <span class="lb-stats">🔥 ${r.streak || 0} · ${(r.answered || 0)} answered</span>
+        <span class="lb-score">⚜ ${(r.score || 0).toLocaleString()}</span>
+      </div>`).join('')
+    : '<p class="empty">No daily scores yet. Be the first to climb today!</p>';
+}
+async function refreshDailyLb() {
+  dailyLbCache = await loadDailyLeaderboard('all');
+  renderDailyLeaderboard();
+}
+async function openDailyLeaderboard() {
+  el('lb-list').classList.add('hidden');
+  el('lb-daily')?.classList.remove('hidden');
+  el('lb-daily-list').innerHTML = SUPABASE_READY
+    ? '<p class="empty">Loading daily scores…</p>'
+    : '<p class="empty">Connect Supabase (fill in <code>supabase.config.js</code>) to track Daily-Quest scores online.</p>';
+  if (!SUPABASE_READY) return;
+  const client = await getSupabaseClient();
+  if (!client) {
+    el('lb-daily-list').innerHTML = '<p class="empty">Supabase could not initialize. The Daily board stays local.</p>';
+    return;
+  }
+  dailyLbCache = await loadDailyLeaderboard('all') || [];
+  clearDailySub();
+  dailySub = subscribeDailyScore(() => { refreshDailyLb(); }, client);
+  renderDailyLeaderboard();
+}
+function leaveDailyLeaderboard() {
+  el('lb-daily')?.classList.add('hidden');
+  el('lb-list')?.classList.remove('hidden');
+  clearDailySub();
 }
 
 // ---------- Profile ----------
@@ -1442,11 +1498,10 @@ function renderProfile() {
       <div class="p-name">${esc(player.name)}</div>
       <div class="p-rank">${rankOf(rankPoints())}</div>
       <div class="p-grid">
-        <div><b>⚜ ${rankPoints().toLocaleString()}</b> lifetime pot</div>
+        <div><b>⚜ ${rankPoints().toLocaleString()}</b> lifetime score</div>
         <div><b>${player.streak || 0}</b> day streak</div>
         <div><b>${player.bestStreak || 0}</b> best streak</div>
         <div><b>${sum.mastered}/${sum.total}</b> chapters mastered</div>
-        <div><b>${player.oilVials || 0}</b> oil vials</div>
         <div><b>${player.totalAnswered || 0}</b> answered</div>
         <div><b>${player.totalCorrect || 0}</b> correct</div>
         <div><b>T${player.entryTier || 1}</b> entry tier</div>
@@ -1482,9 +1537,28 @@ el('btn-how').addEventListener('click', () => showScreen('screen-how'));
 el('btn-how-back').addEventListener('click', () => showScreen('screen-start'));
 el('btn-leaderboard').addEventListener('click', () => { renderLeaderboard(); showScreen('screen-lb'); });
 el('btn-lb2').addEventListener('click', () => { renderLeaderboard(); showScreen('screen-lb'); });
+
+// Daily-Quest leaderboard tabs: local All-time vs. Supabase Daily Quest feed.
+document.querySelectorAll('.lb-tab').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.lb-tab').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (btn.dataset.tab === 'daily') openDailyLeaderboard();
+    else leaveDailyLeaderboard();
+  });
+});
+document.querySelectorAll('.lb-dtab').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.lb-dtab').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    dailyActiveRange = btn.dataset.ddb || 'all';
+    renderDailyLeaderboard();
+  });
+});
 el('btn-lb-back').addEventListener('click', () => {
   // A new player (no name yet) came from the start screen; Back returns there with the name input.
-  // A returning player (name set) came from the candle home; Back returns to the game modes.
+    // A returning player (name set) came from the candle home; Back returns to the game modes.
+  clearDailySub(); // drop any Daily-Quest Realtime subscription before leaving the board
   showScreen(player.name ? 'screen-home' : 'screen-start');
 });
 el('btn-climb').addEventListener('click', () => startClimb());
@@ -1802,7 +1876,7 @@ function showTutorial() {
       target: '#powerups',
       place: 'below',
       h3: 'Power-ups',
-      p: 'Spend an <strong>oil vial (🫗)</strong> to <strong>Skip</strong> a question, cut it to <strong>50/50</strong>, or <strong>Freeze</strong> the clock for 5 seconds.',
+      p: 'Each lifeline is a <strong>one-time</strong> use per game: <strong>Skip</strong> a question, cut it to <strong>50/50</strong>, or <strong>Freeze</strong> the clock for 5 seconds.',
     },
     {
       target: '#hud-score',

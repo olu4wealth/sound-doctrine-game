@@ -206,6 +206,17 @@ button:disabled { cursor: default; opacity: .55; }
 .title-hero-left { left: 0; transform: translateX(-46%); }
 .title-hero-right { right: 0; transform: translateX(46%); }
 .start-inner { position: relative; z-index: 1; }
+
+/* Item 3: the title screen holds a text input; lock the page so the OSK never
+   scrolls it. Bind the screen to the dynamic viewport height and center its
+   content so the name field stays above the keyboard. */
+#screen-start {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 @media (max-width: 420px) {
   .title-hero { width: 240px; bottom: -4vh; }
 }
@@ -287,8 +298,8 @@ button:disabled { cursor: default; opacity: .55; }
   display: flex; justify-content: center; align-items: center; gap: 10px;
   margin: 16px 0 8px; color: var(--ink-soft);
 }
-.streak-num { font-size: 1.6rem; font-weight: 900; color: var(--gold-deep); }
-.streak-label { font-size: .85rem; font-weight: 700; }
+/* .streak-num { font-size: 1.6rem; font-weight: 900; color: var(--gold-deep); } */
+/* .streak-label { font-size: .85rem; font-weight: 700; } */
 
 .flame-card {
   background: var(--card);
@@ -336,57 +347,6 @@ button:disabled { cursor: default; opacity: .55; }
 }
 .daily-card.locked .lock-note, .hero-card-home.locked .lock-note { display: block; }
 
-.ladder {
-  background: var(--card);
-  border: 2px solid var(--line);
-  border-radius: var(--radius);
-  padding: 16px 14px;
-  margin: 0 0 14px;
-  box-shadow: var(--shadow);
-}
-.ladder-title {
-  text-align: center; font-size: .82rem; font-weight: 900;
-  letter-spacing: 1px; color: var(--ink); margin-bottom: 10px;
-}
-.ladder-rungs {
-  position: relative;
-  display: flex; flex-direction: column;
-  padding-left: 8px;
-}
-.ladder-rungs::before {
-  content: ''; position: absolute;
-  left: 13px; top: 10px; bottom: 10px;
-  width: 2px; background: #e5e0d2; border-radius: 1px;
-}
-.ladder-rung {
-  display: flex; align-items: center; gap: 10px;
-  padding: 7px 0; position: relative;
-}
-.rung-dot {
-  width: 12px; height: 12px; border-radius: 50%;
-  background: #fff; border: 2px solid #e5e0d2;
-  flex: 0 0 12px; z-index: 1;
-}
-.ladder-rung.passed .rung-dot { background: var(--green); border-color: var(--green-dk); }
-.ladder-rung.you .rung-dot {
-  background: var(--gold); border-color: var(--gold-deep);
-  box-shadow: 0 0 0 4px rgba(243, 180, 49, .25);
-  width: 14px; height: 14px; flex: 0 0 14px;
-}
-.rung-capsule {
-  background: #f7f2e8; border: 1px solid var(--line);
-  border-radius: 999px; padding: 5px 12px;
-  font-size: .82rem; font-weight: 800; color: var(--ink-soft);
-}
-.ladder-rung.you .rung-capsule { background: #fff5e6; border-color: var(--gold-deep); color: var(--ink); }
-.ladder-rung.passed .rung-capsule { opacity: .72; }
-.rung-you {
-  margin-left: auto;
-  font-size: .72rem; font-weight: 900; color: #a61e1e;
-  background: #fff0f0; border: 1px solid #ffcccc;
-  padding: 3px 8px; border-radius: 999px; white-space: nowrap;
-}
-
 .home-second { display: flex; gap: 10px; }
 .home-second .ghost { flex: 1; }
 .home-cta { display: flex; flex-direction: column; gap: 12px; }
@@ -425,7 +385,6 @@ body.in-game .app { height: 100dvh; }
   display: flex;
   flex-direction: column;
 }
-.question-card > .q-meta,
 .question-card > .q-prompt { flex: 0 0 auto; }
 .question-card > .options {
   flex: 1 1 auto;
@@ -443,15 +402,9 @@ body.in-game .app { height: 100dvh; }
 #screen-game.fit-1 { --prompt-size: 1.05rem; --opt-size: .95rem; --opt-pad-y: 11px; --opt-gap: 8px; --card-gap: 12px; }
 #screen-game.fit-2 { --prompt-size: .98rem; --opt-size: .9rem; --opt-pad-y: 9px; --opt-gap: 7px; --card-gap: 10px; }
 #screen-game.fit-3 { --prompt-size: .92rem; --opt-size: .85rem; --opt-pad-y: 8px; --opt-gap: 6px; --card-gap: 8px; }
-#screen-game.fit-2 .q-meta { margin-bottom: 8px; }
-#screen-game.fit-3 .q-meta { margin-bottom: 6px; }
 #screen-game.fit-2 > .question-card,
 #screen-game.fit-3 > .question-card { padding: 14px; }
 /* At the deeper steps the chrome gives up its room too, before the list scrolls. */
-#screen-game.fit-2 .q-book, #screen-game.fit-2 .q-subject, #screen-game.fit-2 .q-type,
-#screen-game.fit-3 .q-book, #screen-game.fit-3 .q-subject, #screen-game.fit-3 .q-type {
-  font-size: .66rem; padding: 3px 8px;
-}
 #screen-game.fit-3 > .progress { margin-bottom: 6px; }
 #screen-game.fit-3 > .flame-meter { margin: 0 0 4px; }
 #screen-game.fit-3 .flame { width: 20px; height: 30px; }
@@ -480,20 +433,6 @@ body.in-game .app { height: 100dvh; }
   background: #fff; border: 2px solid var(--line); border-radius: var(--pill);
   padding: 6px 12px; font-size: .95rem; font-variant-numeric: tabular-nums;
   white-space: nowrap; box-shadow: var(--shadow);
-}
-.hud-oil {
-  flex: 0 0 auto; font-weight: 900; color: #7a4b00;
-  width: 38px; height: 38px;
-  display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(180deg, #fff8e8, #ffecc7);
-  border: 2px solid var(--gold-deep); border-radius: 50%;
-  font-size: .9rem; white-space: nowrap; line-height: 1;
-  box-shadow: 0 2px 0 #d9a53a, inset 0 0 8px rgba(243, 180, 49, .28);
-}
-.hud-oil.empty {
-  color: var(--ink-soft);
-  background: #f4f1ea; border: 2px dashed #c9c2b4; box-shadow: none;
-  opacity: .8;
 }
 .hud-timer.timer-ring { margin: 0; flex: 0 0 auto; width: 56px; height: 56px; }
 .hud-timer.timer-ring .ring { width: 56px; height: 56px; }
@@ -658,13 +597,6 @@ body.in-game .app { height: 100dvh; }
   padding: 20px;
   box-shadow: var(--shadow), 0 2px 0 #ece3d0;
 }
-.q-meta { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
-.q-book {
-  background: #eef3ff; color: var(--indigo);
-  padding: 4px 12px; border-radius: 999px; font-size: .76rem; font-weight: 900; letter-spacing: .4px; text-transform: uppercase;
-}
-.q-subject { background: #fff5e6; color: var(--gold-deep); padding: 4px 12px; border-radius: 999px; font-size: .76rem; font-weight: 800; }
-.q-type { background: #f1fbe8; color: var(--green-dk); padding: 4px 12px; border-radius: 999px; font-size: .76rem; font-weight: 800; }
 .q-prompt { font-size: var(--prompt-size); line-height: 1.45; color: var(--ink); margin-bottom: var(--card-gap); font-weight: 700; }
 
 .bid-row { display: flex; gap: 8px; margin-bottom: 16px; }
@@ -980,15 +912,22 @@ body.in-game .app { height: 100dvh; }
 .lb-tab.active { background: #eef3ff; border-color: var(--sky-b); color: var(--sky-b); }
 .lb-list { display: flex; flex-direction: column; gap: 8px; }
 .lb-row {
-  display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 8px;
+    display: grid; grid-template-columns: 30px 1fr 70px 120px auto; align-items: center; gap: 8px;
   background: #fff; border: 2px solid var(--line); border-radius: 14px; padding: 12px 14px; box-shadow: var(--shadow);
 }
 .lb-row.me { border-color: var(--gold-deep); background: #fffdf4; }
 .lb-rank { font-weight: 900; color: var(--gold-deep); font-variant-numeric: tabular-nums; }
 .lb-name { font-weight: 800; }
+.lb-rank-title { font-size: .68rem; font-weight: 800; color: var(--gold-deep); text-transform: capitalize; }
 .lb-stats { color: var(--ink-soft); font-size: .8rem; font-weight: 700; }
 .lb-score { color: var(--green-dk); font-weight: 900; }
 .empty { text-align: center; color: var(--ink-soft); font-style: italic; padding: 20px 0; }
+
+/* Daily-Quest (Supabase) leaderboard sub-tabs */
+.lb-daily-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+.lb-dtab { flex: 1; background: #fff; color: var(--ink-soft); border: 2px solid var(--line); border-radius: 999px; font-size: .8rem; font-weight: 800; padding: 8px; cursor: pointer; }
+.lb-dtab.active { background: #eef3ff; border-color: var(--sky-b); color: var(--sky-b); }
+.lb-daily-list { display: flex; flex-direction: column; gap: 8px; }
 
 /* ---------- Profile ---------- */
 .profile-card { background: #fff; border: 2px solid var(--line); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }

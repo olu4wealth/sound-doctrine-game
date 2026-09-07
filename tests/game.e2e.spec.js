@@ -11,7 +11,7 @@ async function dismissTutorial(page) {
 async function seedPlayer(page, name = 'Playwright Tester') {
   await page.addInitScript(([n]) => {
     localStorage.setItem('sd.player.v1', JSON.stringify({
-      name: n, ladderPlayed: true, hearts: 5, oilVials: 3, createdAt: Date.now(),
+      name: n, ladderPlayed: true, hearts: 5, createdAt: Date.now(),
     }));
   }, [name]);
 }
@@ -45,8 +45,61 @@ async function answerOne(page, bidMult = 1) {
   if (await opt.count() === 0) return false;
   // Choosing an option opens the confidence popup; picking a stake there answers.
   await opt.click();
-  await stake(page, bidMult);
+    await stake(page, bidMult);
   return true;
+}
+
+// Test-only: force every question to a single always-correct option so a Ladder
+// climb can be driven past 10 answered questions without burning hearts (the live
+// heart cap is 5). Overrides window.fetch for the merged question bank only, and
+// only for this test's page (Playwright gives each test a fresh context).
+async function forceCorrectBank(page) {
+  await page.addInitScript(() => {
+    const bank = Array.from({ length: 16 }, (_, i) => ({
+      id: `qa-${i}`, book: '1 Timothy', chapter: 1, subject: 'doctrine',
+      difficulty: 1, type: 'recall', tier: 1,
+      prompt: `Q${i} — is the Ladder climb capped at 10 questions?`,
+      options: ['No — it climbs until hearts run out'],
+      correctIndex: 0,
+      passage: '1 Timothy 1:4', verseText: '...',
+      answer: 'No', reference: '1 Timothy 1:4', category: 'Doctrine',
+      skill: 'recall', nearIndexes: [],
+    }));
+    const json = JSON.stringify(bank);
+    const orig = window.fetch;
+    window.fetch = (input, ...rest) => {
+      const u = typeof input === 'string' ? input : (input && input.url);
+      if (u && u.endsWith('questions-merged.json')) {
+        return Promise.resolve(new Response(json, { headers: { 'Content-Type': 'application/json' } }));
+      }
+      return orig.call(window, input, ...rest);
+    };
+  });
+}
+
+// Click the only (always-correct) option, stake it 1x, and continue — a clean,
+// heart-preserving answer that lets the run climb on indefinitely.
+async function answerOneClean(page) {
+  await answerOne(page, 1); // click option + stake 1x -> feedback modal appears
+  const cont = page.locator('#feedback-modal-continue');
+  await cont.waitFor({ state: 'visible' }); // let the GSAP reveal finish so it's stable
+  await cont.click();
+  // onclick removes the backdrop after 200ms and advances; wait so the next
+  // iteration starts from a fully-rendered question (no fixed sleep race).
+  await page.locator('#feedback-modal-backdrop').waitFor({ state: 'detached' });
+}
+
+// The HUD score chip animates (countUp, ~0.7s). Read it only once it has settled so
+// the captured value matches the report's source-of-truth pot.
+async function readSettledHudScore(page) {
+  let prev = null;
+  for (let i = 0; i < 24; i++) {
+    const cur = (await page.locator('#hud-score').textContent()).trim();
+    if (cur && cur === prev) return cur;
+    prev = cur;
+    await page.waitForTimeout(100);
+  }
+  return prev;
 }
 
 // Answer a given option, staking it at the given multiplier in the popup.
@@ -66,18 +119,14 @@ test.describe('core player journey', () => {
 
     await expect(page.locator('#screen-home')).toBeVisible();
     await expect(page.locator('#home-name')).toHaveText('Playwright Tester');
-    // candle + streak are present (oil-vial pill removed from the menu)
-    await expect(page.locator('#candle-stage')).toBeVisible();
-    await expect(page.locator('#streak-num')).toBeVisible();
-    // the menu shows a single static animated candle.webp (no melt / no CSS flame)
-    await expect(page.locator('#candle-webp')).toBeVisible();
-    await expect(page.locator('#candle-webp')).toHaveJSProperty('complete', true);
+        // The home screen no longer paints a static ladder graphic; the climb action is the entry point.
+    await expect(page.locator('#btn-climb')).toBeVisible();
     // the two full-body mascots continue from the title screen onto the menu
     await expect(page.locator('.home-hero-left')).toBeVisible();
     await expect(page.locator('.home-hero-right')).toBeVisible();
-    // oil-vial icon removed + "(of 7)" trimmed from the streak label
+    // oil-vial icon removed + no leftover streak label
     await expect(page.locator('#oil-count')).toHaveCount(0);
-    await expect(page.locator('.streak-label')).not.toContainText('(of 7)');
+    await expect(page.locator('#candle-webp')).toHaveCount(0);
   });
 
   test('HUD shows hearts, progress, and a countdown ring', async ({ page }) => {
@@ -128,7 +177,7 @@ test.describe('core player journey', () => {
     await expect(page.locator('#screen-home')).toBeVisible();
     await page.getByRole('button', { name: /begin a climb/i }).click();
 
-    // Up to 3 lifeline uses (one per oil vial).
+    // Lifelines are once-per-game, so each question can use 50/50 at most once.
     for (let attempt = 0; attempt < 3; attempt++) {
       const pu = page.locator('#pu-5050');
       if (await pu.isDisabled().catch(() => false)) break;
@@ -467,7 +516,7 @@ test.describe('retention surfaces', () => {
     await expect(page.locator('#stake-modal-backdrop')).toHaveCount(0);
     await page.locator('.option').first().click();
     await expect(page.locator('#stake-modal-backdrop')).toBeVisible();
-    await expect(page.locator('.stake-opt')).toHaveCount(5);
+    await expect(page.locator('.stake-opt')).toHaveCount(3);
     // The chosen option is held pending behind the popup, and the popup quotes it.
     await expect(page.locator('.option.pending')).toHaveCount(1);
     await expect(page.locator('.stake-chosen')).not.toBeEmpty();
@@ -493,9 +542,33 @@ test.describe('retention surfaces', () => {
       .toBeLessThan(before);
   });
 
-  test('a climb is a finishable 10-question run (unlocking never needs a loss)', async ({ page }) => {
+    test('the Ladder is an unlimited climb (no /10 cap); Stop ends with score intact', async ({ page }) => {
+    await forceCorrectBank(page);
     await beginClimb(page);
-    await expect(page.locator('#hud-progress')).toContainText('/10');
+        // Unlimited HUD: streak | current tier, no fixed /10 counter, Stop button live.
+    await expect(page.locator('#hud-progress')).not.toContainText('/10');
+    await expect(page.locator('#hud-progress')).toContainText('🔥');
+    await expect(page.locator('#hud-progress')).toContainText(/T1/);
+    await expect(page.locator('#btn-stop')).toBeVisible();
+    // Climb strictly past 10 answered questions — hearts never deplete on a clean run,
+    // so the run must stay live (no auto-finish at 10).
+    for (let i = 0; i < 11; i++) await answerOneClean(page);
+    await expect(page.locator('#screen-game')).toBeVisible();
+    await expect(page.locator('#hud-progress')).toContainText(/T[2-7]/); // tier climbed past T1
+        // Stop ends the climb with the scored pot intact → the report renders with that score.
+    const scoreText = await readSettledHudScore(page);
+    const potNum = scoreText.replace(/[^0-9]/g, '');
+    page.on('dialog', (d) => d.accept());
+    await page.locator('#btn-stop').click();
+    await expect(page.locator('#screen-report')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('#report-summary')).toContainText(potNum);
+  });
+
+  test('hearts-0 ends a Ladder climb with the report', async ({ page }) => {
+    // Wrong answers burn all 5 kind hearts on the real bank; the climb ends at the report.
+    await playToReport(page);
+    await expect(page.locator('#screen-report')).toBeVisible();
+    await expect(page.locator('#screen-game')).toBeHidden();
   });
 
   test('home shows rank progress and the daily reset countdown', async ({ page }) => {
@@ -607,11 +680,23 @@ test.describe('retention surfaces', () => {
     expect(shared.url).toMatch(/^https?:\/\//);
   });
 
-  test('the report play-again button starts a run', async ({ page }) => {
-    await playToReport(page);
+    test('the report play-again button starts a fresh Climb (unlimited HUD)', async ({ page }) => {
+    // A clean climb (all correct) reaches the report only via Stop — no misses —
+    // so "Play again" starts a fresh Climb, not a Retest, and shows the streak|tier HUD.
+    await forceCorrectBank(page);
+    await beginClimb(page);
+    for (let i = 0; i < 12; i++) await answerOneClean(page);
+    await expect(page.locator('#screen-game')).toBeVisible();
+    page.on('dialog', (d) => d.accept());
+    await page.locator('#btn-stop').click();
+    await expect(page.locator('#screen-report')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('#btn-again')).toHaveText(/Climb Again/i);
     await page.locator('#btn-again').click();
     await expect(page.locator('#screen-game')).toBeVisible();
-    await expect(page.locator('#hud-progress')).toContainText('/10');
+        // A fresh Ladder climb shows the streak | tier HUD, not a fixed /10 counter.
+    await expect(page.locator('#hud-progress')).not.toContainText('/10');
+    await expect(page.locator('#hud-progress')).toContainText('🔥');
+    await expect(page.locator('#hud-progress')).toContainText(/T1/);
   });
 
   test('service worker registers', async ({ page }) => {
@@ -657,7 +742,7 @@ test.describe('motion', () => {
   test('rank bar and mastery bars grow from zero', async ({ page }) => {
     await dismissTutorial(page);
     await page.addInitScript(() => localStorage.setItem('sd.player.v1', JSON.stringify({
-      name: 'Climber', ladderPlayed: true, hearts: 5, oilVials: 3, lifetimePot: 8400,
+      name: 'Climber', ladderPlayed: true, hearts: 5, lifetimePot: 8400,
       totalAnswered: 120, totalCorrect: 96, streak: 4, createdAt: Date.now(),
       lifetimeChapters: { '1 Timothy 1': { asked: 6, correct: 6 } },
     })));
@@ -726,7 +811,7 @@ test.describe('motion — reduced', () => {
 
   test('reduced motion applies final values instantly, never skipping state', async ({ page }) => {
     await reducedPage(page, {
-      name: 'RM', ladderPlayed: true, hearts: 5, oilVials: 3, lifetimePot: 8400,
+      name: 'RM', ladderPlayed: true, hearts: 5, lifetimePot: 8400,
       totalAnswered: 120, totalCorrect: 96, streak: 4, createdAt: Date.now(),
       lifetimeChapters: { '1 Timothy 1': { asked: 6, correct: 6 } },
     });
@@ -751,7 +836,7 @@ test.describe('motion — reduced', () => {
   });
 
   test('GSAP tweens are skipped, not merely shortened', async ({ page }) => {
-    await reducedPage(page, { name: 'RM', ladderPlayed: true, hearts: 5, oilVials: 3, createdAt: Date.now() });
+    await reducedPage(page, { name: 'RM', ladderPlayed: true, hearts: 5, createdAt: Date.now() });
     await page.getByRole('button', { name: /begin a climb/i }).click();
     await expect(page.locator('#q-options')).toBeVisible();
     await page.locator('.option').first().click();

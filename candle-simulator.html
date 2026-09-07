@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Sound Doctrine — Candle</title>
+  <style>
+    :root { color-scheme: dark; }
+    html,body { height:100%; margin:0;
+      background:radial-gradient(1200px 800px at 50% 100%, #0f172a 0%, #020610 70%);
+      color:#e2e6ec; font-family:'Nunito','Segoe UI',system-ui,-apple-system,sans-serif; }
+    #candle-wrap { height:100%; display:flex; flex-direction:column; align-items:center;
+      justify-content:center; gap:18px;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+    .brand { font-size:1.05rem; font-weight:800; letter-spacing:1px; opacity:.9; }
+    canvas { width:200px; height:275px; display:block; filter:drop-shadow(0 0 16px rgba(0,0,0,.6)); }
+    .controls { display:flex; align-items:center; gap:16px; flex-wrap:wrap; justify-content:center; }
+    .controls label { font-size:.85rem; opacity:.85; }
+    #hour-slider { width:160px; accent-color:#f3b431; }
+    .btn { background:#1e293b; border:1px solid #334155; color:#e2e6ec; border-radius:999px; padding:8px 16px; font-size:.9rem; font-weight:800; cursor:pointer; }
+    .btn.live { background:#450a0a; border-color:#7f1d1d; }
+    .foot { opacity:.6; font-size:.75rem; font-style:italic; }
+    @media (prefers-reduced-motion: reduce) { canvas { filter:none; } }
+  </style>
+</head>
+<body>
+  <div id="candle-wrap">
+    <div class="brand">Sound Doctrine</div>
+    <canvas id="candle" width="200" height="275" role="img"
+      aria-label="A candle whose wax melts over the hours of the day: fresh at midnight, spent before midnight."></canvas>
+    <div class="controls">
+      <button class="btn live" id="live-toggle">Follow the clock</button>
+      <label for="hour-slider">Simulate Hour (0-11): <span id="sim-label">--</span></label>
+      <input id="hour-slider" type="range" min="0" max="11" value="0" />
+    </div>
+    <div class="foot">Band = floor(getHours() / 2). Fresh at midnight, spent before midnight.</div>
+  </div>
+  <script>
+    const canvas = document.getElementById("candle");
+    const ctx = canvas.getContext("2d");
+    const W = 200, H = 275;
+    const cx = 100, baseY = 245, fullHeight = 190;
+    const bodyW = 36, bodyX = cx - bodyW / 2;
+    const slider = document.getElementById("hour-slider");
+    const simLabel = document.getElementById("sim-label");
+    const liveBtn = document.getElementById("live-toggle");
+
+    let live = true, band = 0, frame = 0;
+
+    // A full 24h arc: fresh at 0:00, nearly spent at 23:59. The slider band (0-11)
+    // is getHours()%12 in sprite-sheet terms; map band -> a 2h slice of the day.
+    function hourForBand(b) { return b * 2; }   // 0,2,4 .. 22
+    function meltFraction(hour24) {
+      const t = hour24 / 23;                    // 0 at midnight .. ~1 just before midnight
+      return Math.pow(t, 1.75);                 // slow burn early, faster into the night
+    }
+    function fraction() {
+      if (live) {
+        const n = new Date();
+        return meltFraction(n.getHours() + n.getMinutes() / 60);
+      }
+      return meltFraction(hourForBand(band));
+    }
+    function flicker() {
+      const f = frame;
+      return Math.abs(Math.sin(f * 0.11)) * 0.10
+           + Math.abs(Math.sin(f * 0.23)) * 0.06
+           + Math.abs(Math.sin(f * 0.05)) * 0.04;
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      const frac = fraction();
+      const height = Math.max(20, fullHeight * (1 - frac));
+      const topY = baseY - height;
+
+      // Wax puddle at the base; widest as the candle shortens.
+      const puddleW = 24 + frac * 60;
+      ctx.fillStyle = "#7a4a1f";
+      ctx.beginPath();
+      ctx.ellipse(cx, baseY + 6, puddleW / 2, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Wax body with a warm top-down gradient.
+      const grad = ctx.createLinearGradient(bodyX, topY, bodyX + bodyW, baseY);
+      grad.addColorStop(0, "#fdf6ec");
+      grad.addColorStop(1, "#e8d5b5");
+      ctx.fillStyle = grad;
+      ctx.fillRect(bodyX, topY, bodyW, height);
+
+      // Melted lip: a thin light band at the top edge of the wax.
+      ctx.fillStyle = "#fffaf0";
+      ctx.fillRect(bodyX, topY - 4, bodyW, 6);
+
+      // Wick.
+      ctx.fillStyle = "#2a1605";
+      ctx.fillRect(cx - 2, topY - 12, 4, 12);
+
+      // Flame — alive until the candle is essentially spent.
+      if (frac < 0.97) {
+        const n = flicker();
+        const alive = 1 - frac;                 // brightness fades with the candle
+        const fh = 16 + n * 8 + alive * 6;
+        const fw = 9 + n * 4;
+        const fy = topY - 12 - fh;
+        ctx.save();
+        ctx.shadowColor = "rgba(255, 150, 30, .55)";
+        ctx.shadowBlur = 14;
+        const fgrad = ctx.createRadialGradient(cx, fy + fh * 0.3, fw * 0.1, cx, fy + fh * 0.6, fw * 0.8);
+        fgrad.addColorStop(0, "#fff7e6");
+        fgrad.addColorStop(0.45, "#ffd54f");
+        fgrad.addColorStop(0.72, "#ff9500");
+        fgrad.addColorStop(1, "rgba(255, 140, 0, 0)");
+        ctx.fillStyle = fgrad;
+        ctx.globalAlpha = 0.6 + alive * 0.4;
+        ctx.beginPath();
+        ctx.moveTo(cx, fy);
+        ctx.bezierCurveTo(cx - fw, fy + fh * 0.45, cx - fw, fy + fh * 0.85, cx, fy + fh);
+        ctx.bezierCurveTo(cx + fw, fy + fh * 0.85, cx + fw, fy + fh * 0.45, cx, fy);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      frame++;
+      requestAnimationFrame(draw);
+    }
+
+    // Controls
+    liveBtn.addEventListener("click", () => { live = true; liveBtn.classList.add("live"); });
+    slider.addEventListener("input", () => {
+      live = false; liveBtn.classList.remove("live");
+      band = Number(slider.value);
+      updateLabel();
+    });
+    function updateLabel() {
+      simLabel.textContent = hourForBand(band) + ":00  (" + Math.round(fraction() * 100) + "% melted)";
+    }
+
+    band = new Date().getHours() % 12;
+    updateLabel();
+    requestAnimationFrame(draw);
+  </script>
+</body>
+</html>
