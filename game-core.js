@@ -185,28 +185,18 @@ export function dailySeed(date) {
 // Guarantees ≥2 per book (leaves 1 wildcard) and excludes T7 from the shared daily
 // (T7 stays a personal Ladder extreme), but includes one T6 stretch.
 export function dailyCharge(bank, date, rng = mulberry32(hashCode(dailySeed(date)))) {
-  const byTier = (t) => bank.filter((q) => tierOf(q) === t);
   const pick = (pool) => shuffle(rng, pool);
   const chosen = [];
 
-  // 3 books × 2 easy/medium (T1-T3) = 6
+  // Hard daily set: 2 upper-tier (T4-T6) questions from each book = 6
   const books = ['1 Timothy', '2 Timothy', 'Titus'];
   for (const b of books) {
-    const pool = bank.filter((q) => q.book === b && tierOf(q) >= 1 && tierOf(q) <= 3);
+    const pool = bank.filter((q) => q.book === b && tierOf(q) >= 4 && tierOf(q) <= 6);
     chosen.push(...pick(pool).slice(0, 2));
   }
-  // 2 medium/hard (T3-T4)
-  const mh = bank.filter((q) => tierOf(q) >= 3 && tierOf(q) <= 4);
-  chosen.push(...pick(mh).slice(0, 2));
-  // 1 T5 sequence
-  const t5 = byTier(5);
-  chosen.push(...(pick(t5).length ? pick(t5).slice(0, 1) : []));
-  // 1 T6 crossref
-  const t6 = byTier(6);
-  chosen.push(...(pick(t6).length ? pick(t6).slice(0, 1) : []));
-  // Fill remainder to DAILY_LENGTH with any (excluding T7)
-  const fillers = bank.filter((q) => !chosen.some((c) => c.id === q.id) && tierOf(q) <= 6);
-  chosen.push(...pick(fillers).slice(0, Math.max(0, DAILY_LENGTH - chosen.length)));
+  // Fill the rest with the hardest available (T5-T6), excluding what's chosen
+  const hard = bank.filter((q) => tierOf(q) >= 5 && tierOf(q) <= 6 && !chosen.some((c) => c.id === q.id));
+  chosen.push(...pick(hard).slice(0, Math.max(0, DAILY_LENGTH - chosen.length)));
 
   // Shuffle final order deterministically
   const ordered = pick(chosen).slice(0, DAILY_LENGTH);
