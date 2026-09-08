@@ -242,23 +242,21 @@ export function climbTierFor(questionIndex, step = 4) {
 // model: { entryTier, weakSubjects:Set, seen:Set (ids used), climbCount }
 export function pickNextLadder(bank, model) {
   const tier = Math.min(7, Math.max(1, model.entryTier || 1));
-  const candidates = bank.filter((q) => {
+  const recent = model.recentPassages || new Set();
+  const inBand = (q) => {
     const t = tierOf(q);
-    if (q._usedThisRun) return false;
-    // in-flow band: current tier ±1 (never out of 1..7)
-    if (t < Math.max(1, tier - 1) || t > Math.min(7, tier + 1)) return false;
-    if (model.seen && model.seen.has(q.id)) return false;
-    return true;
-  });
+    return t >= Math.max(1, tier - 1) && t <= Math.min(7, tier + 1);
+  };
+  const unseen = (q) => !q._usedThisRun;
+  const notRecent = (q) => !recent.has(q.passage);
 
-  let pool = candidates;
+  // Prefer unseen, in-band questions on passages not seen in the last few questions.
+  let pool = bank.filter((q) => unseen(q) && inBand(q) && notRecent(q));
+  if (!pool.length) pool = bank.filter((q) => unseen(q) && inBand(q)); // drop recent-passage rule
+  if (!pool.length) pool = bank.filter((q) => unseen(q)); // drop band
   if (!pool.length) {
-    // relax: allow anything unseen; if the whole bank is exhausted, allow reuse after reset
-    pool = bank.filter((q) => !q._usedThisRun) || bank;
-    if (!pool.length) {
-      bank.forEach((q) => { q._usedThisRun = false; });
-      pool = bank;
-    }
+    bank.forEach((q) => { q._usedThisRun = false; });
+    pool = bank;
   }
 
   // Prefer weak subjects (expose gaps): shuffle each group separately, weak first,

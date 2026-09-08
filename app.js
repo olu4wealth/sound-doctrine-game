@@ -287,6 +287,7 @@ function renderHeroQuestion() {
   q.tier = tierOf(q);
   currentQ = q;
   renderQuestion(q);
+  pushRecentPassage(q.passage);
 }
 
 // Pick the next question for an uncapped Choose Your Hero run, cycling when the
@@ -294,10 +295,12 @@ function renderHeroQuestion() {
 function pickNextHeroQ() {
   const hero = HEROES[session.hero];
   if (!hero) return null;
+  const recent = new Set(session.recentPassages || []);
   const inHero = (q) => q.hero === session.hero;
   const inBook = (q) => hero.books.includes(q.book) && tierOf(q) <= 5;
   const poolAll = [...heroBank.filter(inHero), ...bank.filter(inBook)];
-  let pool = poolAll.filter((q) => !q._usedThisRun);
+  let pool = poolAll.filter((q) => !q._usedThisRun && !recent.has(q.passage));
+  if (!pool.length) pool = poolAll.filter((q) => !q._usedThisRun);
   if (!pool.length) {
     poolAll.forEach((q) => { q._usedThisRun = false; });
     pool = poolAll;
@@ -413,23 +416,6 @@ function setMascot(book) {
   if (label) label.textContent = m.name;
   box.style.display = 'flex';
   box.classList.remove('mascot-happy', 'mascot-sad');
-}
-
-function reactMascot(kind) {
-  if (!hostMascot) return;
-  const mood = (kind === 'correct' || kind === 'grace') ? 'happy' : 'sad';
-  const src = `${hostMascot.base}-${mood}.gif`;
-  // Large centred overlay — on top of the feedback modal, high z-index.
-  const overlay = document.createElement('div');
-  overlay.className = `mascot-reaction mascot-${mood}`;
-  overlay.id = 'mascot-reaction';
-  // Remove any stale reaction first
-  document.getElementById('mascot-reaction')?.remove();
-  overlay.innerHTML = `<img src="${src}" alt="${hostMascot.name} ${mood}" /><span>${hostMascot.name}</span>`;
-  document.body.appendChild(overlay);
-  // Auto-remove after the feedback transition; showFeedbackModal's Continue
-  // handler also removes it when advancing (so it never lingers).
-  setTimeout(() => overlay.remove(), 1800);
 }
 
 // Show/hide the streak-combo "🔥 ×N" badge based on the current consecutive-correct streak.
@@ -601,11 +587,21 @@ function nextQuestion() {
   const q = pickNextLadder(bank, {
     entryTier: effectiveTier,
     weakSubjects: new Set(player.weakSubjects || []),
+    recentPassages: new Set(session.recentPassages || []),
   });
   if (!q) { finishClimb(); return; }
   currentQ = q;
   recordRunTier(qIndex, effectiveTier); // track for reward + milestones
   renderQuestion(q);
+  pushRecentPassage(q.passage);
+}
+
+// Remember the last few passages so the picker avoids repeating the same verse.
+function pushRecentPassage(passage) {
+  if (!passage) return;
+  session.recentPassages = session.recentPassages || [];
+  session.recentPassages.push(passage);
+  if (session.recentPassages.length > 5) session.recentPassages.shift();
 }
 
 // Track the effective tier per question so the timer scales and milestones can be rewarded.
@@ -658,12 +654,16 @@ function showFeedbackModal(head, verse, ref, kind, isLast, correctText) {
   document.body.appendChild(flash);
   
   // Show mascot reaction immediately when modal appears (not on Continue click)
-  const mood = (kind === 'correct' || kind === 'grace') ? 'happy' : 'sad';
+  const mood = kind === 'correct' ? 'happy' : kind === 'grace' ? 'grace' : 'sad';
+  const moodAlt = kind === 'correct' ? 'correct' : kind === 'grace' ? 'near miss' : 'not quite';
   const src = hostMascot ? `${hostMascot.base}-${mood}.gif` : '';
   const name = hostMascot ? hostMascot.name : '';
   const hostEl = backdrop.querySelector('.mascot-reaction-host');
   if (hostEl && hostMascot) {
-    hostEl.innerHTML = `<div class="mascot-reaction mascot-${mood}" id="mascot-reaction"><img src="${src}" alt="${name} ${mood}" /><span>${name}</span></div>`;
+    const fallback = mood === 'grace'
+      ? ` onerror="this.onerror=null;this.src='${hostMascot.base}-sad.gif';this.parentNode.classList.replace('mascot-grace','mascot-sad');"`
+      : '';
+    hostEl.innerHTML = `<div class="mascot-reaction mascot-${mood}" id="mascot-reaction"><img src="${src}" alt="${name} · ${moodAlt}"${fallback} /><span>${name}</span></div>`;
   }
   // Card rises, mascot lands just after it — replaces the CSS `pop` hard-cut.
   revealModal(backdrop.querySelector('.feedback-modal-card'), hostEl?.firstElementChild);

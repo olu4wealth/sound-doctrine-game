@@ -516,6 +516,7 @@ body.in-game .app { height: 100dvh; }
 }
 .mascot-reaction span { font-size: .85rem; font-weight: 900; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.45); }
 .mascot-reaction.mascot-happy img { outline-color: var(--green); }
+.mascot-reaction.mascot-grace img { outline-color: var(--amber); }
 .mascot-reaction.mascot-sad img { outline-color: var(--red); }
 @keyframes mascotReactionPop {
   0% { transform: translateX(-50%) scale(.75) translateY(20px); opacity: 0; }
