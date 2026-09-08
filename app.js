@@ -639,15 +639,8 @@ function showFeedbackModal(head, verse, ref, kind, isLast, correctText) {
   const backdrop = document.createElement('div');
   backdrop.id = 'feedback-modal-backdrop';
   backdrop.className = 'feedback-modal-backdrop';
-  const STATUS = {
-    correct: { icon: '✅', label: 'Correct!' },
-    grace:   { icon: '⚖️', label: 'Near miss' },
-    wrong:   { icon: '✗', label: 'Not quite' },
-  };
-  const st = STATUS[kind] || {};
   backdrop.innerHTML = `
     <div class="feedback-modal-card ${kind}">
-      <div class="feedback-modal-status"><span class="status-icon">${st.icon || ''}</span><span class="status-label">${st.label || ''}</span></div>
       <div class="mascot-reaction-host"></div>
       <div class="feedback-modal-head">${head}</div>
       ${correctLine}
@@ -657,6 +650,12 @@ function showFeedbackModal(head, verse, ref, kind, isLast, correctText) {
     </div>
   `;
   document.body.appendChild(backdrop);
+
+  // Colour the whole screen edge to signal the outcome (win / near-miss / loss).
+  document.querySelector('.outcome-flash')?.remove();
+  const flash = document.createElement('div');
+  flash.className = `outcome-flash ${kind}`;
+  document.body.appendChild(flash);
   
   // Show mascot reaction immediately when modal appears (not on Continue click)
   const mood = (kind === 'correct' || kind === 'grace') ? 'happy' : 'sad';
@@ -673,6 +672,7 @@ function showFeedbackModal(head, verse, ref, kind, isLast, correctText) {
     // Reaction is already visible; just dismiss together with the modal
     setTimeout(() => {
       backdrop.remove();
+      document.querySelector('.outcome-flash')?.remove();
       btnNextGo();
     }, 200);
   };
