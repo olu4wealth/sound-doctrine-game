@@ -1295,3 +1295,26 @@ body.in-game .app { height: 100dvh; }
   font-size: .62rem; font-weight: 800; text-transform: uppercase; letter-spacing: .4px;
   color: var(--ink-soft); background: #f4efe3; border-radius: 999px;
 }
+
+/* ---------- Secret: conquering the unwinnable Ladder ---------- */
+#screen-secret { display: flex; align-items: center; justify-content: center; }
+.secret-card {
+  background: linear-gradient(180deg, #fff8e6 0%, #ffffff 100%);
+  border: 2px solid var(--gold-deep);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 50px rgba(120, 90, 30, .30), 0 0 0 6px rgba(243, 180, 49, .18);
+  padding: 40px 26px;
+  max-width: 440px;
+  width: 100%;
+  text-align: center;
+}
+.secret-badge { font-size: 3.2rem; line-height: 1; margin-bottom: 10px; animation: secretPop .5s ease; }
+.secret-title {
+  font-size: 1.9rem; font-weight: 900; letter-spacing: 1px;
+  color: var(--gold-deep); margin-bottom: 12px; line-height: 1.1;
+}
+.secret-sub { font-size: 1.05rem; font-weight: 700; color: var(--ink-soft); margin-bottom: 8px; }
+.secret-line { font-size: 1.15rem; font-weight: 800; color: var(--ink); margin-bottom: 24px; }
+.secret-line strong { color: var(--green-dk); }
+.secret-card .primary { max-width: 260px; margin: 0 auto; }
+@keyframes secretPop { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }

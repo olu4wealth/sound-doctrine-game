@@ -1164,7 +1164,27 @@ function btnNextGo() {
     renderHeroQuestion();
     return;
   }
+  // Conquered the whole Ladder? Show the secret page instead of the next rung.
+  if (climbCompleted()) {
+    showSecretPage();
+    return;
+  }
   nextQuestion();
+}
+
+// True once the player has answered every question in the bank during a climb —
+// the "unwinnable" ladder.
+function climbCompleted() {
+  if (mode !== 'ladder' || session._retestList) return false;
+  const unique = new Set(session.questions.map((q) => q.id)).size;
+  return unique >= bank.length;
+}
+
+// Secret congratulatory page for beating the unwinnable Ladder.
+function showSecretPage() {
+  stopTimer();
+  showScreen('screen-secret');
+  sfx.milestone();
 }
 
 // ---------- Finishing ----------
@@ -1600,6 +1620,7 @@ el('btn-again').addEventListener('click', () => {
   else startClimb();
 });
 el('btn-home').addEventListener('click', () => { renderCandle(); showScreen('screen-home'); });
+el('btn-secret-home')?.addEventListener('click', () => { renderCandle(); showScreen('screen-home'); });
 el('btn-profile-head').addEventListener('click', () => { renderProfile(); showScreen('screen-profile'); });
 el('btn-profile-back').addEventListener('click', () => showScreen('screen-home'));
 el('btn-settings')?.addEventListener('click', () => openSettings());
