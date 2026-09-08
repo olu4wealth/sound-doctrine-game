@@ -349,8 +349,18 @@ button:disabled { cursor: default; opacity: .55; }
 
 .home-second { display: flex; gap: 10px; }
 .home-second .ghost { flex: 1; }
-.home-cta { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
-.home-cta .primary, .home-cta .ghost { width: 100%; }
+.climb-card {
+  background: linear-gradient(180deg, #fff1dd 0%, #ffffff 100%);
+  border: 2px solid #f3d9a4;
+  border-radius: var(--radius);
+  padding: 16px 14px;
+  margin: 0 0 12px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+.climb-card-title { font-size: .82rem; font-weight: 900; letter-spacing: 1px; color: var(--gold-deep); }
+.climb-card-meta { font-size: .84rem; font-weight: 700; color: var(--ink-soft); margin: 6px 0 12px; }
+.climb-card .primary { max-width: 260px; margin: 0 auto; }
 
 /* ---------- The climb: one question, one screen ----------
    A question used to run past the fold, so the hearts, timer and progress bar
@@ -1064,7 +1074,6 @@ body.in-game .app { height: 100dvh; }
   #screen-game { --prompt-size: 1.35rem; }
   .report-columns { grid-template-columns: repeat(2, 1fr); }
   .report-summary { grid-template-columns: repeat(4, 1fr); }
-  .home-cta { flex-direction: row; }
 }
 
 /* Large screens / desktop (>=1024px) */
@@ -1078,15 +1087,12 @@ body.in-game .app { height: 100dvh; }
   .hud-hearts { font-size: 1.4rem; }
   .title { font-size: 2.4rem; }
   .subtitle { font-size: 1.15rem; }
-  .home-cta { flex-direction: row; }
-  .home-cta .primary, .home-cta .ghost { flex: 1; max-width: none; }
 }
 
 /* Ensure grids/flex wrap gracefully at all sizes */
 @media (max-width: 599px) {
   .report-columns { grid-template-columns: 1fr; }
   .report-summary { grid-template-columns: repeat(2, 1fr); }
-  .home-cta { flex-direction: column; }
 }
 
 /* ---------- Choose Your Hero ---------- */
