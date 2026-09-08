@@ -349,7 +349,7 @@ button:disabled { cursor: default; opacity: .55; }
 
 .home-second { display: flex; gap: 10px; }
 .home-second .ghost { flex: 1; }
-.home-cta { display: flex; flex-direction: column; gap: 12px; }
+.home-cta { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
 .home-cta .primary, .home-cta .ghost { width: 100%; }
 
 /* ---------- The climb: one question, one screen ----------
